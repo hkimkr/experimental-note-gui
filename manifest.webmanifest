@@ -1,0 +1,10 @@
+{
+  "name": "실험 노트 GUI",
+  "short_name": "실험노트",
+  "description": "실험 프로토콜, 노트, 메모, 재고 관리",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#5b7cfa",
+  "lang": "ko"
+}

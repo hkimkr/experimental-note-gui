@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#5b7cfa" />
+    <title>실험 노트 GUI</title>
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+    <script src="./html2pdf.bundle.min.js"></script>
+    <style>
+      :root{--ink:#1f2a26;--muted:#738079;--line:#e3e9e5;--paper:#fff;--bg:#f4f7f4;--brand:#1f6b4f;--brand2:#e7f3ed;--danger:#c94f4f;--warn-bg:#fff8e6;--warn-line:#efcf8b;--deviation-bg:#fff3e0;--result-bg:#e8f5e9;--panel-border:#dfe7e2;--shadow:0 18px 48px rgba(31,42,38,.08)}
+      *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(91,124,250,.25);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}
+      .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:36px;height:36px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:16px;font-weight:800}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
+      .shell{max-width:1480px;margin:auto;padding:22px}.main{min-width:0}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 12px rgba(37,55,46,.035)}.card-pad{padding:18px}.card-head{padding:15px 18px;border-bottom:1px solid #edf0ed;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-head h2,.card-head h3{margin:0;font-size:15px}.eyebrow{color:var(--brand);font-weight:800;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.page-title{margin:3px 0 0;font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.25}.page-sub{color:var(--muted);font-size:13px;margin-top:5px}.muted{color:var(--muted)}.tiny{font-size:11px}.small{font-size:13px}.stack{display:flex;flex-direction:column;gap:12px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:0}.btn{min-height:38px;border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:700}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--brand2);border-color:transparent;color:var(--brand)}.btn.ghost{background:transparent;border-color:transparent}.btn.danger{color:var(--danger)}.field{width:100%;border:1px solid #d7ded9;background:#fff;border-radius:11px;padding:9px 11px;min-height:40px}.label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#566159}.textarea{min-height:92px;resize:vertical}.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}
+      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:none}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97)}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-handle{position:absolute;right:11px;top:11px;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:5px 8px;font-size:14px;cursor:grab}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}
+      .project-hub{max-width:1100px;margin:0 auto;padding:10px 0 48px}.hub-hero{padding:34px;background:linear-gradient(135deg,#fff,#eef5f0);border-radius:26px;border:1px solid var(--line);margin-bottom:22px}.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.hub-tile{min-height:190px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:var(--shadow);transition:transform .16s,border-color .16s}.hub-tile:hover{transform:translateY(-3px);border-color:#a8c8b9}.hub-icon{width:48px;height:48px;border-radius:15px;background:var(--brand2);display:grid;place-items:center;font-size:22px;margin-bottom:22px}.hub-tile strong{font-size:20px;display:block}.hub-tile span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.back-library{border:0;background:transparent;color:var(--brand);font-weight:800;padding:0;margin-bottom:14px}
+      .hero{padding:22px;background:linear-gradient(135deg,#fff 0%,#f3f6ff 100%);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
+      .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
+      .mobile-projects{display:none;margin-bottom:14px}.view-toggle{display:inline-flex;background:#f0f2f5;border-radius:11px;padding:3px}.view-toggle button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}.view-toggle button.active{background:#fff;color:var(--brand)}
+      .protocol-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}.protocol-overview{position:sticky;top:86px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow)}.protocol-overview h3{margin:0 0 4px;font-size:15px}.overview-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}.overview-step{width:100%;border:0;background:#f5f8f6;border-radius:10px;padding:9px 10px;text-align:left;font-size:12px}.overview-step:hover{background:var(--brand2);color:var(--brand)}.overview-step strong{display:block}.overview-step span{display:block;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nature-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.step-group{scroll-margin-top:92px;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin-bottom:14px}.step-head{padding:12px 14px;background:#f8faf8;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.step-num{width:28px;height:28px;border-radius:8px;background:var(--brand2);color:var(--brand);font-weight:900;display:grid;place-items:center;font-size:13px;flex:none}.step-timing{width:112px}.panel-line-editor{border-bottom:1px solid var(--line);padding:10px 14px}.panel-line-editor:last-of-type{border-bottom:0}.panel-row-layout{display:flex;align-items:flex-start;gap:10px;min-width:0}.panel-row{display:flex;flex:1;min-width:0;gap:10px;padding:0 0 5px;overflow-x:auto;overscroll-behavior-inline:contain;align-items:flex-start}.panel-row.stack-mobile{flex-direction:column}.panel-instance{flex:0 0 280px;min-width:0;max-width:280px}.panel-instance.reagent{flex-basis:340px;max-width:340px}.panel-line-tools,.panel-line-secondary{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.panel-primary-tools{flex:0 0 auto;margin-left:auto;padding:5px;background:#f5f8f6;border:1px solid var(--line);border-radius:10px}.panel-line-secondary{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line)}.panel-line-tools .btn,.panel-line-secondary .btn{min-height:31px;padding:4px 8px;font-size:12px}.panel-line-secondary .row-remove-button{margin-left:auto}.protocol-text-lines{display:flex;flex-direction:column;gap:5px;margin:0 0 8px}.protocol-text-lines.after{margin:6px 0 0}.protocol-text-line{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:5px;align-items:center}.protocol-text-line .field{min-height:34px;padding:5px 9px}.protocol-text-line .btn{min-height:30px;padding:3px}.protocol-text-block{width:100%;min-height:34px;border:1px solid #dfe7e2;background:#f6f9f7;border-radius:9px;padding:6px 10px;text-align:left;font-size:13px;line-height:1.45;white-space:pre-wrap}.protocol-text-block:hover{border-color:#9fc6b4;background:var(--brand2)}.protocol-text-block.empty{color:var(--muted);font-style:italic}.callout-row{display:flex;gap:8px;align-items:center;padding:9px 14px 11px;background:#fbfcfb}.callout-row select{width:150px}.callout-note{flex:1}
+      .proto-panel{width:100%;min-width:0;max-width:none;border:1px solid var(--panel-border);border-radius:14px;background:#fff;overflow:hidden}.proto-panel.reagent-panel{min-width:0;max-width:none}.proto-panel-head{padding:10px 12px;background:#fafbfc;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.proto-panel-head h4{margin:0;font-size:13px}.proto-panel-body{padding:10px 12px}
+      .reagent-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}.reagent-table th,.reagent-table td{border:1px solid var(--line);padding:6px 8px;text-align:left}.reagent-table th{background:#f5f7fa;font-weight:800}.reagent-table .material-col{width:auto}.reagent-table .amount-col{width:64px}.reagent-table .delete-col{width:34px;padding-left:3px;padding-right:3px}.reagent-table .total-row{background:#faf6f0;font-weight:800}.reagent-table .sample-row{color:var(--danger);font-weight:700}.reagent-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}.reagent-table input.field:focus{background:#fff;border:1px solid #cad4cd;border-radius:6px}.reagent-unit-input{width:100%;min-width:0;border:0;background:transparent;font-size:11px;font-weight:800;text-align:center;padding:2px}.reagent-unit-input:focus{background:#fff;outline:2px solid rgba(31,107,79,.18)}
+      .cond-table{width:100%;border-collapse:collapse;font-size:12px}.cond-table th,.cond-table td{border:1px solid var(--line);padding:6px 8px}.cond-table th{background:#f5f7fa;font-weight:800}.cond-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}
+      .method-textarea{min-height:72px;line-height:1.45;padding:8px 10px;font-size:12px;resize:vertical}.warning-chip{display:inline-block;margin-top:6px;padding:4px 8px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:11px;font-weight:700}
+      .diff-changed{color:var(--danger);font-weight:700}.diff-del,.diff-removed{color:var(--danger);text-decoration:line-through}.diff-removed-row{background:#fff2f2;color:var(--danger);text-decoration:line-through}.diff-removed-block{border:1px solid #f3b5b5;border-radius:14px;background:#fff7f7;padding:12px;color:var(--danger)}.diff-added-block{border-color:#f3b5b5}.diff-added-block input,.diff-added-block textarea{color:var(--danger);font-weight:700}
+      .deviation-highlight{background:var(--deviation-bg);outline:2px solid #ffcc80}.result-highlight{background:var(--result-bg);outline:2px solid #a5d6a7}.deviation-highlight.result-highlight{background:linear-gradient(135deg,var(--deviation-bg) 0 50%,var(--result-bg) 50% 100%);outline-color:#d6b36a}
+      .condition-label-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08)}.condition-label-chip .dot{width:8px;height:8px;border-radius:50%}.condition-label-chip .btn{min-height:18px;padding:0 2px}.condition-label-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.condition-label-item{border:1px solid var(--line);border-left:4px solid var(--label-color);border-radius:12px;padding:10px 12px;background:#fff}.condition-label-item p{margin:5px 0 0;color:var(--muted);font-size:12px;white-space:pre-wrap}
+      .note-records{display:flex;flex-direction:column;gap:7px;margin-top:8px}.note-record{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}.note-record.deviation{border-color:#ffcc80}.note-record.result{border-color:#a5d6a7}.note-record textarea{min-height:58px}.auto-deviation{margin-top:8px;padding:7px 9px;border-radius:9px;background:#fff3e0;color:#9a5a00;font-size:11px;font-weight:800}.panel-label-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;padding:6px 7px;border:1px solid #dce7e1;border-radius:9px;background:#f7faf8}.panel-label-bar select{min-height:30px;width:auto;padding:3px 7px;font-size:11px}.execution-detail{margin:5px 0 0 0;border:1px solid #d2a94d;border-left:5px solid #d8921b;border-radius:9px;background:#fff8df;color:#4b3815;padding:8px 10px;text-align:left;font-size:13px;line-height:1.5}.execution-detail strong{display:block;color:#9b5b00;font-size:10px;letter-spacing:.06em;margin-bottom:2px}.execution-detail-editor{margin-top:5px;padding:8px;border:1px solid #d2a94d;border-radius:9px;background:#fffdf5}.execution-detail-editor textarea{min-height:66px;margin-bottom:5px}.execution-summary{position:sticky;top:76px;z-index:12;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid #cfe0d7;border-radius:14px;background:rgba(250,253,251,.96);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(31,42,38,.08)}.execution-progress{flex:1;min-width:180px;height:8px;border-radius:99px;background:#e3ebe6;overflow:hidden}.execution-progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#61a681);border-radius:inherit;transition:width .2s}.execution-stat{font-size:12px;font-weight:800;white-space:nowrap}.changed-filter{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}.run-card{padding:10px 14px;background:#f8fbf9;border-bottom:1px solid var(--line)}.run-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.run-status{display:flex;gap:4px;flex-wrap:wrap}.run-status button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800}.run-status button.active{background:var(--brand);border-color:var(--brand);color:#fff}.run-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.run-field{border:1px solid var(--line);background:#fff;border-radius:11px;padding:8px}.run-field label{font-size:11px;font-weight:900;display:block;margin-bottom:4px}.run-field textarea{min-height:66px;border:0;padding:0;resize:vertical;line-height:1.45}.run-field.planned{border-color:#efcf8b;background:#fffdf7}.run-field.actual{border-color:#9fc6b4}.run-field.observation{border-color:#aed6b0;background:#fbfefb}.status-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;background:#edf2ef;color:var(--muted);font-size:10px;font-weight:900}.status-chip.running{background:#fff3d8;color:#946100}.status-chip.done{background:#e3f3e6;color:#2f7441}.status-chip.skipped{background:#f0f0f0;color:#777}.variation-count{font-size:11px;font-weight:800;color:#9a5a00}
+      .execution-detail.result{border-color:#76b67e;border-left-color:#3b8b4b;background:#edf8ef;color:#234b2b}.execution-detail.result strong{color:#2f7441}.execution-detail-editor.result{border-color:#76b67e;background:#f7fcf8}.inline-record-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.record-block-list{display:flex;flex-direction:column;gap:5px;margin-top:5px}
+      .note-hypothesis{border:1px solid #c9b7e8;border-left:5px solid #7656ad;border-radius:12px;background:#faf7ff;padding:10px}.note-hypothesis .label{color:#65479a}.note-hypothesis textarea{min-height:82px;background:transparent}.note-conclusion-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.note-conclusion{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}.note-conclusion.result{border-color:#a9d1ae;background:#f7fcf8}.note-conclusion.next{border-color:#9fbce2;background:#f6f9fe}.note-conclusion .label{font-size:13px}.note-conclusion textarea{min-height:150px;background:transparent;line-height:1.6}
+      .inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}
+      .inventory-level{font-size:11px;font-weight:800;text-align:center;margin-top:4px}
+      .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
+      .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+      .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}
+      .color-palette{display:flex;gap:10px;flex-wrap:wrap}.color-palette button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.color-palette button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
+      .breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}.breadcrumb button{border:0;background:transparent;color:var(--brand);font-weight:700;padding:0}
+      .toast{position:fixed;right:22px;bottom:22px;z-index:100;background:#2c3340;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px}
+      .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-root.exporting{display:block;position:absolute;left:0;top:0;z-index:1000;pointer-events:none;box-shadow:0 20px 60px rgba(0,0,0,.18)}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
+      @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
+      @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
+      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid{grid-template-columns:1fr}.execution-summary{top:64px}}
+      @media(max-width:460px){.bookshelf{grid-template-columns:1fr}.book,.add-book{min-height:205px}}
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="boot-status" style="padding:24px;font-family:sans-serif;color:#566159">
+        앱을 불러오는 중…
+      </div>
+    </div>
+    <script>
+      window.__expNoteBootError = null;
+      window.addEventListener("error", function (e) {
+        window.__expNoteBootError = e.error?.message || e.message || "알 수 없는 오류";
+        var el = document.getElementById("boot-status");
+        if (el) {
+          el.innerHTML =
+            "<strong style='color:#e85d5d'>앱 로드 실패</strong><p style='margin:8px 0 0;font-size:13px;line-height:1.5'>" +
+            window.__expNoteBootError +
+            "</p><p style='font-size:12px;color:#8b95a1'>F12 → Console 탭에서 자세한 오류를 확인하세요.<br>또는 CDN(React/Babel) 차단 여부를 확인하세요.</p>";
+        }
+      });
+      window.setTimeout(function () {
+        if (document.getElementById("boot-status") && !window.__expNoteMounted) {
+          var el = document.getElementById("boot-status");
+          el.innerHTML =
+            "<strong style='color:#e85d5d'>앱이 시작되지 않았습니다</strong>" +
+            "<p style='margin:8px 0 0;font-size:13px'>React/Babel CDN 로드 실패 가능성이 있습니다. 네트워크 또는 광고 차단기를 확인하세요.</p>" +
+            "<p style='font-size:12px;color:#8b95a1'><a href='./app.html'>app.html</a>을 직접 열어 Console 오류를 확인해주세요.</p>";
+        }
+      }, 8000);
+    </script>
+    <script type="text/babel">
+      const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+      const STORAGE_KEY = "hamin-exp-note-v1";
+      const LOCAL_UPDATED_KEY = "hamin-exp-note-v1-local-updated-at";
+      const PENDING_SYNC_KEY = "hamin-exp-note-v1-pending-sync";
+      const VIEW_STORAGE_KEY = "exp-note-current-view";
+      const VALID_VIEWS = ["protocol", "notes", "memo", "inventory"];
+      const COLORS = ["#5b7cfa", "#4caf7d", "#f5a623", "#e85d5d", "#9b59b6", "#1abc9c", "#e67e22", "#34495e"];
+      const INVENTORY_LEVELS = ["전부 소진", "당장 주문", "살짝 위험", "괜찮음", "넉넉함"];
+      const INVENTORY_COLORS = ["#e85d5d", "#f5a623", "#f0c674", "#8bc78b", "#4caf50"];
+      const MEMO_CANVAS_W = 1400;
+      const MEMO_CANVAS_H = 900;
+      const DEFAULT_PROJECT_ID = "project-default";
+
+      const uid = () => `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+      const clone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
+      const fmtDate = (d) => { const x = d instanceof Date ? d : new Date(d); return isNaN(x) ? "" : x.toLocaleDateString("ko-KR"); };
+      const fmtDateTime = (t) => t ? new Date(t).toLocaleString("ko-KR", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }) : "";
+      const isImeComposing = (e) => e.nativeEvent?.isComposing || e.isComposing;
+      const parseVolume = (v) => { const n = parseFloat(String(v).replace(/[^\d.-]/g, "")); return isNaN(n) ? 0 : n; };
+      const sumVolumes = (rows) => rows.reduce((s, r) => s + parseVolume(r.volume), 0);
+      const summarizePanel = (panel) => {
+        if (!panel) return "";
+        if (panel.type === "reagent") return (panel.rows || []).filter(r => r.material || r.volume).map(r => `${r.material || "시약"} ${r.volume || ""}${panel.unit || ""}`.trim()).join(", ");
+        if (panel.type === "condition") return (panel.rows || []).map(r => [r.temp && `${r.temp}°C`, r.duration, r.rpm && `${r.rpm} rpm`, r.note].filter(Boolean).join(" · ")).filter(Boolean).join(" / ");
+        return panel.content || "";
+      };
+
+      const emptyReagentRow = () => ({ id: uid(), material: "", volume: "", highlight: false });
+      const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", rpm: "", note: "" });
+      const emptyPanel = (type) => {
+        if (type === "reagent") return { id: uid(), type, unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()] };
+        if (type === "condition") return { id: uid(), type, rows: [emptyConditionRow()] };
+        return { id: uid(), type: "method", content: "", warnings: "" };
+      };
+      const emptyPanelRow = () => ({ id: uid(), panels: [], texts: [] });
+      const emptyTextLine = (position = "before") => ({ id: uid(), content: "", detail: "", result: "", position });
+      const emptyStepGroup = (order) => ({ id: uid(), title: "", timing: "", text: "", calloutType: "", callout: "", order, panelRows: [emptyPanelRow()] });
+      const emptyProtocolVersion = (label) => ({
+        id: uid(), label: label || "v1", savedAt: Date.now(), note: "",
+        stepGroups: [emptyStepGroup(1)],
+      });
+      const emptyProtocol = (name) => {
+        const v = emptyProtocolVersion("v1");
+        return { id: uid(), name: name || "새 프로토콜", summary: "", scope: "", anticipatedResults: "", troubleshooting: "", activeVersionId: v.id, versions: [v], draftVersion: clone(v) };
+      };
+      const emptyExperiment = (name) => ({ id: uid(), name: name || "새 실험", memo: "", protocols: [] });
+      const emptyNote = () => ({
+        id: uid(), date: new Date().toISOString().slice(0, 10), title: "", purpose: "", hypothesis: "",
+        conditionOverview: "", resultSummary: "", nextPlan: "", conditionLabels: [],
+        linkedProtocolId: null, linkedProtocolVersionId: null, linkedExperimentId: null, linkedStepGroupIds: [],
+        execution: { mode: "freeform", stepGroups: [emptyStepGroup(1)], baseStepGroups: [], deviations: [], results: [], stepAnnotations: [], panelAnnotations: [], stepRuns: [] },
+      });
+      const emptyProject = (name, color) => ({
+        id: uid(), name: name || "새 프로젝트", color: color || COLORS[0],
+        purpose: "", conditions: "", memo: "",
+        experiments: [], notes: [], inventory: [],
+        memoScratch: { content: "", updatedAt: null },
+        memoSnapshots: [],
+      });
+      const emptyStore = () => ({
+        version: 1,
+        projects: [{ ...emptyProject("기본 프로젝트", COLORS[0]), id: DEFAULT_PROJECT_ID }],
+        activeProjectId: DEFAULT_PROJECT_ID,
+        settings: {},
+        createdAt: Date.now(),
+      });
+
+      const normalizePanel = (p) => {
+        if (!p || typeof p !== "object") return emptyPanel("method");
+        if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })) };
+        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, id: r.id || uid() })) };
+        return { id: p.id || uid(), type: "method", content: p.content || "", warnings: p.warnings || "" };
+      };
+      const normalizeStepGroup = (sg, i) => ({
+        id: sg.id || uid(), title: sg.title || "", timing: sg.timing || "", text: sg.text || "", calloutType: sg.calloutType || "", callout: sg.callout || "", order: sg.order ?? i + 1,
+        panelRows: (sg.panelRows?.length ? sg.panelRows : [emptyPanelRow()]).map(pr => ({
+          id: pr.id || uid(),
+          panels: (pr.panels || []).map(normalizePanel),
+          texts: (pr.texts || []).map(t => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "", position: "before" } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "", position: t.position === "after" ? "after" : "before" }),
+        })),
+      });
+      const normalizeVersion = (v) => ({
+        id: v.id || uid(), label: v.label || "v1", savedAt: v.savedAt || Date.now(), note: v.note || "",
+        stepGroups: (v.stepGroups || [emptyStepGroup(1)]).map(normalizeStepGroup),
+      });
+      const normalizeProtocol = (p) => {
+        const sourceVersions = (p.versions || []).map(normalizeVersion);
+        const versions = sourceVersions.length ? sourceVersions : [emptyProtocolVersion()];
+        const activeVersionId = p.activeVersionId && versions.some(v => v.id === p.activeVersionId) ? p.activeVersionId : versions[0].id;
+        const activeVersion = versions.find(v => v.id === activeVersionId) || versions[0];
+        const draftVersion = p.draftVersion && p.draftVersion.id === activeVersionId ? normalizeVersion(p.draftVersion) : clone(activeVersion);
+        return { id: p.id || uid(), name: p.name || "프로토콜", summary: p.summary || "", scope: p.scope || "", anticipatedResults: p.anticipatedResults || "", troubleshooting: p.troubleshooting || "", activeVersionId, versions, draftVersion };
+      };
+      const getProtocolWorkingVersion = (protocol) => protocol?.draftVersion?.id === protocol?.activeVersionId
+        ? protocol.draftVersion
+        : protocol?.versions?.find(v => v.id === protocol.activeVersionId) || protocol?.versions?.[0] || null;
+      const getSelectedProtocolVersion = (protocol, versionId) => versionId && versionId !== "draft"
+        ? protocol?.versions?.find(v => v.id === versionId) || getProtocolWorkingVersion(protocol)
+        : getProtocolWorkingVersion(protocol);
+      const normalizeProject = (p) => ({
+        ...emptyProject(), ...p, id: p.id || uid(),
+        experiments: (p.experiments || []).map(e => ({
+          ...emptyExperiment(), ...e, id: e.id || uid(),
+          protocols: (e.protocols || []).map(normalizeProtocol),
+        })),
+        notes: (p.notes || []).map(n => ({
+          ...emptyNote(), ...n, id: n.id || uid(),
+          conditionLabels: (n.conditionLabels || []).map(l => ({ id: l.id || uid(), name: l.name || "", color: l.color || COLORS[0], description: l.description || "" })),
+          execution: {
+            mode: n.execution?.mode || "freeform",
+            stepGroups: (n.execution?.stepGroups || []).map(normalizeStepGroup),
+            baseStepGroups: (n.execution?.baseStepGroups || []).map(normalizeStepGroup),
+            deviations: (n.execution?.deviations || []).map(d => ({ ...d, id: d.id || uid(), planned: d.planned || "" })),
+            results: (n.execution?.results || []).map(r => ({ ...r, id: r.id || uid() })),
+            stepAnnotations: n.execution?.stepAnnotations || [],
+            panelAnnotations: (n.execution?.panelAnnotations || []).map(a => ({ stepGroupId: a.stepGroupId, panelId: a.panelId, labelId: a.labelId })),
+            stepRuns: (n.execution?.stepRuns || []).map(r => ({
+              stepGroupId: r.stepGroupId, status: ["pending","running","done","skipped"].includes(r.status) ? r.status : "pending",
+              planned: r.planned || "", actual: r.actual || "", observation: r.observation || "",
+              updatedAt: r.updatedAt || null, completedAt: r.completedAt || null,
+            })),
+          },
+        })),
+        inventory: (p.inventory || []).map(it => {
+          const numericLevel = Number(it.level);
+          return { id: it.id || uid(), name: it.name || "", unit: it.unit || "", level: clamp(Number.isFinite(numericLevel) ? numericLevel : 3, 0, 4), notes: it.notes || "" };
+        }),
+        memoScratch: { content: p.memoScratch?.content || "", updatedAt: p.memoScratch?.updatedAt || null },
+        memoSnapshots: (p.memoSnapshots || []).map((m, i) => ({
+          id: m.id || uid(), title: m.title || "제목 없는 메모", body: m.body || "",
+          color: m.color || COLORS[3], savedAt: m.savedAt || Date.now(),
+          x: m.x ?? 24 + (i % 4) * 228, y: m.y ?? 24 + Math.floor(i / 4) * 190,
+        })),
+      });
+      const normalizeStore = (raw) => {
+        const base = emptyStore();
+        const projects = (Array.isArray(raw?.projects) && raw.projects.length ? raw.projects : base.projects).map(normalizeProject);
+        const activeProjectId = projects.some(p => p.id === raw?.activeProjectId) ? raw.activeProjectId : projects[0]?.id;
+        return { ...base, ...raw, version: 1, projects, activeProjectId, settings: raw?.settings || {} };
+      };
+      const loadStore = () => {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return saved ? normalizeStore(JSON.parse(saved)) : emptyStore();
+        } catch { return emptyStore(); }
+      };
+
+      const getActiveProject = (store) =>
+        store.projects?.find((p) => p.id === store.activeProjectId) ||
+        store.projects?.[0] ||
+        emptyProject("기본 프로젝트", COLORS[0]);
+      const updateProject = (setStore, projectId, fn) => setStore(s => ({
+        ...s, projects: s.projects.map(p => p.id === projectId ? fn(p) : p),
+      }));
+
+      const loadScript = (src) =>
+        new Promise((resolve, reject) => {
+          if (document.querySelector(`script[src="${src}"]`)) return resolve();
+          const s = document.createElement("script");
+          s.src = src;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error(`스크립트 로드 실패: ${src}`));
+          document.head.appendChild(s);
+        });
+
+      const diffText = (a, b) => {
+        if (typeof diff_match_patch === "undefined") return <span className="diff-changed">{String(b || "")}</span>;
+        const dmp = new diff_match_patch();
+        const diffs = dmp.diff_main(String(a || ""), String(b || ""));
+        dmp.diff_cleanupSemantic(diffs);
+        return diffs.map(([op, text], i) => {
+          if (op === 0) return <span key={i}>{text}</span>;
+          if (op === 1) return <span key={i} className="diff-changed">{text}</span>;
+          return <span key={i} className="diff-del">{text}</span>;
+        });
+      };
+
+      function Button({ children, className = "", ...props }) {
+        return <button className={`btn ${className}`} {...props}>{children}</button>;
+      }
+      function Card({ title, action, children, className = "" }) {
+        return (
+          <section className={`card ${className}`}>
+            {title && <div className="card-head"><h3>{title}</h3>{action}</div>}
+            {children}
+          </section>
+        );
+      }
+      function ColorPalette({ value, onChange }) {
+        return (
+          <div className="color-palette">
+            {COLORS.map(c => (
+              <button key={c} type="button" className={value === c ? "on" : ""} style={{ background: c, color: c }} onClick={() => onChange(c)} aria-label={`색상 ${c}`} />
+            ))}
+          </div>
+        );
+      }
+
+      function ReagentPanel({ panel, onChange, readOnly, diffBase }) {
+        const rows = panel.rows || [];
+        const total = sumVolumes(rows);
+        const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
+        return (
+          <div className="proto-panel reagent-panel">
+            <div className="proto-panel-head"><h4>시약</h4></div>
+            <div className="proto-panel-body">
+              <table className="reagent-table">
+                <thead><tr><th className="material-col">Material</th><th className="amount-col">{readOnly ? (panel.unit || "uL") : <input className="reagent-unit-input" value={panel.unit || ""} onChange={e => onChange({ ...panel, unit: e.target.value })} aria-label="시약 부피 단위" placeholder="단위" />}</th><th className="delete-col"></th></tr></thead>
+                <tbody>
+                  {rows.map(r => {
+                    const baseRow = diffBase?.rows?.find(br => br.id === r.id);
+                    const isSample = /sample/i.test(r.material);
+                    return (
+                      <tr key={r.id} className={isSample ? "sample-row" : ""}>
+                        <td>
+                          {readOnly && diffBase ? diffText(baseRow?.material, r.material) : (
+                            <input className="field" value={r.material} readOnly={readOnly} onChange={e => patchRow(r.id, { material: e.target.value })} placeholder="시약명" />
+                          )}
+                        </td>
+                        <td className="amount-col">
+                          {readOnly && diffBase ? diffText(baseRow?.volume, r.volume) : (
+                            <input className="field" value={r.volume} readOnly={readOnly} onChange={e => patchRow(r.id, { volume: e.target.value })} placeholder="0" />
+                          )}
+                        </td>
+                        <td className="delete-col">{!readOnly && <button className="btn ghost danger" type="button" onClick={() => onChange({ ...panel, rows: rows.filter(x => x.id !== r.id) })}>×</button>}</td>
+                      </tr>
+                    );
+                  })}
+                  {readOnly && diffBase?.rows?.filter(br => !rows.some(r => r.id === br.id)).map(br => (
+                    <tr key={`removed-${br.id}`} className="diff-removed-row"><td>{br.material || "(빈 시약명)"}</td><td>{br.volume}</td><td>삭제</td></tr>
+                  ))}
+                  <tr className="total-row"><td>Total</td><td colSpan={2}>{total ? total.toFixed(1) : "—"} {panel.unit || ""}</td></tr>
+                </tbody>
+              </table>
+              {!readOnly && <Button className="soft" style={{ marginTop: 8 }} onClick={() => onChange({ ...panel, rows: [...rows, emptyReagentRow()] })}>+ 행</Button>}
+            </div>
+          </div>
+        );
+      }
+
+      function ConditionPanel({ panel, onChange, readOnly, diffBase }) {
+        const rows = panel.rows || [];
+        const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
+        return (
+          <div className="proto-panel">
+            <div className="proto-panel-head"><h4>반응 조건</h4></div>
+            <div className="proto-panel-body">
+              <table className="cond-table">
+                <thead><tr><th>온도(°C)</th><th>시간</th><th>rpm</th><th></th></tr></thead>
+                <tbody>
+                  {rows.map(r => {
+                    const baseRow = diffBase?.rows?.find(br => br.id === r.id);
+                    return (
+                      <tr key={r.id}>
+                        <td>{readOnly && diffBase ? diffText(baseRow?.temp, r.temp) : <input className="field" value={r.temp} readOnly={readOnly} onChange={e => patchRow(r.id, { temp: e.target.value })} />}</td>
+                        <td>{readOnly && diffBase ? diffText(baseRow?.duration, r.duration) : <input className="field" value={r.duration} readOnly={readOnly} onChange={e => patchRow(r.id, { duration: e.target.value })} />}</td>
+                        <td>{readOnly && diffBase ? diffText(baseRow?.rpm, r.rpm) : <input className="field" value={r.rpm} readOnly={readOnly} onChange={e => patchRow(r.id, { rpm: e.target.value })} />}</td>
+                        <td>{!readOnly && <button className="btn ghost danger" type="button" onClick={() => onChange({ ...panel, rows: rows.filter(x => x.id !== r.id) })}>×</button>}</td>
+                      </tr>
+                    );
+                  })}
+                  {readOnly && diffBase?.rows?.filter(br => !rows.some(r => r.id === br.id)).map(br => (
+                    <tr key={`removed-${br.id}`} className="diff-removed-row"><td>{br.temp}</td><td>{br.duration}</td><td>{br.rpm}</td><td>삭제</td></tr>
+                  ))}
+                </tbody>
+              </table>
+              {!readOnly && <Button className="soft" style={{ marginTop: 8 }} onClick={() => onChange({ ...panel, rows: [...rows, emptyConditionRow()] })}>+ 행</Button>}
+            </div>
+          </div>
+        );
+      }
+
+      function MethodPanel({ panel, onChange, readOnly, diffBase }) {
+        return (
+          <div className="proto-panel">
+            <div className="proto-panel-head"><h4>실험 방법</h4></div>
+            <div className="proto-panel-body">
+              {readOnly && diffBase ? (
+                <div className="small" style={{ lineHeight: 1.45 }}>{diffText(diffBase.content, panel.content)}</div>
+              ) : (
+                <textarea className="field method-textarea" value={panel.content} readOnly={readOnly} onChange={e => onChange({ ...panel, content: e.target.value })} placeholder="세부 지시 사항" />
+              )}
+              {(panel.warnings || !readOnly) && (
+                <>
+                  {!readOnly && <label className="label" style={{ marginTop: 8 }}>주의사항</label>}
+                  {readOnly ? (
+                    panel.warnings && <span className="warning-chip">{diffBase ? diffText(diffBase.warnings, panel.warnings) : panel.warnings}</span>
+                  ) : (
+                    <>
+                      <input className="field" value={panel.warnings} onChange={e => onChange({ ...panel, warnings: e.target.value })} placeholder="예: ice block 필수" />
+                      {panel.warnings && <span className="warning-chip">{panel.warnings}</span>}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      function ProtocolPanel({ panel, onChange, readOnly, diffBase }) {
+        if (panel.type === "reagent") return <ReagentPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
+        if (panel.type === "condition") return <ConditionPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
+        return <MethodPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
+      }
+
+      function StepGroupEditor({ stepGroup, onChange, readOnly, diffBase, annotations, panelAnnotations, conditionLabels, onAnnotate, onRemoveAnnotation, onAnnotatePanel, onRemovePanelAnnotation, deviationKeys, resultKeys, autoDeviationKeys, deviations, results, noteMode, stepRun, onPatchRun, onDeviation, onResult, onPatchDeviation, onDeleteDeviation, onPatchResult, onDeleteResult }) {
+        const [editingTextId, setEditingTextId] = useState(null);
+        const [editingDetailId, setEditingDetailId] = useState(null);
+        const [editingTextResultId, setEditingTextResultId] = useState(null);
+        const [editingPanelMemoId, setEditingPanelMemoId] = useState(null);
+        const [editingPanelResultId, setEditingPanelResultId] = useState(null);
+        const updateRow = (rowId, fn) => onChange({ ...stepGroup, panelRows: stepGroup.panelRows.map(r => r.id === rowId ? fn(r) : r) });
+        const addPanel = (rowId, type) => updateRow(rowId, r => ({ ...r, panels: [...(r.panels || []), emptyPanel(type)] }));
+        const addText = (rowId) => {
+          const row = stepGroup.panelRows.find(r => r.id === rowId);
+          const line = emptyTextLine((row?.panels || []).length > 0 ? "after" : "before");
+          updateRow(rowId, r => ({ ...r, texts: [...(r.texts || []), line] }));
+          setEditingTextId(line.id);
+        };
+        const addPanelRowAfter = (rowId) => onChange({ ...stepGroup, panelRows: stepGroup.panelRows.flatMap(r => r.id === rowId ? [r, emptyPanelRow()] : [r]) });
+        const removePanelRow = (rowId) => {
+          const row = stepGroup.panelRows.find(r => r.id === rowId);
+          const hasContent = (row?.panels || []).length > 0 || (row?.texts || []).some(t => t.content);
+          if (hasContent && !window.confirm("이 패널 줄의 패널과 텍스트를 모두 삭제할까요?")) return;
+          onChange({ ...stepGroup, panelRows: stepGroup.panelRows.filter(r => r.id !== rowId) });
+        };
+        const renderTextLines = (row, position) => {
+          const lines = (row.texts || []).filter(line => (line.position === "after" ? "after" : "before") === position);
+          if (!lines.length) return null;
+          return <div className={`protocol-text-lines ${position === "after" ? "after" : ""}`}>{lines.map(line => <div key={line.id} className="protocol-text-entry">
+            <div className="protocol-text-line">
+              {editingTextId === line.id && !readOnly ? <input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={() => setEditingTextId(null)} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /> : <button type="button" className={`protocol-text-block ${line.content ? "" : "empty"}`} onClick={() => !readOnly && setEditingTextId(line.id)}>{line.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+              {!readOnly && <Button className="ghost danger" aria-label="텍스트 줄 삭제" onClick={() => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) }))}>×</Button>}
+            </div>
+            {noteMode && (editingDetailId === line.id ? <div className="execution-detail-editor">
+              <label className="label">실제로 어떻게 수행했는지</label>
+              <textarea className="field" autoFocus value={line.detail || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, detail: e.target.value } : t) }))} placeholder="순서, 실제 시간·온도, 실수나 조정 사항 등을 기록하세요." />
+              <Button className="soft" onClick={() => setEditingDetailId(null)}>메모 완료</Button>
+            </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => setEditingDetailId(line.id)}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : <Button className="ghost" onClick={() => setEditingDetailId(line.id)}>+ 실제 수행 메모</Button>)}
+            {noteMode && (editingTextResultId === line.id ? <div className="execution-detail-editor result">
+              <label className="label">결과 기록</label>
+              <textarea className="field" autoFocus value={line.result || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, result: e.target.value } : t) }))} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
+              <Button className="soft" onClick={() => setEditingTextResultId(null)}>메모 완료</Button>
+            </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => setEditingTextResultId(line.id)}><strong>RESULT</strong>{line.result}</button> : <Button className="ghost" onClick={() => setEditingTextResultId(line.id)}>+ 결과 기록</Button>)}
+          </div>)}</div>;
+        };
+        const baseSg = diffBase?.stepGroups ? diffBase.stepGroups.find(s => s.id === stepGroup.id) : diffBase;
+        const comparing = readOnly && Boolean(diffBase);
+        const run = stepRun || { status: "pending", planned: "", actual: "", observation: "" };
+        const stepVariationCount = (deviations || []).filter(d => d.stepGroupId === stepGroup.id).length + [...(autoDeviationKeys || [])].filter(k => k.startsWith(`${stepGroup.id}:`)).length;
+        const currentPanelIds = new Set((stepGroup.panelRows || []).flatMap(pr => pr.panels).map(p => p.id));
+        const removedPanels = readOnly && baseSg ? (baseSg.panelRows || []).flatMap(pr => pr.panels).filter(p => !currentPanelIds.has(p.id)) : [];
+        return (
+          <div id={`step-${stepGroup.id}`} className={`step-group ${comparing && !baseSg ? "diff-added-block" : ""}`}>
+            <div className="step-head">
+              <span className={`step-num ${comparing && baseSg?.order !== stepGroup.order ? "diff-changed" : ""}`}>{stepGroup.order}</span>
+              {comparing ? (
+                <div className="field grow" style={{ minWidth: 120 }}>{diffText(baseSg?.title, stepGroup.title)}</div>
+              ) : (
+                <input className="field grow" value={stepGroup.title || (noteMode ? `단계 ${stepGroup.order}` : "")} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, title: e.target.value })} placeholder="단계 제목" style={{ minWidth: 120 }} />
+              )}
+              {!comparing && <input className="field step-timing" value={stepGroup.timing || ""} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, timing: e.target.value })} placeholder="소요 시간" aria-label="단계 소요 시간" />}
+              {noteMode && <span className={`status-chip ${run.status}`}>{run.status === "running" ? "진행 중" : run.status === "done" ? "완료" : run.status === "skipped" ? "건너뜀" : "대기"}</span>}
+              {annotations?.length > 0 && annotations.map(a => {
+                const label = conditionLabels?.find(l => l.id === a.labelId);
+                if (!label) return null;
+                return <span key={a.labelId} className="condition-label-chip" style={{ background: `${label.color}22` }} title={label.description || ""}><span className="dot" style={{ background: label.color }} />{label.name}{onRemoveAnnotation && <button type="button" className="btn ghost" aria-label={`${label.name} 라벨 제거`} onClick={() => onRemoveAnnotation(stepGroup.id, label.id)}>×</button>}</span>;
+              })}
+              {onAnnotate && conditionLabels?.length > 0 && (
+                <select className="field" style={{ width: "auto", minHeight: 34 }} onChange={e => { if (e.target.value) { onAnnotate(stepGroup.id, e.target.value); e.target.value = ""; } }} defaultValue="">
+                  <option value="">+ 조건 라벨</option>
+                  {conditionLabels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              )}
+              {!readOnly && <Button className="ghost danger" onClick={() => onChange(null)}>단계 삭제</Button>}
+            </div>
+            {noteMode && <div className="run-card">
+              <div className="run-card-head">
+                <div className="run-status">
+                  {[["pending","대기"],["running","진행 중"],["done","완료"],["skipped","건너뜀"]].map(([value,label]) => <button type="button" key={value} className={run.status === value ? "active" : ""} onClick={() => onPatchRun?.({ status: value, completedAt: value === "done" ? Date.now() : null })}>{label}</button>)}
+                </div>
+                <div className="row">
+                  {stepVariationCount > 0 && <span className="variation-count">variation {stepVariationCount}개</span>}
+                  <Button className="soft" onClick={() => onPatchRun?.({ actual: run.planned.trim() || "프로토콜대로 수행", status: run.status === "pending" ? "running" : run.status })}>계획대로 수행</Button>
+                </div>
+              </div>
+              <div className="run-fields">
+                <div className="run-field planned"><label>계획한 variation</label><textarea className="field" value={run.planned || ""} onChange={e => onPatchRun?.({ planned: e.target.value })} placeholder="이 단계에서 바꿀 조건만 적기" /></div>
+                <div className="run-field actual"><label>실제로 수행한 내용</label><textarea className="field" value={run.actual || ""} onChange={e => onPatchRun?.({ actual: e.target.value, status: run.status === "pending" ? "running" : run.status })} placeholder="계획과 달랐던 점 또는 실제 조건" /></div>
+                <div className="run-field observation"><label>관찰 · 결과</label><textarea className="field" value={run.observation || ""} onChange={e => onPatchRun?.({ observation: e.target.value })} placeholder="색, 침전, 수율, 사진 번호 등" /></div>
+              </div>
+            </div>}
+            {(stepGroup.panelRows || []).map(row => (
+              <div key={row.id} className="panel-line-editor">
+                {renderTextLines(row, "before")}
+                <div className="panel-row-layout">
+                <div className="panel-row">
+                {(row.panels || []).map((panel, pi) => {
+                  const basePanel = baseSg?.panelRows?.flatMap(pr => pr.panels)?.find(p => p.id === panel.id);
+                  const panelDiffBase = comparing ? (basePanel || (panel.type === "reagent" || panel.type === "condition" ? { rows: [] } : { content: "", warnings: "" })) : basePanel;
+                  const devKey = `${stepGroup.id}:${panel.id}`;
+                  const hasDev = deviationKeys?.has(devKey);
+                  const hasRes = resultKeys?.has(devKey);
+                  const hasAutoDev = autoDeviationKeys?.has(devKey);
+                  const panelDeviations = (deviations || []).filter(d => d.stepGroupId === stepGroup.id && d.panelId === panel.id);
+                  const panelResults = (results || []).filter(r => r.stepGroupId === stepGroup.id && r.panelId === panel.id);
+                  const appliedPanelAnnotations = (panelAnnotations || []).filter(a => a.stepGroupId === stepGroup.id && a.panelId === panel.id);
+                  return (
+                    <div key={panel.id} className={`panel-instance ${panel.type === "reagent" ? "reagent" : ""} ${hasDev || hasAutoDev ? "deviation-highlight" : ""} ${hasRes ? "result-highlight" : ""}`.trim()}>
+                      {noteMode && <div className="panel-label-bar">
+                        {appliedPanelAnnotations.map(a => {
+                          const label = conditionLabels?.find(l => l.id === a.labelId);
+                          return label ? <span key={a.labelId} className="condition-label-chip" style={{ background: `${label.color}22` }}><span className="dot" style={{ background: label.color }} />{label.name}<button type="button" className="btn ghost" aria-label={`${label.name} 패널 라벨 제거`} onClick={() => onRemovePanelAnnotation?.(stepGroup.id, panel.id, label.id)}>×</button></span> : null;
+                        })}
+                        {conditionLabels?.length > 0 && <select className="field" value="" onChange={e => { if (e.target.value) onAnnotatePanel?.(stepGroup.id, panel.id, e.target.value); }} aria-label="패널 조건 라벨 추가"><option value="">+ 조건 라벨</option>{conditionLabels.filter(l => !appliedPanelAnnotations.some(a => a.labelId === l.id)).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>}
+                      </div>}
+                      <ProtocolPanel
+                        panel={panel}
+                        diffBase={panelDiffBase}
+                        readOnly={readOnly}
+                        onChange={np => updateRow(row.id, r => ({ ...r, panels: r.panels.map((p, i) => i === pi ? np : p) }))}
+                      />
+                      {!readOnly && (
+                        <div className="row" style={{ marginTop: 4 }}>
+                          <Button className="ghost danger" onClick={() => updateRow(row.id, r => ({ ...r, panels: r.panels.filter((_, i) => i !== pi) }))}>패널 삭제</Button>
+                        </div>
+                      )}
+                      {noteMode && (
+                        <>
+                          {hasAutoDev && <div className="auto-deviation">프로토콜과 다르게 편집된 패널</div>}
+                          <div className="inline-record-actions">
+                            <Button className="ghost" onClick={() => { const id = onDeviation?.(stepGroup.id, panel.id, "manual", summarizePanel(basePanel || panel), ""); if (id) setEditingPanelMemoId(id); }}>+ 실제 수행 메모</Button>
+                            <Button className="ghost" onClick={() => { const id = onResult?.(stepGroup.id, panel.id, ""); if (id) setEditingPanelResultId(id); }}>+ 결과 기록</Button>
+                          </div>
+                          {(panelDeviations.length > 0 || panelResults.length > 0) && <div className="record-block-list">
+                            {panelDeviations.map(d => { const memo = d.actual || d.planned || ""; return editingPanelMemoId === d.id || !memo ? <div key={d.id} className="execution-detail-editor">
+                              <div className="row between"><label className="label">실제 수행 메모</label><Button className="ghost danger" onClick={() => onDeleteDeviation?.(d.id)}>삭제</Button></div>
+                              {d.original && <div className="tiny muted" style={{ marginBottom: 5 }}>프로토콜 기준 · {d.original}</div>}
+                              <textarea className="field" autoFocus value={d.actual || ""} onChange={e => onPatchDeviation?.(d.id, { actual: e.target.value })} placeholder="이 패널에서 실제로 바꿔 수행한 내용을 기록하세요." />
+                              <Button className="soft" onClick={() => setEditingPanelMemoId(null)}>메모 완료</Button>
+                            </div> : <button key={d.id} type="button" className="execution-detail" onClick={() => setEditingPanelMemoId(d.id)}><strong>ACTUAL EXECUTION</strong>{memo}</button>; })}
+                            {panelResults.map(r => editingPanelResultId === r.id || !r.content ? <div key={r.id} className="execution-detail-editor result">
+                              <div className="row between"><label className="label">결과 기록</label><Button className="ghost danger" onClick={() => onDeleteResult?.(r.id)}>삭제</Button></div>
+                              <textarea className="field" autoFocus value={r.content || ""} onChange={e => onPatchResult?.(r.id, { content: e.target.value })} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
+                              <Button className="soft" onClick={() => setEditingPanelResultId(null)}>메모 완료</Button>
+                            </div> : <button key={r.id} type="button" className="execution-detail result" onClick={() => setEditingPanelResultId(r.id)}><strong>RESULT</strong>{r.content}</button>)}
+                          </div>}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                </div>
+                {!readOnly && <div className="panel-line-tools panel-primary-tools">
+                  <Button className="soft" onClick={() => addPanel(row.id, "reagent")}>+ 시약</Button>
+                  <Button className="soft" onClick={() => addPanel(row.id, "condition")}>+ 조건</Button>
+                  <Button className="soft" onClick={() => addPanel(row.id, "method")}>+ 방법</Button>
+                </div>}
+                </div>
+                {renderTextLines(row, "after")}
+                {!readOnly && <div className="panel-line-secondary">
+                  <Button className="ghost" onClick={() => addText(row.id)}>+ 텍스트</Button>
+                  <Button className="ghost" onClick={() => addPanelRowAfter(row.id)}>+ 새 패널 줄</Button>
+                  {stepGroup.panelRows.length > 1 && <Button className="ghost danger row-remove-button" onClick={() => removePanelRow(row.id)}>줄 삭제</Button>}
+                </div>}
+              </div>
+            ))}
+            {removedPanels.length > 0 && <div className="card-pad stack">
+              {removedPanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}
+            </div>}
+            {stepGroup.text && <div className="protocol-text-lines" style={{ padding: "0 14px 8px" }}><div className="protocol-text-line"><input className="field" value={stepGroup.text} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, text: e.target.value })} aria-label="기존 단계 설명" /><span /></div></div>}
+            {!readOnly && <div className="callout-row">
+                <select className="field" value={stepGroup.calloutType || ""} onChange={e => onChange({ ...stepGroup, calloutType: e.target.value })} aria-label="주의 표시 종류">
+                  <option value="">표시 없음</option><option value="CRITICAL">CRITICAL STEP</option><option value="CAUTION">CAUTION</option><option value="PAUSE">PAUSE POINT</option><option value="TROUBLESHOOTING">TROUBLESHOOTING</option>
+                </select>
+                <input className="field callout-note" value={stepGroup.callout || ""} onChange={e => onChange({ ...stepGroup, callout: e.target.value })} placeholder="주의점이나 재개 조건" />
+            </div>}
+            {readOnly && stepGroup.callout && <div style={{ padding: "0 14px 10px" }}><span className="warning-chip">{stepGroup.calloutType || "NOTE"}: {stepGroup.callout}</span></div>}
+          </div>
+        );
+      }
+
+      function PrintPanel({ panel }) {
+        if (panel.type === "reagent") {
+          const rows = (panel.rows || []).filter(r => r.material || r.volume);
+          return <div className="print-static-panel"><div className="print-static-head">시약 · {panel.unit || "단위 없음"}</div><div className="print-static-body">
+            {rows.length ? <table className="print-static-table"><thead><tr><th>Material</th><th>Amount</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.material || "—"}</td><td>{r.volume || "—"} {panel.unit || ""}</td></tr>)}<tr className="print-total"><td>Total</td><td>{sumVolumes(rows) ? sumVolumes(rows).toFixed(1) : "—"} {panel.unit || ""}</td></tr></tbody></table> : <span className="muted">입력된 시약 없음</span>}
+          </div></div>;
+        }
+        if (panel.type === "condition") {
+          const rows = panel.rows || [];
+          return <div className="print-static-panel"><div className="print-static-head">반응 조건</div><div className="print-static-body"><table className="print-static-table"><thead><tr><th>온도</th><th>시간</th><th>rpm</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.temp ? `${r.temp}°C` : "—"}</td><td>{r.duration || "—"}</td><td>{r.rpm || "—"}</td></tr>)}</tbody></table></div></div>;
+        }
+        return <div className="print-static-panel"><div className="print-static-head">실험 방법</div><div className="print-static-body print-method">{panel.content || "입력된 방법 없음"}{panel.warnings && <div className="print-callout">CAUTION · {panel.warnings}</div>}</div></div>;
+      }
+
+      function PrintLayout({ protocol, version, projectName, experimentName }) {
+        const summaryItems = [["OVERVIEW",protocol.summary],["SCOPE",protocol.scope],["ANTICIPATED RESULTS",protocol.anticipatedResults],["TROUBLESHOOTING",protocol.troubleshooting]].filter(([,value]) => value);
+        return (
+          <div className="print-root" id="print-layout">
+            <header className="print-header"><div className="print-kicker">LAB PROTOCOL</div><h1 className="print-title">{protocol.name || "Protocol"}</h1><div className="print-subtitle"><span>{projectName}</span><span>{experimentName}</span><span>{version.label}</span><span>{version.stepGroups.length} steps</span></div></header>
+            {summaryItems.length > 0 && <div className="print-summary-grid">{summaryItems.map(([label,value]) => <div key={label} className="print-summary-block"><strong>{label}</strong>{value}</div>)}</div>}
+            <div className="print-steps-grid">
+              {[...version.stepGroups].sort((a, b) => a.order - b.order).map(sg => <article key={sg.id} className="print-step">
+                <div className="print-step-head"><span className="print-step-num">{sg.order}</span><span className="print-step-title">{sg.title || "제목 없는 단계"}</span>{sg.timing && <span className="print-timing">{sg.timing}</span>}</div>
+                <div className="print-step-body">
+                  {sg.panelRows.map(pr => <React.Fragment key={pr.id}>
+                    {(pr.texts || []).filter(t => t.position !== "after").map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
+                    {pr.panels.length > 0 && <div className="print-panel-row">{pr.panels.map(p => <PrintPanel key={p.id} panel={p} />)}</div>}
+                    {(pr.texts || []).filter(t => t.position === "after").map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
+                  </React.Fragment>)}
+                  {sg.text && <div className="print-step-text">{sg.text}</div>}
+                  {sg.callout && <div className="print-callout">{sg.calloutType || "NOTE"} · {sg.callout}</div>}
+                </div>
+              </article>)}
+            </div>
+            <div className="print-footer">Generated {fmtDateTime(Date.now())}</div>
+          </div>
+        );
+      }
+
+      function ProtocolEditor({ project, experiment, protocol, setStore, toast }) {
+        const [compareVersionId, setCompareVersionId] = useState(null);
+        const [viewMode, setViewMode] = useState("edit");
+        const savedVersion = protocol.versions.find(v => v.id === protocol.activeVersionId) || protocol.versions[0];
+        const version = protocol.draftVersion?.id === savedVersion.id ? protocol.draftVersion : savedVersion;
+        const compareVersion = compareVersionId ? protocol.versions.find(v => v.id === compareVersionId) : null;
+        const readOnly = viewMode === "compare";
+        const hasDraftChanges = JSON.stringify(version) !== JSON.stringify(savedVersion);
+
+        const patchProtocol = (fn) => updateProject(setStore, project.id, p => ({
+          ...p, experiments: p.experiments.map(ex => ex.id !== experiment.id ? ex : {
+            ...ex, protocols: ex.protocols.map(pr => pr.id !== protocol.id ? pr : fn(pr)),
+          }),
+        }));
+
+        const patchVersion = (fn) => patchProtocol(pr => ({ ...pr, draftVersion: fn(pr.draftVersion?.id === pr.activeVersionId ? pr.draftVersion : clone(savedVersion)) }));
+
+        const saveNewVersion = () => {
+          const label = window.prompt("버전 이름", `${new Date().toISOString().slice(2, 10).replace(/-/g, "")} v${protocol.versions.length + 1}`);
+          if (!label) return;
+          const snap = clone(version);
+          snap.id = uid(); snap.label = label; snap.savedAt = Date.now();
+          patchProtocol(pr => ({ ...pr, activeVersionId: snap.id, versions: [...pr.versions, snap], draftVersion: clone(snap) }));
+          toast("새 버전을 저장했습니다");
+        };
+
+        const exportPdf = async () => {
+          const el = document.getElementById("print-layout");
+          if (!el) { toast("PDF 레이아웃을 찾을 수 없습니다"); return; }
+          if (!window.html2pdf) { toast("PDF 모듈을 찾을 수 없어 인쇄 창을 엽니다"); setTimeout(() => window.print(), 120); return; }
+          try {
+            toast("PDF 생성 중…");
+            el.classList.add("exporting");
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await window.html2pdf().set({
+              margin: 8, filename: `${(protocol.name || "protocol").replace(/[\\/:*?"<>|]/g, "-")}.pdf`,
+              image: { type: "jpeg", quality: 0.96 },
+              html2canvas: { scale: 1.7, useCORS: true, backgroundColor: "#ffffff", windowWidth: el.scrollWidth, windowHeight: el.scrollHeight, scrollX: 0, scrollY: 0 },
+              jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+              pagebreak: { mode: ["css", "legacy"] },
+            }).from(el).save();
+            el.classList.remove("exporting");
+            toast("PDF 저장 완료");
+          } catch (e) {
+            el?.classList?.remove("exporting");
+            toast("PDF 생성 실패: " + (e.message || e));
+          }
+        };
+
+        const updateStep = (sgId, val) => patchVersion(v => ({
+          ...v, stepGroups: val === null ? v.stepGroups.filter(s => s.id !== sgId).map((s, index) => ({ ...s, order: index + 1 })) : v.stepGroups.map(s => s.id === sgId ? val : s),
+        }));
+
+        const sortedSteps = [...version.stepGroups].sort((a, b) => a.order - b.order);
+        const jumpToStep = (id) => document.getElementById(`step-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        return (
+          <>
+          <div className="stack screen-only">
+            <div className="breadcrumb">
+              <button type="button" onClick={() => window.__navBack?.()}>← 실험 목록</button>
+              <span>/</span><span>{experiment.name}</span><span>/</span><strong>{protocol.name}</strong>
+            </div>
+            <div className="hero">
+              <div>
+                <div className="eyebrow">PROTOCOL</div>
+                <input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={protocol.name} onChange={e => patchProtocol(pr => ({ ...pr, name: e.target.value }))} />
+              </div>
+              <div className="row">
+                <select className="field" style={{ width: "auto" }} value={protocol.activeVersionId} onChange={e => {
+                  const selected = protocol.versions.find(v => v.id === e.target.value);
+                  if (selected) patchProtocol(pr => ({ ...pr, activeVersionId: selected.id, draftVersion: clone(selected) }));
+                }}>
+                  {protocol.versions.map(v => <option key={v.id} value={v.id}>{v.label} ({fmtDateTime(v.savedAt)})</option>)}
+                </select>
+                {hasDraftChanges && <span className="warning-chip">저장되지 않은 수정</span>}
+                <div className="view-toggle">
+                  <button className={viewMode === "edit" ? "active" : ""} onClick={() => { setViewMode("edit"); setCompareVersionId(null); }}>편집</button>
+                  <button className={viewMode === "compare" ? "active" : ""} onClick={async () => {
+                    setViewMode("compare");
+                    if (!compareVersionId) setCompareVersionId(protocol.versions.find(v => v.id !== savedVersion.id)?.id || null);
+                    if (typeof diff_match_patch === "undefined") {
+                      try { await loadScript("https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"); }
+                      catch { toast("diff 라이브러리 로드 실패"); }
+                    }
+                  }}>비교</button>
+                </div>
+                {viewMode === "compare" && (
+                  <select className="field" style={{ width: "auto" }} value={compareVersionId || ""} onChange={e => setCompareVersionId(e.target.value)}>
+                    <option value="">비교할 이전 버전</option>
+                    {protocol.versions.filter(v => v.id !== version.id).map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
+                  </select>
+                )}
+                <Button className="soft" onClick={saveNewVersion}>수정 버전 저장</Button>
+                <Button className="soft" onClick={() => window.print()}>인쇄</Button>
+                <Button className="primary" onClick={exportPdf}>PDF 저장</Button>
+              </div>
+            </div>
+            <Card title="프로토콜 개요" className="nature-card">
+              <div className="card-pad nature-fields">
+                <div><label className="label">개요</label><textarea className="field textarea" value={protocol.summary || ""} onChange={e => patchProtocol(pr => ({ ...pr, summary: e.target.value }))} placeholder="무엇을 위한 프로토콜인지 요약하세요." /></div>
+                <div><label className="label">적용 범위 · 전제 조건</label><textarea className="field textarea" value={protocol.scope || ""} onChange={e => patchProtocol(pr => ({ ...pr, scope: e.target.value }))} placeholder="샘플, 장비, 숙련도, 제한 조건" /></div>
+                <div><label className="label">예상 결과</label><textarea className="field textarea" value={protocol.anticipatedResults || ""} onChange={e => patchProtocol(pr => ({ ...pr, anticipatedResults: e.target.value }))} placeholder="정상 결과의 기준과 해석" /></div>
+                <div><label className="label">트러블슈팅</label><textarea className="field textarea" value={protocol.troubleshooting || ""} onChange={e => patchProtocol(pr => ({ ...pr, troubleshooting: e.target.value }))} placeholder="문제 · 원인 · 해결 방법" /></div>
+              </div>
+            </Card>
+            <div className="protocol-workspace">
+              <aside className="protocol-overview">
+                <div className="eyebrow">PROTOCOL OVERVIEW</div><h3>전체 단계</h3>
+                <div className="tiny muted">단계를 누르면 해당 위치로 이동합니다.</div>
+                <div className="overview-list">
+                  {sortedSteps.map(sg => <button key={sg.id} className="overview-step" onClick={() => jumpToStep(sg.id)}><strong>{sg.order}. {sg.title || "제목 없는 단계"}</strong><span>{sg.timing || sg.text || sg.panelRows.flatMap(r => r.texts || []).find(t => t.content)?.content || "내용을 추가하세요"}</span></button>)}
+                  {!sortedSteps.length && <div className="empty">아직 단계가 없습니다.</div>}
+                </div>
+              </aside>
+              <div className="stack">
+                {sortedSteps.length === 0 ? <div className="empty">첫 실험 단계를 추가하세요. 시약 패널은 자동으로 생성되지 않습니다.</div> : sortedSteps.map(sg => (
+                  <StepGroupEditor key={sg.id} stepGroup={sg} readOnly={readOnly} diffBase={compareVersion} onChange={val => updateStep(sg.id, val)} />
+                ))}
+                {readOnly && compareVersion && compareVersion.stepGroups.filter(baseSg => !version.stepGroups.some(sg => sg.id === baseSg.id)).map(baseSg => (
+                  <div key={`removed-${baseSg.id}`} className="diff-removed-block stack"><strong>삭제된 단계</strong><StepGroupEditor stepGroup={baseSg} readOnly onChange={() => {}} /></div>
+                ))}
+                {!readOnly && <Button className="primary" onClick={() => patchVersion(v => ({ ...v, stepGroups: [...v.stepGroups, emptyStepGroup(Math.max(0, ...v.stepGroups.map(s => Number(s.order) || 0)) + 1)] }))}>+ 실험 단계 추가</Button>}
+              </div>
+            </div>
+          </div>
+          <PrintLayout protocol={protocol} version={version} projectName={project.name} experimentName={experiment.name} />
+          </>
+        );
+      }
+
+      function ProtocolView({ project, setStore, toast }) {
+        const [selExp, setSelExp] = useState(null);
+        const [selProto, setSelProto] = useState(null);
+
+        useEffect(() => { setSelExp(null); setSelProto(null); }, [project.id]);
+        useEffect(() => {
+          window.__navBack = () => { setSelProto(null); setSelExp(null); };
+          return () => { delete window.__navBack; };
+        }, []);
+
+        const patchProject = (fn) => updateProject(setStore, project.id, fn);
+
+        if (selExp && selProto) {
+          const exp = project.experiments.find(e => e.id === selExp);
+          const proto = exp?.protocols.find(p => p.id === selProto);
+          if (exp && proto) return <ProtocolEditor key={`${project.id}:${proto.id}`} project={project} experiment={exp} protocol={proto} setStore={setStore} toast={toast} />;
+        }
+
+        if (selExp) {
+          const exp = project.experiments.find(e => e.id === selExp);
+          return (
+            <div className="stack">
+              <div className="breadcrumb"><button type="button" onClick={() => setSelExp(null)}>← 실험 목록</button><span>/</span><strong>{exp?.name}</strong></div>
+              <div className="hero"><div className="grow"><div className="eyebrow">EXPERIMENT</div><input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={exp?.name || ""} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === selExp ? { ...x, name: ev.target.value } : x) }))} aria-label="실험 이름" /></div>
+                <Button className="primary" onClick={() => {
+                  const p = emptyProtocol("새 프로토콜");
+                  patchProject(pr => ({ ...pr, experiments: pr.experiments.map(e => e.id === selExp ? { ...e, protocols: [...e.protocols, p] } : e) }));
+                  setSelProto(p.id);
+                }}>+ 프로토콜 추가</Button>
+              </div>
+              {exp?.protocols.length ? exp.protocols.map(p => (
+                <Card key={p.id} title={p.name} action={<Button className="soft" onClick={() => setSelProto(p.id)}>열기</Button>}>
+                  <div className="card-pad tiny muted">버전 {p.versions.length}개 · 최신 {p.versions.find(v => v.id === p.activeVersionId)?.label}</div>
+                </Card>
+              )) : <div className="empty">프로토콜을 추가해주세요.</div>}
+            </div>
+          );
+        }
+
+        return (
+          <div className="stack">
+            <div className="hero">
+              <div><div className="eyebrow">PROTOCOL</div><h1 className="page-title">프로토콜</h1><div className="page-sub">실험별 프로토콜을 패널로 구성하고 버전을 관리하세요.</div></div>
+              <Button className="primary" onClick={() => {
+                const e = emptyExperiment("새 실험");
+                patchProject(p => ({ ...p, experiments: [...p.experiments, e] }));
+                setSelExp(e.id);
+              }}>+ 실험 추가</Button>
+            </div>
+            {project.experiments.length ? project.experiments.map(e => (
+              <Card key={e.id} title={e.name} action={<Button className="soft" onClick={() => setSelExp(e.id)}>열기 ({e.protocols.length})</Button>}>
+                <div className="card-pad stack">
+                  <div><label className="label">실험 이름</label><input className="field" value={e.name} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, name: ev.target.value } : x) }))} /></div>
+                  <div><label className="label">실험 메모</label><input className="field" value={e.memo} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, memo: ev.target.value } : x) }))} placeholder="실험 메모" /></div>
+                </div>
+              </Card>
+            )) : <div className="empty">실험을 추가해주세요.</div>}
+          </div>
+        );
+      }
+
+      /* Notes, Memo, Inventory, Sidebar, App */
+
+      function ConditionLabelModal({ onSave, onClose }) {
+        const [name, setName] = useState("");
+        const [color, setColor] = useState(COLORS[0]);
+        const [description, setDescription] = useState("");
+        return (
+          <div className="modal-backdrop" onClick={onClose}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-head"><h3>조건 라벨 추가</h3><Button className="ghost" onClick={onClose}>닫기</Button></div>
+              <div className="modal-body">
+                <div><label className="label">라벨 이름</label><input className="field" value={name} onChange={e => setName(e.target.value)} placeholder="예: 조건 A" /></div>
+                <div><label className="label">설명</label><textarea className="field textarea" value={description} onChange={e => setDescription(e.target.value)} /></div>
+                <ColorPalette value={color} onChange={setColor} />
+              </div>
+              <div className="modal-foot">
+                <Button onClick={onClose}>취소</Button>
+                <Button className="primary" onClick={() => onSave({ name: name.trim() || "조건", color, description })}>추가</Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function NoteEditor({ note, project, setStore, toast }) {
+        const [showLabelModal, setShowLabelModal] = useState(false);
+        const [showChangedOnly, setShowChangedOnly] = useState(false);
+        const patchNote = (fn) => updateProject(setStore, project.id, p => ({
+          ...p, notes: p.notes.map(n => n.id === note.id ? fn(n) : n),
+        }));
+
+        const allProtocols = project.experiments.flatMap(e => e.protocols.map(p => ({ ...p, experimentId: e.id, experimentName: e.name })));
+
+        const loadProtocol = () => {
+          const proto = allProtocols.find(p => p.id === note.linkedProtocolId);
+          if (!proto) { toast("프로토콜을 선택해주세요"); return; }
+          const hasRunRecords = (note.execution.deviations || []).length || (note.execution.results || []).length || (note.execution.panelAnnotations || []).length || (note.execution.stepRuns || []).some(r => r.planned || r.actual || r.observation || r.status !== "pending") || (note.execution.stepGroups || []).some(sg => (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)));
+          if (hasRunRecords && !window.confirm("현재 variation과 실행 기록을 지우고 프로토콜을 다시 불러올까요?")) return;
+          const ver = getSelectedProtocolVersion(proto, note.linkedProtocolVersionId);
+          if (!ver) { toast("불러올 프로토콜 버전이 없습니다"); return; }
+          let groups = clone(ver.stepGroups);
+          if (note.linkedStepGroupIds?.length) groups = groups.filter(g => note.linkedStepGroupIds.includes(g.id));
+          groups = groups.map((g, index) => {
+            const order = Number(g.order) || index + 1;
+            return { ...g, order, title: String(g.title || "").trim() || `단계 ${order}` };
+          });
+          patchNote(n => ({ ...n, execution: { ...n.execution, mode: "fromProtocol", stepGroups: clone(groups), baseStepGroups: clone(groups), deviations: [], results: [], stepAnnotations: [], panelAnnotations: [], stepRuns: groups.map(g => ({ stepGroupId: g.id, status: "pending", planned: "", actual: "", observation: "", updatedAt: null, completedAt: null })) } }));
+          toast(`${note.linkedProtocolVersionId && note.linkedProtocolVersionId !== "draft" ? ver.label : "현재 편집본"} · ${groups.length}단계를 불러왔습니다`);
+        };
+
+        const markDeviation = (stepGroupId, panelId, path, original, actual) => {
+          const existing = note.execution.deviations.find(d => d.stepGroupId === stepGroupId && d.panelId === panelId && d.path === path);
+          if (existing) return existing.id;
+          const id = uid();
+          patchNote(n => ({
+            ...n, execution: {
+              ...n.execution,
+              deviations: [...n.execution.deviations, { id, stepGroupId, panelId, path, original, planned: "", actual }],
+            },
+          }));
+          return id;
+        };
+
+        const addResult = (stepGroupId, panelId, content) => {
+          const id = uid();
+          patchNote(n => ({
+            ...n, execution: {
+              ...n.execution,
+              results: [...n.execution.results, { id, stepGroupId, panelId, content, savedAt: Date.now() }],
+            },
+          }));
+          return id;
+        };
+
+        const deviationKeys = new Set(note.execution.deviations.map(d => `${d.stepGroupId}:${d.panelId}`));
+        const resultKeys = new Set(note.execution.results.map(r => `${r.stepGroupId}:${r.panelId}`));
+        const basePanels = new Map((note.execution.baseStepGroups || []).flatMap(sg => (sg.panelRows || []).flatMap(pr => pr.panels)).map(p => [p.id, p]));
+        const autoDeviationKeys = new Set();
+        (note.execution.stepGroups || []).forEach(sg => (sg.panelRows || []).forEach(pr => pr.panels.forEach(panel => {
+          const basePanel = basePanels.get(panel.id);
+          if (note.execution.mode === "fromProtocol" && (!basePanel || JSON.stringify(basePanel) !== JSON.stringify(panel))) autoDeviationKeys.add(`${sg.id}:${panel.id}`);
+        })));
+        const currentPanelIds = new Set((note.execution.stepGroups || []).flatMap(sg => (sg.panelRows || []).flatMap(pr => pr.panels)).map(p => p.id));
+        const removedBasePanels = note.execution.mode === "fromProtocol" ? [...basePanels.values()].filter(p => !currentPanelIds.has(p.id)) : [];
+
+        const patchDeviation = (id, patch) => patchNote(n => ({ ...n, execution: { ...n.execution, deviations: n.execution.deviations.map(d => d.id === id ? { ...d, ...patch } : d) } }));
+        const deleteDeviation = (id) => patchNote(n => ({ ...n, execution: { ...n.execution, deviations: n.execution.deviations.filter(d => d.id !== id) } }));
+        const patchResult = (id, patch) => patchNote(n => ({ ...n, execution: { ...n.execution, results: n.execution.results.map(r => r.id === id ? { ...r, ...patch } : r) } }));
+        const deleteResult = (id) => patchNote(n => ({ ...n, execution: { ...n.execution, results: n.execution.results.filter(r => r.id !== id) } }));
+        const getStepRun = (stepGroupId) => (note.execution.stepRuns || []).find(r => r.stepGroupId === stepGroupId) || { stepGroupId, status: "pending", planned: "", actual: "", observation: "", updatedAt: null, completedAt: null };
+        const patchStepRun = (stepGroupId, patch) => patchNote(n => {
+          const current = (n.execution.stepRuns || []).find(r => r.stepGroupId === stepGroupId);
+          const next = { ...(current || { stepGroupId, status: "pending", planned: "", actual: "", observation: "", completedAt: null }), ...patch, updatedAt: Date.now() };
+          return { ...n, execution: { ...n.execution, stepRuns: current ? n.execution.stepRuns.map(r => r.stepGroupId === stepGroupId ? next : r) : [...(n.execution.stepRuns || []), next] } };
+        });
+        const executionGroups = note.execution.stepGroups || [];
+        const finishedCount = executionGroups.filter(sg => ["done","skipped"].includes(getStepRun(sg.id).status)).length;
+        const changedStepIds = new Set(executionGroups.filter(sg => {
+          const run = getStepRun(sg.id);
+          return run.status !== "pending" || run.planned || run.actual || run.observation ||
+            note.execution.deviations.some(d => d.stepGroupId === sg.id) || note.execution.results.some(r => r.stepGroupId === sg.id) ||
+            (note.execution.panelAnnotations || []).some(a => a.stepGroupId === sg.id) || (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)) ||
+            [...autoDeviationKeys].some(key => key.startsWith(`${sg.id}:`));
+        }).map(sg => sg.id));
+        const visibleExecutionGroups = showChangedOnly ? executionGroups.filter(sg => changedStepIds.has(sg.id)) : executionGroups;
+
+        return (
+          <div className="stack">
+            <div className="breadcrumb"><button type="button" onClick={() => window.__noteBack?.()}>← 노트 목록</button></div>
+            <Card title="실험 노트">
+              <div className="card-pad stack">
+                <div className="row">
+                  <div style={{ flex: "0 0 140px" }}><label className="label">날짜</label><input type="date" className="field" value={note.date} onChange={e => patchNote(n => ({ ...n, date: e.target.value }))} /></div>
+                  <div className="grow"><label className="label">제목</label><input className="field" value={note.title} onChange={e => patchNote(n => ({ ...n, title: e.target.value }))} /></div>
+                </div>
+                <div><label className="label">실험 목적</label><textarea className="field textarea" value={note.purpose} onChange={e => patchNote(n => ({ ...n, purpose: e.target.value }))} /></div>
+                <div className="note-hypothesis"><label className="label">이번 실험 가설</label><textarea className="field textarea" value={note.hypothesis || ""} onChange={e => patchNote(n => ({ ...n, hypothesis: e.target.value }))} placeholder="어떤 조건이 어떤 결과를 만들 것이라고 예상하는지 적으세요. 예: 코팅 농도를 높이면 세포 부착률이 증가할 것이다." /></div>
+                <div><label className="label">이번 실험의 공통 variation</label><textarea className="field textarea" value={note.conditionOverview} onChange={e => patchNote(n => ({ ...n, conditionOverview: e.target.value }))} placeholder="전체 단계에 공통으로 바꾼 샘플, 농도, 배치 조건만 적으세요." /></div>
+                <div className="row between">
+                  <label className="label" style={{ margin: 0 }}>조건 라벨</label>
+                  <Button className="soft" onClick={() => setShowLabelModal(true)}>+ 조건 라벨</Button>
+                </div>
+                <div className="condition-label-list">
+                  {note.conditionLabels.map(l => (
+                    <div key={l.id} className="condition-label-item" style={{ "--label-color": l.color }}>
+                      <div className="row between"><span className="condition-label-chip" style={{ background: `${l.color}22` }}><span className="dot" style={{ background: l.color }} />{l.name}</span><button type="button" className="btn ghost danger" aria-label={`${l.name} 삭제`} onClick={() => patchNote(n => ({ ...n, conditionLabels: n.conditionLabels.filter(x => x.id !== l.id), execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => a.labelId !== l.id), panelAnnotations: (n.execution.panelAnnotations || []).filter(a => a.labelId !== l.id) } }))}>×</button></div>
+                      {l.description && <p>{l.description}</p>}
+                    </div>
+                  ))}
+                </div>
+                <div className="divider" style={{ height: 1, background: "var(--line)" }} />
+                <div className="row wrap">
+                  <select className="field" style={{ width: "auto", minWidth: 160 }} value={note.linkedExperimentId || ""} onChange={e => patchNote(n => ({ ...n, linkedExperimentId: e.target.value || null, linkedProtocolId: null, linkedProtocolVersionId: null, linkedStepGroupIds: [] }))}>
+                    <option value="">실험 선택</option>
+                    {project.experiments.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+                  </select>
+                  <select className="field" style={{ width: "auto", minWidth: 160 }} value={note.linkedProtocolId || ""} onChange={e => patchNote(n => ({ ...n, linkedProtocolId: e.target.value || null, linkedProtocolVersionId: e.target.value ? "draft" : null, linkedStepGroupIds: [] }))}>
+                    <option value="">프로토콜 선택</option>
+                    {project.experiments.filter(e => !note.linkedExperimentId || e.id === note.linkedExperimentId).flatMap(e => e.protocols.map(p => <option key={p.id} value={p.id}>{`${e.name} / ${p.name}`}</option>))}
+                  </select>
+                  {note.linkedProtocolId && (() => { const proto = allProtocols.find(p => p.id === note.linkedProtocolId); return proto ? <select className="field" style={{ width: "auto", minWidth: 170 }} value={note.linkedProtocolVersionId || "draft"} onChange={e => patchNote(n => ({ ...n, linkedProtocolVersionId: e.target.value, linkedStepGroupIds: [] }))} aria-label="프로토콜 버전 선택"><option value="draft">현재 편집본</option>{proto.versions.map(v => <option key={v.id} value={v.id}>{v.label} · {fmtDateTime(v.savedAt)}</option>)}</select> : null; })()}
+                  <Button className="primary" onClick={loadProtocol}>선택 버전 불러오기</Button>
+                </div>
+                {note.linkedProtocolId && (() => {
+                  const proto = allProtocols.find(p => p.id === note.linkedProtocolId);
+                  const ver = getSelectedProtocolVersion(proto, note.linkedProtocolVersionId);
+                  if (!ver) return null;
+                  return (
+                    <div>
+                      <div className="row between"><label className="label" style={{ margin: 0 }}>불러올 단계</label><Button className="ghost" onClick={() => patchNote(n => ({ ...n, linkedStepGroupIds: [] }))}>전체 {ver.stepGroups.length}단계</Button></div>
+                      <div className="tiny muted" style={{ margin: "4px 0 7px" }}>{(note.linkedStepGroupIds || []).length ? `선택한 ${note.linkedStepGroupIds.length}개 단계만 불러옵니다.` : "선택하지 않으면 모든 단계를 불러옵니다."}</div>
+                      <div className="row wrap">
+                        {ver.stepGroups.map(sg => (
+                          <label key={sg.id} className="row" style={{ fontSize: 12 }}>
+                            <input type="checkbox" checked={(note.linkedStepGroupIds || []).includes(sg.id)} onChange={e => {
+                              patchNote(n => ({
+                                ...n,
+                                linkedStepGroupIds: e.target.checked
+                                  ? [...(n.linkedStepGroupIds || []), sg.id]
+                                  : (n.linkedStepGroupIds || []).filter(id => id !== sg.id),
+                              }));
+                            }} />
+                            {sg.order}. {sg.title || "단계"}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </Card>
+            {executionGroups.length > 0 && <div className="execution-summary">
+              <span className="execution-stat">진행 {finishedCount}/{executionGroups.length}</span>
+              <div className="execution-progress" aria-label={`실험 진행률 ${executionGroups.length ? Math.round(finishedCount / executionGroups.length * 100) : 0}%`}><span style={{ width: `${executionGroups.length ? finishedCount / executionGroups.length * 100 : 0}%` }} /></div>
+              <span className="variation-count">변경 단계 {changedStepIds.size}</span>
+              <label className="changed-filter"><input type="checkbox" checked={showChangedOnly} onChange={e => setShowChangedOnly(e.target.checked)} /> 변경·기록 있는 단계만</label>
+            </div>}
+            {showChangedOnly && visibleExecutionGroups.length === 0 && <div className="empty">아직 variation이나 실행 기록이 없습니다.</div>}
+            {visibleExecutionGroups.map(sg => (
+              <StepGroupEditor
+                key={sg.id}
+                stepGroup={sg}
+                noteMode
+                stepRun={getStepRun(sg.id)}
+                onPatchRun={patch => patchStepRun(sg.id, patch)}
+                conditionLabels={note.conditionLabels}
+                annotations={note.execution.stepAnnotations.filter(a => a.stepGroupId === sg.id)}
+                panelAnnotations={(note.execution.panelAnnotations || []).filter(a => a.stepGroupId === sg.id)}
+                deviationKeys={deviationKeys}
+                resultKeys={resultKeys}
+                autoDeviationKeys={autoDeviationKeys}
+                deviations={note.execution.deviations}
+                results={note.execution.results}
+                onDeviation={markDeviation}
+                onResult={addResult}
+                onPatchDeviation={patchDeviation}
+                onDeleteDeviation={deleteDeviation}
+                onPatchResult={patchResult}
+                onDeleteResult={deleteResult}
+                onAnnotate={(sgId, labelId) => patchNote(n => ({
+                  ...n, execution: {
+                    ...n.execution,
+                    stepAnnotations: [...n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)), { stepGroupId: sgId, labelId, note: "" }],
+                  },
+                }))}
+                onRemoveAnnotation={(sgId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)) } }))}
+                onAnnotatePanel={(sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: [...(n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)), { stepGroupId: sgId, panelId, labelId }] } }))}
+                onRemovePanelAnnotation={(sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: (n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)) } }))}
+                onChange={val => patchNote(n => ({
+                  ...n, execution: { ...n.execution, stepGroups: val === null ? n.execution.stepGroups.filter(s => s.id !== sg.id).map((s, index) => ({ ...s, order: index + 1 })) : n.execution.stepGroups.map(s => s.id === sg.id ? val : s) },
+                }))}
+              />
+            ))}
+            {removedBasePanels.length > 0 && <Card title="프로토콜에서 삭제된 과정">
+              <div className="card-pad stack">{removedBasePanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}</div>
+            </Card>}
+            <Button className="soft" onClick={() => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: [...n.execution.stepGroups, emptyStepGroup(Math.max(0, ...n.execution.stepGroups.map(s => Number(s.order) || 0)) + 1)] } }))}>+ 단계 추가</Button>
+            <Card title="실험 정리">
+              <div className="card-pad note-conclusion-grid">
+                <div className="note-conclusion result"><label className="label">실험 결과 요약</label><textarea className="field textarea" value={note.resultSummary || ""} onChange={e => patchNote(n => ({ ...n, resultSummary: e.target.value }))} placeholder="핵심 결과, 가설과의 일치 여부, 중요한 수치와 해석을 정리하세요." /></div>
+                <div className="note-conclusion next"><label className="label">Next plan</label><textarea className="field textarea" value={note.nextPlan || ""} onChange={e => patchNote(n => ({ ...n, nextPlan: e.target.value }))} placeholder="다음 실험에서 유지할 조건, 바꿀 조건, 확인할 항목과 우선순위를 적으세요." /></div>
+              </div>
+            </Card>
+            {showLabelModal && (
+              <ConditionLabelModal
+                onClose={() => setShowLabelModal(false)}
+                onSave={({ name, color, description }) => {
+                  patchNote(n => ({ ...n, conditionLabels: [...n.conditionLabels, { id: uid(), name, color, description }] }));
+                  setShowLabelModal(false);
+                }}
+              />
+            )}
+          </div>
+        );
+      }
+
+      function NotesView({ project, setStore, toast }) {
+        const [selNote, setSelNote] = useState(null);
+        useEffect(() => { setSelNote(null); }, [project.id]);
+        useEffect(() => { window.__noteBack = () => setSelNote(null); return () => delete window.__noteBack; }, []);
+        if (selNote) {
+          const note = project.notes.find(n => n.id === selNote);
+          if (note) return <NoteEditor note={note} project={project} setStore={setStore} toast={toast} />;
+        }
+        return (
+          <div className="stack">
+            <div className="hero">
+              <div><div className="eyebrow">NOTES</div><h1 className="page-title">실험 노트</h1><div className="page-sub">프로토콜을 불러와 실행 기록과 결과를 남기세요.</div></div>
+              <Button className="primary" onClick={() => {
+                const n = emptyNote();
+                updateProject(setStore, project.id, p => ({ ...p, notes: [n, ...p.notes] }));
+                setSelNote(n.id);
+              }}>+ 노트 추가</Button>
+            </div>
+            {project.notes.length ? project.notes.map(n => (
+              <Card key={n.id} title={n.title || "제목 없음"} action={<Button className="soft" onClick={() => setSelNote(n.id)}>열기</Button>}>
+                <div className="card-pad small muted">{fmtDate(n.date)} · {n.purpose?.slice(0, 60) || "목적 미입력"}</div>
+              </Card>
+            )) : <div className="empty">실험 노트를 추가해주세요.</div>}
+          </div>
+        );
+      }
+
+      function SnapshotModal({ defaultTitle, onSave, onClose }) {
+        const [title, setTitle] = useState(defaultTitle || "");
+        const [color, setColor] = useState(COLORS[3]);
+        const [clearAfter, setClearAfter] = useState(false);
+        return (
+          <div className="modal-backdrop" onClick={onClose}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-head"><h3>포스트잇으로 저장</h3><Button className="ghost" onClick={onClose}>닫기</Button></div>
+              <div className="modal-body">
+                <div><label className="label">제목</label><input className="field" value={title} onChange={e => setTitle(e.target.value)} /></div>
+                <ColorPalette value={color} onChange={setColor} />
+                <label className="row" style={{ fontSize: 12, color: "var(--muted)" }}><input type="checkbox" checked={clearAfter} onChange={e => setClearAfter(e.target.checked)} /> 저장 후 메모장 비우기</label>
+              </div>
+              <div className="modal-foot"><Button onClick={onClose}>취소</Button><Button className="primary" onClick={() => onSave({ title: title.trim() || "제목 없는 메모", color, clearAfter })}>저장</Button></div>
+            </div>
+          </div>
+        );
+      }
+
+      function ScratchPad({ project, setStore, toast }) {
+        const scratch = project.memoScratch || { content: "", updatedAt: null };
+        const [value, setValue] = useState(scratch.content);
+        const [showSnap, setShowSnap] = useState(false);
+        const timerRef = useRef(null);
+        useEffect(() => { setValue(scratch.content); }, [scratch.content]);
+        useEffect(() => () => clearTimeout(timerRef.current), []);
+        const commit = (text) => updateProject(setStore, project.id, p => ({ ...p, memoScratch: { content: text, updatedAt: Date.now() } }));
+        const onChange = (e) => { setValue(e.target.value); clearTimeout(timerRef.current); timerRef.current = setTimeout(() => commit(e.target.value), 400); };
+        const saveSnapshot = ({ title, color, clearAfter }) => {
+          updateProject(setStore, project.id, p => {
+            const list = p.memoSnapshots || [];
+            return {
+              ...p,
+              memoSnapshots: [...list, { id: uid(), title, body: value, color, savedAt: Date.now(), x: 24 + (list.length % 4) * 228, y: 24 + Math.floor(list.length / 4) * 190 }],
+              memoScratch: clearAfter ? { content: "", updatedAt: Date.now() } : p.memoScratch,
+            };
+          });
+          if (clearAfter) setValue("");
+          setShowSnap(false);
+          toast("포스트잇으로 저장했습니다");
+        };
+        return (
+          <Card title="메모장" action={<Button className="primary" onClick={() => value.trim() ? setShowSnap(true) : toast("저장할 내용이 없습니다")}>📌 스냅샷</Button>}>
+            <div className="card-pad stack">
+              <textarea className="field textarea scratch-textarea" value={value} onChange={onChange} placeholder="자유롭게 메모하세요." />
+              <div className="scratch-meta"><span>{value.length}자</span><span>{scratch.updatedAt ? fmtDateTime(scratch.updatedAt) : ""}</span></div>
+            </div>
+            {showSnap && <SnapshotModal defaultTitle={value.split("\n")[0]?.slice(0, 24)} onClose={() => setShowSnap(false)} onSave={saveSnapshot} />}
+          </Card>
+        );
+      }
+
+      function MemoView({ project, setStore, toast }) {
+        const [mode, setMode] = useState("board");
+        const [query, setQuery] = useState("");
+        const memos = project.memoSnapshots || [];
+        const q = query.trim().toLowerCase();
+        const filtered = memos.filter(m => !q || `${m.title} ${m.body}`.toLowerCase().includes(q));
+        const patchMemo = (id, patch) => updateProject(setStore, project.id, p => ({
+          ...p, memoSnapshots: p.memoSnapshots.map(m => m.id === id ? { ...m, ...patch } : m),
+        }));
+        const startMemoDrag = (event, memo) => {
+          event.preventDefault();
+          const pointerId = event.pointerId;
+          const start = { x: event.clientX, y: event.clientY, ox: memo.x, oy: memo.y };
+          const move = ev => {
+            if (ev.pointerId !== pointerId) return;
+            patchMemo(memo.id, { x: clamp(start.ox + ev.clientX - start.x, 0, MEMO_CANVAS_W - 200), y: clamp(start.oy + ev.clientY - start.y, 0, MEMO_CANVAS_H - 160) });
+          };
+          const up = ev => {
+            if (ev.pointerId !== pointerId) return;
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+            window.removeEventListener("pointercancel", up);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+          window.addEventListener("pointercancel", up);
+        };
+        return (
+          <div className="stack">
+            <div className="hero"><div><div className="eyebrow">MEMO</div><h1 className="page-title">실험 메모</h1></div></div>
+            <ScratchPad project={project} setStore={setStore} toast={toast} />
+            <Card title={`저장된 메모 ${memos.length}개`} action={
+              <div className="view-toggle">
+                <button className={mode === "board" ? "active" : ""} onClick={() => setMode("board")}>보드</button>
+                <button className={mode === "list" ? "active" : ""} onClick={() => setMode("list")}>목록</button>
+              </div>
+            }>
+              <div className="card-pad">
+                <input className="field" value={query} onChange={e => setQuery(e.target.value)} placeholder="검색" style={{ marginBottom: 12 }} />
+                {filtered.length === 0 ? <div className="memo-empty empty">저장된 메모가 없습니다.</div> : mode === "board" ? (
+                  <div className="memo-board"><div className="memo-canvas">
+                    {filtered.map(m => (
+                      <div key={m.id} className="memo-card" style={{ left: m.x, top: m.y, background: m.color }}>
+                        <div className="memo-drag-handle" onPointerDown={e => startMemoDrag(e, m)} aria-label="메모 이동">⋮⋮ 이동</div>
+                        <input className="memo-card-title" value={m.title} onChange={e => patchMemo(m.id, { title: e.target.value })} />
+                        <textarea className="memo-card-body" value={m.body} onChange={e => patchMemo(m.id, { body: e.target.value })} />
+                        <Button className="ghost danger" onClick={() => { if (confirm("삭제?")) updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: p.memoSnapshots.filter(x => x.id !== m.id) })); }}>삭제</Button>
+                      </div>
+                    ))}
+                  </div></div>
+                ) : (
+                  <div className="memo-list">{filtered.map(m => (
+                    <div key={m.id} className="memo-list-item" style={{ borderLeft: `4px solid ${m.color}` }}>
+                      <div className="grow">
+                        <input className="memo-card-title" value={m.title} onChange={e => patchMemo(m.id, { title: e.target.value })} />
+                        <textarea className="field textarea" style={{ minHeight: 60, marginTop: 6 }} value={m.body} onChange={e => patchMemo(m.id, { body: e.target.value })} />
+                      </div>
+                      <Button className="ghost danger" onClick={() => updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: p.memoSnapshots.filter(x => x.id !== m.id) }))}>×</Button>
+                    </div>
+                  ))}</div>
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+      }
+
+      function InventoryView({ project, setStore }) {
+        const addItem = () => updateProject(setStore, project.id, p => ({
+          ...p, inventory: [...p.inventory, { id: uid(), name: "", unit: "", level: 3, notes: "" }],
+        }));
+        const patchItem = (id, patch) => updateProject(setStore, project.id, p => ({
+          ...p, inventory: p.inventory.map(it => it.id === id ? { ...it, ...patch } : it),
+        }));
+        return (
+          <div className="stack">
+            <div className="hero">
+              <div><div className="eyebrow">INVENTORY</div><h1 className="page-title">재고 관리</h1><div className="page-sub">시약·재료 잔량을 정성적으로 표시하세요.</div></div>
+              <Button className="primary" onClick={addItem}>+ 재료 추가</Button>
+            </div>
+            {project.inventory.length ? project.inventory.map(it => (
+              <div key={it.id} className="inventory-row">
+                <input className="field" value={it.name} onChange={e => patchItem(it.id, { name: e.target.value })} placeholder="이름" />
+                <input className="field" value={it.unit} onChange={e => patchItem(it.id, { unit: e.target.value })} placeholder="단위" />
+                <div>
+                  <input type="range" className="inventory-slider" min={0} max={4} step={1} value={it.level} onChange={e => patchItem(it.id, { level: +e.target.value })} />
+                  <div className="inventory-level" style={{ color: INVENTORY_COLORS[it.level] }}>{INVENTORY_LEVELS[it.level]}</div>
+                </div>
+                <input className="field" value={it.notes} onChange={e => patchItem(it.id, { notes: e.target.value })} placeholder="메모" />
+                <Button className="ghost danger" onClick={() => updateProject(setStore, project.id, p => ({ ...p, inventory: p.inventory.filter(x => x.id !== it.id) }))}>×</Button>
+              </div>
+            )) : <div className="empty">재료를 추가해주세요.</div>}
+          </div>
+        );
+      }
+
+      function Sidebar({ store, setStore }) {
+        const project = getActiveProject(store);
+        return (
+          <aside className="sidebar sticky">
+            <Card title="프로젝트">
+              <div className="card-pad project-list">
+                {store.projects.map(p => (
+                  <div key={p.id} className="project-block">
+                    <div className={`project-row ${store.activeProjectId === p.id ? "active" : ""}`} onClick={() => setStore(s => ({ ...s, activeProjectId: p.id }))}>
+                      <input type="color" className="color-select" value={p.color} onClick={e => e.stopPropagation()} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, color: e.target.value }))} />
+                      <input value={p.name} onClick={e => e.stopPropagation()} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, name: e.target.value }))} />
+                    </div>
+                    {store.activeProjectId === p.id && (
+                      <div className="project-meta">
+                        <div><label className="label">실험 목적</label><textarea className="field" value={p.purpose} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, purpose: e.target.value }))} /></div>
+                        <div><label className="label">실험 조건</label><textarea className="field" value={p.conditions} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, conditions: e.target.value }))} /></div>
+                        <div><label className="label">메모</label><textarea className="field" value={p.memo} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, memo: e.target.value }))} /></div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <Button className="soft" onClick={() => {
+                  const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]);
+                  setStore(s => ({ ...s, projects: [...s.projects, p], activeProjectId: p.id }));
+                }}>+ 프로젝트</Button>
+              </div>
+            </Card>
+          </aside>
+        );
+      }
+
+      function MobileProjects({ store, setStore }) {
+        const project = getActiveProject(store);
+        return (
+          <div className="mobile-projects card card-pad stack">
+            <div><label className="label">프로젝트</label><select className="field" value={store.activeProjectId} onChange={e => setStore(s => ({ ...s, activeProjectId: e.target.value }))}>
+                {store.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select></div>
+            <div className="row"><input type="color" className="color-select" value={project.color} onChange={e => updateProject(setStore, project.id, p => ({ ...p, color: e.target.value }))} aria-label="프로젝트 색상" /><input className="field grow" value={project.name} onChange={e => updateProject(setStore, project.id, p => ({ ...p, name: e.target.value }))} aria-label="프로젝트 이름" /></div>
+            <div><label className="label">실험 목적</label><textarea className="field" value={project.purpose} onChange={e => updateProject(setStore, project.id, p => ({ ...p, purpose: e.target.value }))} /></div>
+            <div><label className="label">실험 조건</label><textarea className="field" value={project.conditions} onChange={e => updateProject(setStore, project.id, p => ({ ...p, conditions: e.target.value }))} /></div>
+            <div><label className="label">메모</label><textarea className="field" value={project.memo} onChange={e => updateProject(setStore, project.id, p => ({ ...p, memo: e.target.value }))} /></div>
+            <Button className="soft" onClick={() => {
+              const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]);
+              setStore(s => ({ ...s, projects: [...s.projects, p], activeProjectId: p.id }));
+            }}>+ 프로젝트</Button>
+          </div>
+        );
+      }
+
+      function ProjectLibrary({ store, setStore, onOpen }) {
+        const [dragId, setDragId] = useState(null);
+        const holdRef = useRef({ timer: null, active: false, moved: false, id: null });
+        const reorder = (fromId, toId) => {
+          if (!fromId || !toId || fromId === toId) return;
+          setStore(s => {
+            const from = s.projects.findIndex(p => p.id === fromId), to = s.projects.findIndex(p => p.id === toId);
+            if (from < 0 || to < 0) return s;
+            const projects = [...s.projects], [item] = projects.splice(from, 1); projects.splice(to, 0, item);
+            return { ...s, projects };
+          });
+        };
+        const clearHold = () => { clearTimeout(holdRef.current.timer); holdRef.current.active = false; setDragId(null); };
+        const startTouch = (e, id) => {
+          if (e.pointerType === "mouse") return;
+          holdRef.current = { timer: setTimeout(() => { holdRef.current.active = true; setDragId(id); navigator.vibrate?.(30); }, 520), active: false, moved: false, id };
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+        };
+        const moveTouch = (e) => {
+          if (!holdRef.current.active) return;
+          e.preventDefault(); holdRef.current.moved = true;
+          const target = document.elementFromPoint(e.clientX, e.clientY)?.closest?.("[data-project-id]");
+          if (target?.dataset?.projectId) { reorder(holdRef.current.id, target.dataset.projectId); holdRef.current.id = target.dataset.projectId; }
+        };
+        return (
+          <main className="library">
+            <div className="library-head"><div><div className="eyebrow">PROJECT LIBRARY</div><h1 className="page-title">나의 실험 프로젝트</h1><div className="page-sub">책을 열어 프로젝트를 시작하세요. 드래그하거나 모바일에서 길게 눌러 순서를 바꿀 수 있습니다.</div></div>
+              <Button className="primary" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}>+ 프로젝트 추가</Button>
+            </div>
+            <div className="bookshelf">
+              {store.projects.map((p, index) => <div className="book-wrap" key={p.id} data-project-id={p.id} draggable onDragStart={() => setDragId(p.id)} onDragOver={e => e.preventDefault()} onDrop={() => { reorder(dragId, p.id); setDragId(null); }}>
+                <div className={`book ${dragId === p.id ? "dragging" : ""}`} style={{ background: `linear-gradient(145deg, ${p.color}, color-mix(in srgb, ${p.color} 70%, #17231d))` }} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onOpen(p.id); }} onClick={e => { if (holdRef.current.moved) { holdRef.current.moved = false; return; } if (!e.target.closest("input,button")) onOpen(p.id); }} onPointerDown={e => startTouch(e, p.id)} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold}>
+                  <div><div className="book-kicker">LAB PROJECT · {String(index + 1).padStart(2,"0")}</div><input className="book-name" value={p.name} onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, name: e.target.value }))} aria-label={`${p.name} 프로젝트 이름`} /></div>
+                  <div className="book-stats">실험 {p.experiments.length} · 노트 {p.notes.length} · 재고 {p.inventory.length}</div>
+                  <span className="book-handle" aria-hidden="true">⠿</span>
+                </div>
+              </div>)}
+              <button className="add-book" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}><div><span>＋</span>새 프로젝트 책 만들기</div></button>
+            </div>
+            <div className="shelf-line" />
+          </main>
+        );
+      }
+
+      function ProjectHub({ project, onBack, onSelect }) {
+        const tiles = [
+          ["protocol","▤","프로토콜","재현 가능한 절차와 버전을 설계합니다."],
+          ["notes","✎","실험 노트","실험 실행, 변경 사항과 결과를 기록합니다."],
+          ["memo","◫","실험 메모","빠른 메모와 아이디어를 모아둡니다."],
+          ["inventory","▦","재고 관리","시약과 소모품의 현재 상태를 관리합니다."],
+        ];
+        return <main className="project-hub"><button className="back-library" onClick={onBack}>← 프로젝트 서재</button><div className="hub-hero"><div className="eyebrow">CURRENT PROJECT</div><h1 className="page-title">{project.name}</h1><div className="page-sub">작업할 영역을 선택하세요.</div></div><div className="hub-grid">{tiles.map(([id,icon,title,desc]) => <button key={id} className="hub-tile" onClick={() => onSelect(id)}><span className="hub-icon">{icon}</span><strong>{title}</strong><span>{desc}</span></button>)}</div></main>;
+      }
+
+      function DataTools({ store, setStore, toast }) {
+        const exportData = () => {
+          const blob = new Blob([JSON.stringify(store, null, 2)], { type: "application/json" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = `exp-note-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+        };
+        const importData = (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try { setStore(normalizeStore(JSON.parse(reader.result))); toast("가져오기 완료"); }
+            catch { toast("파일 형식 오류"); }
+          };
+          reader.readAsText(file);
+        };
+        return (
+          <div className="row">
+            <Button className="soft" onClick={exportData}>JSON 백업</Button>
+            <label className="btn soft" style={{ display: "inline-flex", alignItems: "center" }}>가져오기<input type="file" accept=".json" hidden onChange={importData} /></label>
+          </div>
+        );
+      }
+
+      function App() {
+        const [store, setStore] = useState(loadStore);
+        const [screen, setScreen] = useState("library");
+        const [saveState, setSaveState] = useState("저장됨");
+        const [toastMsg, setToastMsg] = useState("");
+        const skipRef = useRef(false);
+        const storeRef = useRef(store);
+        storeRef.current = store;
+        const loadCurrentView = () => {
+          try { const s = sessionStorage.getItem(VIEW_STORAGE_KEY); return VALID_VIEWS.includes(s) ? s : "protocol"; } catch { return "protocol"; }
+        };
+        const [view, setView] = useState(loadCurrentView);
+        const project = getActiveProject(store);
+        const toast = (text) => { setToastMsg(text); clearTimeout(toast.t); toast.t = setTimeout(() => setToastMsg(""), 2800); };
+        toast.t = null;
+
+        useEffect(() => {
+          const receive = (event) => {
+            if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "exp-note-cloud-store" || !event.data.store) return;
+            skipRef.current = true;
+            setStore(normalizeStore(event.data.store));
+            setSaveState("저장됨");
+            window.parent.postMessage({ type: "exp-note-cloud-store-applied", fingerprint: event.data.fingerprint || "" }, window.location.origin);
+          };
+          window.addEventListener("message", receive);
+          if (window.parent !== window) window.parent.postMessage({ type: "exp-note-ready" }, window.location.origin);
+          return () => window.removeEventListener("message", receive);
+        }, []);
+
+        useEffect(() => {
+          if (window.parent === window) return;
+          let blurTimer = null;
+          const isText = (t) => t instanceof HTMLElement && (t.matches("textarea,[contenteditable='true']") || (t.matches("input") && !["button","checkbox","file","hidden","radio","range","submit"].includes((t.getAttribute("type")||"text").toLowerCase())));
+          const postEdit = (editing, includeStore = false) => {
+            let raw = "";
+            if (includeStore) try { raw = JSON.stringify(storeRef.current); } catch { raw = ""; }
+            window.parent.postMessage({ type: "exp-note-editing", editing, raw }, window.location.origin);
+          };
+          const onFocusIn = (e) => { if (!isText(e.target)) return; clearTimeout(blurTimer); postEdit(true); };
+          const onFocusOut = (e) => {
+            if (!isText(e.target)) return;
+            blurTimer = setTimeout(() => { if (!isText(document.activeElement)) postEdit(false, true); }, 320);
+          };
+          document.addEventListener("focusin", onFocusIn);
+          document.addEventListener("focusout", onFocusOut);
+          return () => { clearTimeout(blurTimer); document.removeEventListener("focusin", onFocusIn); document.removeEventListener("focusout", onFocusOut); };
+        }, []);
+
+        useEffect(() => { try { sessionStorage.setItem(VIEW_STORAGE_KEY, view); } catch {} }, [view]);
+
+        useEffect(() => {
+          if (skipRef.current) { skipRef.current = false; return; }
+          let raw = "";
+          try {
+            raw = JSON.stringify(store);
+            if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
+          } catch { setSaveState("저장 실패"); toast("저장 공간 확인"); return; }
+          setSaveState("저장 중");
+          const id = setTimeout(() => {
+            try {
+              localStorage.setItem(STORAGE_KEY, raw);
+              localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+              localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
+              setSaveState("저장됨");
+            } catch { setSaveState("저장 실패"); }
+          }, 250);
+          return () => clearTimeout(id);
+        }, [store]);
+
+        return (
+          <div className="app">
+            <header className="header no-print">
+              <div className="header-inner">
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><div className="brand-mark">🧪</div><div><strong>실험 노트</strong><small>Experimental Note GUI</small></div></button>
+                {screen === "tool" && <nav className="nav" aria-label="주요 보기">
+                  {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
+                    <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
+                  ))}
+                </nav>}
+                <div className="header-actions">
+                  <span className="save-state">{saveState}</span>
+                  <DataTools store={store} setStore={setStore} toast={toast} />
+                </div>
+              </div>
+            </header>
+            {screen === "library" && <ProjectLibrary store={store} setStore={setStore} onOpen={id => { setStore(s => ({ ...s, activeProjectId: id })); setScreen("hub"); }} />}
+            {screen === "hub" && <div className="shell"><ProjectHub project={project} onBack={() => setScreen("library")} onSelect={v => { setView(v); setScreen("tool"); }} /></div>}
+            {screen === "tool" && <div className="shell"><main className="main"><button className="back-library" onClick={() => setScreen("hub")}>← {project.name}</button>
+              {view === "protocol" && <ProtocolView project={project} setStore={setStore} toast={toast} />}
+              {view === "notes" && <NotesView project={project} setStore={setStore} toast={toast} />}
+              {view === "memo" && <MemoView project={project} setStore={setStore} toast={toast} />}
+              {view === "inventory" && <InventoryView project={project} setStore={setStore} />}
+            </main></div>}
+            {toastMsg && <div className="toast no-print">{toastMsg}</div>}
+          </div>
+        );
+      }
+
+      try {
+        if (!window.React || !window.ReactDOM?.createRoot) {
+          throw new Error("React 또는 ReactDOM CDN 로드 실패");
+        }
+        window.__expNoteMounted = true;
+        ReactDOM.createRoot(document.getElementById("app")).render(<App />);
+      } catch (e) {
+        window.__expNoteBootError = e.message || String(e);
+        const el = document.getElementById("app");
+        if (el) {
+          el.innerHTML =
+            `<div style="padding:24px;font-family:sans-serif"><strong style="color:#e85d5d">앱 시작 실패</strong>` +
+            `<p style="margin:8px 0 0;font-size:13px">${window.__expNoteBootError}</p></div>`;
+        }
+      }
+    </script>
+  </body>
+</html>

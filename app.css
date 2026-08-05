@@ -1,0 +1,251 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background: #f7f8fa;
+}
+
+body {
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.planner-shell {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.planner-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #f7f8fa;
+}
+
+.cloud-sync-launcher {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 10px 14px;
+  overflow: hidden;
+  color: #394452;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #dfe4e8;
+  border-radius: 999px;
+  box-shadow: 0 9px 28px rgb(37 48 60 / 16%);
+}
+
+.cloud-sync-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: #a7afb8;
+  border-radius: 50%;
+}
+
+.cloud-sync-dot.on {
+  background: #4caf7d;
+  box-shadow: 0 0 0 3px rgb(76 175 125 / 14%);
+}
+
+.cloud-auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(34 42 51 / 48%);
+}
+
+.cloud-auth-backdrop[hidden],
+[hidden] {
+  display: none !important;
+}
+
+.cloud-auth-card {
+  width: min(430px, 100%);
+  overflow: hidden;
+  color: #2f3944;
+  background: #fff;
+  border: 1px solid #e1e5e9;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgb(19 29 40 / 28%);
+}
+
+.cloud-auth-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 18px;
+  background: linear-gradient(135deg, #f4f6ff, #f8fbf8);
+  border-bottom: 1px solid #e7eaee;
+}
+
+.cloud-auth-head h1 {
+  margin: 0 0 5px;
+  font-size: 20px;
+}
+
+.cloud-auth-head p {
+  margin: 0;
+  color: #697480;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cloud-auth-close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  color: #65707c;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #dfe4e8;
+  border-radius: 50%;
+}
+
+.cloud-auth-body {
+  padding: 22px;
+}
+
+.cloud-auth-label {
+  display: block;
+  margin: 0 0 7px;
+  color: #4d5864;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.cloud-auth-field {
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 12px 13px;
+  color: #2f3944;
+  background: #fff;
+  border: 1px solid #dce2e7;
+  border-radius: 11px;
+  outline: none;
+}
+
+.cloud-auth-field:focus {
+  border-color: #7188ee;
+  box-shadow: 0 0 0 3px rgb(91 124 250 / 12%);
+}
+
+.cloud-auth-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cloud-auth-button {
+  width: 100%;
+  padding: 11px 14px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  background: #5b7cfa;
+  border: 1px solid #5b7cfa;
+  border-radius: 11px;
+}
+
+.cloud-auth-button.secondary {
+  color: #4a5b9f;
+  background: #f5f7ff;
+  border-color: #dce2ff;
+}
+
+.cloud-auth-button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.cloud-auth-error {
+  min-height: 18px;
+  margin: -4px 0 12px;
+  color: #c34d54;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cloud-account {
+  margin-bottom: 12px;
+  padding: 13px;
+  color: #67727e;
+  font-size: 12px;
+  background: #f8fafb;
+  border: 1px solid #e5e9ed;
+  border-radius: 11px;
+}
+
+.cloud-account strong {
+  display: block;
+  margin-top: 4px;
+  color: #34404c;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.cloud-status {
+  margin: 12px 0;
+  padding: 10px 12px;
+  color: #66717c;
+  font-size: 12px;
+  background: #fafbf9;
+  border: 1px solid #e5e9ed;
+  border-radius: 11px;
+}
+
+noscript {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #2c3340;
+  text-align: center;
+  background: #f7f8fa;
+}
+
+@media (max-width: 760px) {
+  .cloud-sync-launcher {
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 9px 12px;
+  }
+
+  .cloud-auth-actions {
+    flex-direction: column;
+  }
+}
