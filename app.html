@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#18553f" />
-    <title>실험 노트 GUI · ver2.2</title>
+    <title>실험 노트 GUI · ver3</title>
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
@@ -24,14 +24,15 @@
       .proto-panel{width:100%;min-width:0;max-width:none;border:1px solid var(--panel-border);border-radius:14px;background:#fff;overflow:hidden}.proto-panel.reagent-panel{min-width:0;max-width:none}.proto-panel-head{padding:10px 12px;background:#fafbfc;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.proto-panel-head h4{margin:0;font-size:13px}.proto-panel-body{padding:10px 12px}
       .reagent-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}.reagent-table th,.reagent-table td{border:1px solid var(--line);padding:6px 8px;text-align:left}.reagent-table th{background:#f5f7fa;font-weight:800}.reagent-table .material-col{width:auto}.reagent-table .amount-col{width:64px}.reagent-table .delete-col{width:34px;padding-left:3px;padding-right:3px}.reagent-table .total-row{background:#faf6f0;font-weight:800}.reagent-table .sample-row{color:var(--danger);font-weight:700}.reagent-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}.reagent-table input.field:focus{background:#fff;border:1px solid #cad4cd;border-radius:6px}.reagent-unit-input{width:100%;min-width:0;border:0;background:transparent;font-size:11px;font-weight:800;text-align:center;padding:2px}.reagent-unit-input:focus{background:#fff;outline:2px solid rgba(31,107,79,.18)}
       .cond-table{width:100%;border-collapse:collapse;font-size:12px}.cond-table th,.cond-table td{border:1px solid var(--line);padding:6px 8px}.cond-table th{background:#f5f7fa;font-weight:800}.cond-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}
-      .method-textarea{min-height:72px;line-height:1.45;padding:8px 10px;font-size:12px;resize:vertical}.warning-chip{display:inline-block;margin-top:6px;padding:4px 8px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:11px;font-weight:700}
+      .method-textarea{min-height:72px;line-height:1.45;padding:8px 10px;font-size:12px;resize:vertical}.warning-chip{display:inline-block;margin-top:6px;padding:4px 8px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:11px;font-weight:700}.method-block{width:100%;border:1px solid #d8e4dd;border-left:4px solid var(--brand);border-radius:11px;background:#f7faf8;padding:10px 12px;text-align:left;white-space:pre-wrap;line-height:1.55;font-size:13px;font-weight:700}.method-block:hover{background:var(--brand2);border-color:#9fc6b4}.method-block .warning-chip{display:block;width:max-content;max-width:100%}.method-editor-actions{display:flex;justify-content:flex-end;margin-top:8px}
+      .summary-block-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.summary-view-block{border:1px solid #dce6e0;border-radius:13px;background:#f8fbf9;padding:12px 14px;min-height:86px}.summary-view-block strong{display:block;color:var(--brand);font-size:10px;letter-spacing:.08em;margin-bottom:5px}.summary-view-block p{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.55}.summary-view-block.empty-block p{color:var(--muted);font-style:italic}.protocol-viewing .step-group{border-color:#ceddd4;box-shadow:0 5px 18px rgba(31,42,38,.055)}.protocol-viewing .step-head{background:#eef5f1;padding:14px 16px}.step-static-title{flex:1;min-width:120px;font-size:15px;font-weight:900}.step-static-timing{padding:4px 9px;border-radius:99px;background:#fff;color:var(--muted);font-size:11px;font-weight:800}.readonly-panel{background:#fcfdfc}.readonly-panel .proto-panel-head{background:#f3f7f5}.readonly-panel input.field{border:0;background:transparent;padding:2px 0;min-height:auto}.readonly-panel .delete-col{display:none}.readonly-panel .panel-note-static{cursor:default}.readonly-panel .panel-note-static:hover{background:#f6f9f7;border-color:#dfe7e2}
       .diff-changed{color:var(--danger);font-weight:700}.diff-del,.diff-removed{color:var(--danger);text-decoration:line-through}.diff-removed-row{background:#fff2f2;color:var(--danger);text-decoration:line-through}.diff-removed-block{border:1px solid #f3b5b5;border-radius:14px;background:#fff7f7;padding:12px;color:var(--danger)}.diff-added-block{border-color:#f3b5b5}.diff-added-block input,.diff-added-block textarea{color:var(--danger);font-weight:700}
       .deviation-highlight{background:var(--deviation-bg);outline:2px solid #ffcc80}.result-highlight{background:var(--result-bg);outline:2px solid #a5d6a7}.deviation-highlight.result-highlight{background:linear-gradient(135deg,var(--deviation-bg) 0 50%,var(--result-bg) 50% 100%);outline-color:#d6b36a}
       .condition-label-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08)}.condition-label-chip .dot{width:8px;height:8px;border-radius:50%}.condition-label-chip .btn{min-height:18px;padding:0 2px}.condition-label-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.condition-label-item{border:1px solid var(--line);border-left:4px solid var(--label-color);border-radius:12px;padding:10px 12px;background:#fff}.condition-label-item p{margin:5px 0 0;color:var(--muted);font-size:12px;white-space:pre-wrap}
       .note-records{display:flex;flex-direction:column;gap:7px;margin-top:8px}.note-record{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}.note-record.deviation{border-color:#ffcc80}.note-record.result{border-color:#a5d6a7}.note-record textarea{min-height:58px}.auto-deviation{margin-top:8px;padding:7px 9px;border-radius:9px;background:#fff3e0;color:#9a5a00;font-size:11px;font-weight:800}.panel-label-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;padding:6px 7px;border:1px solid #dce7e1;border-radius:9px;background:#f7faf8}.panel-label-bar select{min-height:30px;width:auto;padding:3px 7px;font-size:11px}.execution-detail{margin:5px 0 0 0;border:1px solid #d2a94d;border-left:5px solid #d8921b;border-radius:9px;background:#fff8df;color:#4b3815;padding:8px 10px;text-align:left;font-size:13px;line-height:1.5}.execution-detail strong{display:block;color:#9b5b00;font-size:10px;letter-spacing:.06em;margin-bottom:2px}.execution-detail-editor{margin-top:5px;padding:8px;border:1px solid #d2a94d;border-radius:9px;background:#fffdf5}.execution-detail-editor textarea{min-height:66px;margin-bottom:5px}.execution-summary{position:sticky;top:76px;z-index:12;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid #cfe0d7;border-radius:14px;background:rgba(250,253,251,.96);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(31,42,38,.08)}.execution-progress{flex:1;min-width:180px;height:8px;border-radius:99px;background:#e3ebe6;overflow:hidden}.execution-progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#61a681);border-radius:inherit;transition:width .2s}.execution-stat{font-size:12px;font-weight:800;white-space:nowrap}.changed-filter{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}.run-card{padding:10px 14px;background:#f8fbf9;border-bottom:1px solid var(--line)}.run-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.run-status{display:flex;gap:4px;flex-wrap:wrap}.run-status button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800}.run-status button.active{background:var(--brand);border-color:var(--brand);color:#fff}.run-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.run-field{border:1px solid var(--line);background:#fff;border-radius:11px;padding:8px}.run-field label{font-size:11px;font-weight:900;display:block;margin-bottom:4px}.run-field textarea{min-height:66px;border:0;padding:0;resize:vertical;line-height:1.45}.run-field.planned{border-color:#efcf8b;background:#fffdf7}.run-field.actual{border-color:#9fc6b4}.run-field.observation{border-color:#aed6b0;background:#fbfefb}.status-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;background:#edf2ef;color:var(--muted);font-size:10px;font-weight:900}.status-chip.running{background:#fff3d8;color:#946100}.status-chip.done{background:#e3f3e6;color:#2f7441}.status-chip.skipped{background:#f0f0f0;color:#777}.variation-count{font-size:11px;font-weight:800;color:#9a5a00}
       .execution-detail.result{border-color:#76b67e;border-left-color:#3b8b4b;background:#edf8ef;color:#234b2b}.execution-detail.result strong{color:#2f7441}.execution-detail-editor.result{border-color:#76b67e;background:#f7fcf8}.inline-record-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}.record-block-list{display:flex;flex-direction:column;gap:5px;margin-top:5px}
       .note-hypothesis{border:1px solid #c9b7e8;border-left:5px solid #7656ad;border-radius:12px;background:#faf7ff;padding:10px}.note-hypothesis .label{color:#65479a}.note-hypothesis textarea{min-height:82px;background:transparent}.note-conclusion-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.note-conclusion{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}.note-conclusion.result{border-color:#a9d1ae;background:#f7fcf8}.note-conclusion.next{border-color:#9fbce2;background:#f6f9fe}.note-conclusion .label{font-size:13px}.note-conclusion textarea{min-height:150px;background:transparent;line-height:1.6}
-      .inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}
+      .inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.inventory-block{border:1px solid #dce6e0;border-radius:16px;background:#fff;padding:15px;text-align:left;box-shadow:0 3px 12px rgba(31,42,38,.04)}.inventory-block:hover{border-color:#9fc6b4;transform:translateY(-1px)}.inventory-block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.inventory-block h3{margin:0;font-size:16px}.inventory-unit{color:var(--muted);font-size:12px}.inventory-status{display:inline-flex;margin-top:12px;padding:5px 9px;border-radius:99px;background:#f1f5f2;font-size:11px;font-weight:900}.inventory-block p{margin:10px 0 0;color:#566159;white-space:pre-wrap;font-size:13px}.inventory-edit-hint{margin-top:10px;color:var(--muted);font-size:10px}
       .inventory-level{font-size:11px;font-weight:800;text-align:center;margin-top:4px}
       .step-group{border-color:#c9d8d0;border-radius:18px;margin-bottom:0;box-shadow:0 7px 22px rgba(31,70,52,.07)}.step-head{padding:13px 14px;background:linear-gradient(135deg,#eef5f1,#f8fbf9);border-bottom-color:#cfdcd5;border-left:4px solid var(--brand)}.step-num{width:30px;height:30px;background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(31,107,79,.2)}.panel-line-editor{padding:12px 14px}.between-step-editor{margin:-1px 18px 0;padding:9px 12px;border-left:1px dashed #aebfb5;border-right:1px dashed #aebfb5;background:#f7faf8}.between-step-editor .protocol-text-lines{margin:0 0 6px}.between-step-editor>.btn{min-height:30px;padding:4px 9px;font-size:12px}.step-callout{margin:0 14px 12px;padding:9px 11px;border-radius:10px;border-left:4px solid #d8921b;background:#fff8df;color:#6f4700;font-size:12px;font-weight:750;white-space:pre-wrap}.step-callout strong{display:block;margin-bottom:2px;font-size:10px;letter-spacing:.08em}.step-callout.critical{border-color:#d64444;background:#fff1f1;color:#b42323}.step-callout.critical strong{color:#c52d2d}.step-callout.pause{border-color:#517fbd;background:#f1f6fd;color:#315f9b}.step-callout.troubleshooting{border-color:#7656ad;background:#f7f3fc;color:#65479a}
       .proto-panel-head{padding:8px 9px 8px 12px}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{width:100%;margin:0;border:1px solid #dfe7e2;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;font-weight:750;text-align:left;white-space:pre-wrap}.panel-note-static:hover{border-color:#9fc6b4;background:var(--brand2)}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
@@ -47,7 +48,7 @@
       .print-callout.critical{border-left-color:#d64444;background:#fff1f1;color:#b42323}
       @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
       @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
-      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid,.text-editor-fields{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
+      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.summary-block-grid{grid-template-columns:1fr}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid,.text-editor-fields{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
       @media(max-width:460px){.bookshelf{grid-template-columns:1fr}.book,.add-book{min-height:205px}}
     </style>
   </head>
@@ -108,7 +109,7 @@
       const summarizePanel = (panel) => {
         if (!panel) return "";
         if (panel.type === "reagent") return (panel.rows || []).filter(r => r.material || r.volume).map(r => `${r.material || "시약"} ${r.volume || ""}${panel.unit || ""}`.trim()).join(", ");
-        if (panel.type === "condition") return (panel.rows || []).map(r => [r.temp && `${r.temp}°C`, r.duration, r.rpm && `${r.rpm} rpm`, r.note].filter(Boolean).join(" · ")).filter(Boolean).join(" / ");
+        if (panel.type === "condition") return (panel.rows || []).map(r => [r.temp && `${r.temp}°C`, r.duration, r.note || r.rpm].filter(Boolean).join(" · ")).filter(Boolean).join(" / ");
         return panel.content || "";
       };
       const protocolShareRequests = new Map();
@@ -136,7 +137,7 @@
       });
 
       const emptyReagentRow = () => ({ id: uid(), material: "", volume: "", highlight: false });
-      const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", rpm: "", note: "" });
+      const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", note: "" });
       const defaultPanelTitle = (type) => type === "reagent" ? "시약" : type === "condition" ? "반응 조건" : "실험 방법";
       const emptyPanel = (type) => {
         if (type === "reagent") return { id: uid(), type, title: defaultPanelTitle(type), unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()], notes: [] };
@@ -181,7 +182,7 @@
         if (!p || typeof p !== "object") return emptyPanel("method");
         const notes = (p.notes || []).map(n => typeof n === "string" ? { id: uid(), content: n } : { id: n.id || uid(), content: n.content || "" });
         if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", title: p.title || defaultPanelTitle("reagent"), unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })), notes };
-        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, id: r.id || uid() })), notes };
+        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, note: r.note || r.rpm || "", id: r.id || uid() })), notes };
         return { id: p.id || uid(), type: "method", title: p.title || defaultPanelTitle("method"), content: p.content || "", warnings: p.warnings || "" };
       };
       const normalizeTextLine = (t, position) => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "", calloutType: "", ...(position ? { position } : {}) } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "", calloutType: t.calloutType || "", ...(position ? { position: t.position === "after" ? "after" : position } : {}) };
@@ -346,7 +347,7 @@
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
         const missingAmounts = rows.filter(r => String(r.material || "").trim() && !isSampleMaterial(r.material) && !String(r.volume || "").trim());
         return (
-          <div className="proto-panel reagent-panel">
+          <div className={`proto-panel reagent-panel ${readOnly ? "readonly-panel" : ""}`}>
             <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="reagent-table">
@@ -359,12 +360,12 @@
                     return (
                       <tr key={r.id} className={`${sampleRow ? "sample-row" : ""} ${needsAmount ? "needs-amount" : ""}`.trim()}>
                         <td>
-                          {readOnly && diffBase ? diffText(baseRow?.material, r.material) : (
+                          {readOnly ? (diffBase ? diffText(baseRow?.material, r.material) : (r.material || "—")) : (
                             <input className="field" value={r.material} readOnly={readOnly} onChange={e => patchRow(r.id, { material: e.target.value })} placeholder="시약명" />
                           )}
                         </td>
                         <td className="amount-col">
-                          {readOnly && diffBase ? diffText(baseRow?.volume, r.volume) : (
+                          {readOnly ? (diffBase ? diffText(baseRow?.volume, r.volume) : (r.volume || "—")) : (
                             <input className="field" value={r.volume} readOnly={readOnly} onChange={e => patchRow(r.id, { volume: e.target.value })} placeholder={sampleRow ? "선택" : "필수"} aria-label={`${r.material || "시약"} 투입량`} />
                           )}
                         </td>
@@ -391,25 +392,25 @@
         const rows = panel.rows || [];
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
         return (
-          <div className="proto-panel">
+          <div className={`proto-panel ${readOnly ? "readonly-panel" : ""}`}>
             <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="cond-table">
-                <thead><tr><th>온도(°C)</th><th>시간</th><th>rpm</th><th></th></tr></thead>
+                <thead><tr><th>온도(°C)</th><th>시간</th><th>비고</th><th></th></tr></thead>
                 <tbody>
                   {rows.map(r => {
                     const baseRow = diffBase?.rows?.find(br => br.id === r.id);
                     return (
                       <tr key={r.id}>
-                        <td>{readOnly && diffBase ? diffText(baseRow?.temp, r.temp) : <input className="field" value={r.temp} readOnly={readOnly} onChange={e => patchRow(r.id, { temp: e.target.value })} />}</td>
-                        <td>{readOnly && diffBase ? diffText(baseRow?.duration, r.duration) : <input className="field" value={r.duration} readOnly={readOnly} onChange={e => patchRow(r.id, { duration: e.target.value })} />}</td>
-                        <td>{readOnly && diffBase ? diffText(baseRow?.rpm, r.rpm) : <input className="field" value={r.rpm} readOnly={readOnly} onChange={e => patchRow(r.id, { rpm: e.target.value })} />}</td>
+                        <td>{readOnly ? (diffBase ? diffText(baseRow?.temp, r.temp) : (r.temp || "—")) : <input className="field" value={r.temp} onChange={e => patchRow(r.id, { temp: e.target.value })} />}</td>
+                        <td>{readOnly ? (diffBase ? diffText(baseRow?.duration, r.duration) : (r.duration || "—")) : <input className="field" value={r.duration} onChange={e => patchRow(r.id, { duration: e.target.value })} />}</td>
+                        <td>{readOnly ? (diffBase ? diffText(baseRow?.note || baseRow?.rpm, r.note || r.rpm) : (r.note || r.rpm || "—")) : <input className="field" value={r.note || ""} onChange={e => patchRow(r.id, { note: e.target.value })} placeholder="비고" aria-label="반응 조건 비고" />}</td>
                         <td>{!readOnly && <button className="btn ghost danger" type="button" onClick={() => onChange({ ...panel, rows: rows.filter(x => x.id !== r.id) })}>×</button>}</td>
                       </tr>
                     );
                   })}
                   {readOnly && diffBase?.rows?.filter(br => !rows.some(r => r.id === br.id)).map(br => (
-                    <tr key={`removed-${br.id}`} className="diff-removed-row"><td>{br.temp}</td><td>{br.duration}</td><td>{br.rpm}</td><td>삭제</td></tr>
+                    <tr key={`removed-${br.id}`} className="diff-removed-row"><td>{br.temp}</td><td>{br.duration}</td><td>{br.note || br.rpm}</td><td>삭제</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -421,26 +422,34 @@
       }
 
       function MethodPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
+        const [editing, setEditing] = useState(!(panel.content || panel.warnings));
+        const hasContent = Boolean((panel.content || "").trim() || (panel.warnings || "").trim());
+        const showBlock = readOnly || (!editing && hasContent);
         return (
-          <div className="proto-panel">
+          <div className={`proto-panel ${readOnly ? "readonly-panel" : ""}`}>
             <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               {readOnly && diffBase ? (
                 <div className="small" style={{ lineHeight: 1.45 }}>{diffText(diffBase.content, panel.content)}</div>
+              ) : showBlock ? (readOnly ? <div className="method-block">
+                  <span>{panel.content || "입력된 실험 방법이 없습니다."}</span>
+                  {panel.warnings && <span className="warning-chip">CAUTION · {panel.warnings}</span>}
+                </div> :
+                <button type="button" className="method-block" onClick={() => setEditing(true)}>
+                  <span>{panel.content || "입력된 실험 방법이 없습니다."}</span>
+                  {panel.warnings && <span className="warning-chip">CAUTION · {panel.warnings}</span>}
+                </button>
               ) : (
-                <textarea className="field method-textarea" value={panel.content} readOnly={readOnly} onChange={e => onChange({ ...panel, content: e.target.value })} placeholder="세부 지시 사항" />
-              )}
-              {(panel.warnings || !readOnly) && (
                 <>
-                  {!readOnly && <label className="label" style={{ marginTop: 8 }}>주의사항</label>}
-                  {readOnly ? (
-                    panel.warnings && <span className="warning-chip">{diffBase ? diffText(diffBase.warnings, panel.warnings) : panel.warnings}</span>
-                  ) : (
-                    <>
-                      <input className="field" value={panel.warnings} onChange={e => onChange({ ...panel, warnings: e.target.value })} placeholder="예: ice block 필수" />
-                      {panel.warnings && <span className="warning-chip">{panel.warnings}</span>}
-                    </>
-                  )}
+                  <textarea className="field method-textarea" autoFocus value={panel.content} onChange={e => onChange({ ...panel, content: e.target.value })} placeholder="세부 지시 사항" aria-label="실험 방법 내용" />
+                  <label className="label" style={{ marginTop: 8 }}>주의사항</label>
+                  <input className="field" value={panel.warnings} onChange={e => onChange({ ...panel, warnings: e.target.value })} placeholder="예: ice block 필수" aria-label="실험 방법 주의사항" />
+                  <div className="method-editor-actions"><Button className="soft" onClick={() => { if (hasContent) setEditing(false); }}>입력 완료</Button></div>
+                </>
+              )}
+              {readOnly && diffBase && (panel.warnings || diffBase?.warnings) && (
+                <>
+                  <span className="warning-chip">{diffText(diffBase.warnings, panel.warnings)}</span>
                 </>
               )}
             </div>
@@ -534,10 +543,12 @@
               <span className={`step-num ${comparing && baseSg?.order !== stepGroup.order ? "diff-changed" : ""}`}>{stepGroup.order}</span>
               {comparing ? (
                 <div className="field grow" style={{ minWidth: 120 }}>{diffText(baseSg?.title, stepGroup.title)}</div>
+              ) : readOnly ? (
+                <div className="step-static-title">{stepGroup.title || `단계 ${stepGroup.order}`}</div>
               ) : (
                 <input className="field grow" value={stepGroup.title || (noteMode ? `단계 ${stepGroup.order}` : "")} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, title: e.target.value })} placeholder="단계 제목" style={{ minWidth: 120 }} />
               )}
-              {!comparing && <input className="field step-timing" value={stepGroup.timing || ""} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, timing: e.target.value })} placeholder="소요 시간" aria-label="단계 소요 시간" />}
+              {!comparing && (readOnly ? (stepGroup.timing && <span className="step-static-timing">{stepGroup.timing}</span>) : <input className="field step-timing" value={stepGroup.timing || ""} onChange={e => onChange({ ...stepGroup, timing: e.target.value })} placeholder="소요 시간" aria-label="단계 소요 시간" />)}
               {noteMode && <span className={`status-chip ${run.status}`}>{run.status === "running" ? "진행 중" : run.status === "done" ? "완료" : run.status === "skipped" ? "건너뜀" : "대기"}</span>}
               {annotations?.length > 0 && annotations.map(a => {
                 const label = conditionLabels?.find(l => l.id === a.labelId);
@@ -642,7 +653,7 @@
             {removedPanels.length > 0 && <div className="card-pad stack">
               {removedPanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}
             </div>}
-            {stepGroup.text && <div className="protocol-text-lines" style={{ padding: "0 14px 8px" }}><div className="protocol-text-line"><input className="field" value={stepGroup.text} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, text: e.target.value })} aria-label="기존 단계 설명" /><span /></div></div>}
+            {stepGroup.text && <div className="protocol-text-lines" style={{ padding: "0 14px 8px" }}>{readOnly ? <div className="protocol-text-block">{stepGroup.text}</div> : <div className="protocol-text-line"><input className="field" value={stepGroup.text} onChange={e => onChange({ ...stepGroup, text: e.target.value })} aria-label="기존 단계 설명" /><span /></div>}</div>}
           </div>
         );
       }
@@ -756,7 +767,7 @@
         }
         if (panel.type === "condition") {
           const rows = panel.rows || [];
-          return <div className="print-static-panel"><div className="print-static-head">{panel.title || "반응 조건"}</div><div className="print-static-body"><table className="print-static-table"><thead><tr><th>온도</th><th>시간</th><th>rpm</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.temp ? `${r.temp}°C` : "—"}</td><td>{r.duration || "—"}</td><td>{r.rpm || "—"}</td></tr>)}</tbody></table>{(panel.notes || []).map(n => n.content && <div key={n.id} className="print-step-text">{n.content}</div>)}</div></div>;
+          return <div className="print-static-panel"><div className="print-static-head">{panel.title || "반응 조건"}</div><div className="print-static-body"><table className="print-static-table"><thead><tr><th>온도</th><th>시간</th><th>비고</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.temp ? `${r.temp}°C` : "—"}</td><td>{r.duration || "—"}</td><td>{r.note || r.rpm || "—"}</td></tr>)}</tbody></table>{(panel.notes || []).map(n => n.content && <div key={n.id} className="print-step-text">{n.content}</div>)}</div></div>;
         }
         return <div className="print-static-panel"><div className="print-static-head">{panel.title || "실험 방법"}</div><div className="print-static-body print-method">{panel.content || "입력된 방법 없음"}{panel.warnings && <div className="print-callout">CAUTION · {panel.warnings}</div>}</div></div>;
       }
@@ -826,12 +837,12 @@
 
       function ProtocolEditor({ project, experiment, protocol, setStore, toast }) {
         const [compareVersionId, setCompareVersionId] = useState(null);
-        const [viewMode, setViewMode] = useState("edit");
+        const [viewMode, setViewMode] = useState("view");
         const [showShareModal, setShowShareModal] = useState(false);
         const savedVersion = protocol.versions.find(v => v.id === protocol.activeVersionId) || protocol.versions[0];
         const version = protocol.draftVersion?.id === savedVersion.id ? protocol.draftVersion : savedVersion;
         const compareVersion = compareVersionId ? protocol.versions.find(v => v.id === compareVersionId) : null;
-        const readOnly = viewMode === "compare";
+        const readOnly = viewMode !== "edit";
         const hasDraftChanges = JSON.stringify(version) !== JSON.stringify(savedVersion);
 
         const patchProtocol = (fn) => updateProject(setStore, project.id, p => ({
@@ -848,6 +859,8 @@
           const snap = clone(version);
           snap.id = uid(); snap.label = label; snap.savedAt = Date.now();
           patchProtocol(pr => ({ ...pr, activeVersionId: snap.id, versions: [...pr.versions, snap], draftVersion: clone(snap) }));
+          setViewMode("view");
+          setCompareVersionId(null);
           toast("새 버전을 저장했습니다");
         };
 
@@ -867,7 +880,7 @@
 
         return (
           <>
-          <div className="stack screen-only">
+          <div className={`stack screen-only ${viewMode === "view" ? "protocol-viewing" : ""}`}>
             <div className="breadcrumb">
               <button type="button" onClick={() => window.__navBack?.()}>← 실험 목록</button>
               <span>/</span><span>{experiment.name}</span><span>/</span><strong>{protocol.name}</strong>
@@ -875,7 +888,7 @@
             <div className="hero">
               <div>
                 <div className="eyebrow">PROTOCOL</div>
-                <input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={protocol.name} onChange={e => patchProtocol(pr => ({ ...pr, name: e.target.value }))} />
+                {viewMode === "edit" ? <input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={protocol.name} onChange={e => patchProtocol(pr => ({ ...pr, name: e.target.value }))} aria-label="프로토콜 이름" /> : <h1 className="page-title">{protocol.name || "제목 없는 프로토콜"}</h1>}
               </div>
               <div className="row">
                 <select className="field" style={{ width: "auto" }} value={protocol.activeVersionId} onChange={e => {
@@ -886,6 +899,7 @@
                 </select>
                 {hasDraftChanges && <span className="warning-chip">저장되지 않은 수정</span>}
                 <div className="view-toggle">
+                  <button className={viewMode === "view" ? "active" : ""} onClick={() => { setViewMode("view"); setCompareVersionId(null); }}>보기</button>
                   <button className={viewMode === "edit" ? "active" : ""} onClick={() => { setViewMode("edit"); setCompareVersionId(null); }}>편집</button>
                   <button className={viewMode === "compare" ? "active" : ""} onClick={async () => {
                     setViewMode("compare");
@@ -902,19 +916,21 @@
                     {protocol.versions.filter(v => v.id !== version.id).map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
                   </select>
                 )}
-                <Button className="soft" onClick={saveNewVersion}>수정 버전 저장</Button>
+                {viewMode === "edit" && <Button className="soft" onClick={saveNewVersion}>수정 버전 저장</Button>}
                 <Button className="soft" onClick={() => setShowShareModal(true)}>공유</Button>
                 <Button className="soft" onClick={() => window.print()}>인쇄</Button>
                 <Button className="primary" onClick={exportPdf}>PDF 저장</Button>
               </div>
             </div>
             <Card title="프로토콜 개요" className="nature-card">
-              <div className="card-pad nature-fields">
+              {viewMode === "edit" ? <div className="card-pad nature-fields">
                 <div><label className="label">개요</label><textarea className="field textarea" value={protocol.summary || ""} onChange={e => patchProtocol(pr => ({ ...pr, summary: e.target.value }))} placeholder="무엇을 위한 프로토콜인지 요약하세요." /></div>
                 <div><label className="label">적용 범위 · 전제 조건</label><textarea className="field textarea" value={protocol.scope || ""} onChange={e => patchProtocol(pr => ({ ...pr, scope: e.target.value }))} placeholder="샘플, 장비, 숙련도, 제한 조건" /></div>
                 <div><label className="label">예상 결과</label><textarea className="field textarea" value={protocol.anticipatedResults || ""} onChange={e => patchProtocol(pr => ({ ...pr, anticipatedResults: e.target.value }))} placeholder="정상 결과의 기준과 해석" /></div>
                 <div><label className="label">트러블슈팅</label><textarea className="field textarea" value={protocol.troubleshooting || ""} onChange={e => patchProtocol(pr => ({ ...pr, troubleshooting: e.target.value }))} placeholder="문제 · 원인 · 해결 방법" /></div>
-              </div>
+              </div> : <div className="card-pad summary-block-grid">
+                {[["OVERVIEW", protocol.summary, "입력된 개요가 없습니다."],["SCOPE · PREREQUISITES", protocol.scope, "입력된 적용 범위가 없습니다."],["ANTICIPATED RESULTS", protocol.anticipatedResults, "입력된 예상 결과가 없습니다."],["TROUBLESHOOTING", protocol.troubleshooting, "입력된 트러블슈팅이 없습니다."]].map(([label, value, emptyText]) => <div key={label} className={`summary-view-block ${value ? "" : "empty-block"}`}><strong>{label}</strong><p>{value || emptyText}</p></div>)}
+              </div>}
             </Card>
             <BeforeStartingEditor protocol={protocol} patchProtocol={patchProtocol} readOnly={readOnly} />
             <div className="protocol-workspace">
@@ -1420,9 +1436,13 @@
       }
 
       function InventoryView({ project, setStore }) {
-        const addItem = () => updateProject(setStore, project.id, p => ({
-          ...p, inventory: [...p.inventory, { id: uid(), name: "", unit: "", level: 3, notes: "" }],
-        }));
+        const [editing, setEditing] = useState(false);
+        const addItem = () => {
+          setEditing(true);
+          updateProject(setStore, project.id, p => ({
+            ...p, inventory: [...p.inventory, { id: uid(), name: "", unit: "", level: 3, notes: "" }],
+          }));
+        };
         const patchItem = (id, patch) => updateProject(setStore, project.id, p => ({
           ...p, inventory: p.inventory.map(it => it.id === id ? { ...it, ...patch } : it),
         }));
@@ -1430,9 +1450,12 @@
           <div className="stack">
             <div className="hero">
               <div><div className="eyebrow">INVENTORY</div><h1 className="page-title">재고 관리</h1><div className="page-sub">시약·재료 잔량을 정성적으로 표시하세요.</div></div>
-              <Button className="primary" onClick={addItem}>+ 재료 추가</Button>
+              <div className="row">
+                <div className="view-toggle"><button className={!editing ? "active" : ""} onClick={() => setEditing(false)}>보기</button><button className={editing ? "active" : ""} onClick={() => setEditing(true)}>편집</button></div>
+                {editing && <Button className="primary" onClick={addItem}>+ 재료 추가</Button>}
+              </div>
             </div>
-            {project.inventory.length ? project.inventory.map(it => (
+            {project.inventory.length ? (editing ? project.inventory.map(it => (
               <div key={it.id} className="inventory-row">
                 <input className="field" value={it.name} onChange={e => patchItem(it.id, { name: e.target.value })} placeholder="이름" />
                 <input className="field" value={it.unit} onChange={e => patchItem(it.id, { unit: e.target.value })} placeholder="단위" />
@@ -1443,7 +1466,13 @@
                 <input className="field" value={it.notes} onChange={e => patchItem(it.id, { notes: e.target.value })} placeholder="메모" />
                 <Button className="ghost danger" onClick={() => updateProject(setStore, project.id, p => ({ ...p, inventory: p.inventory.filter(x => x.id !== it.id) }))}>×</Button>
               </div>
-            )) : <div className="empty">재료를 추가해주세요.</div>}
+            )) : <div className="inventory-grid">{project.inventory.map(it => (
+              <button type="button" key={it.id} className="inventory-block" onClick={() => setEditing(true)}>
+                <div className="inventory-block-head"><div><h3>{it.name || "이름 없는 재료"}</h3><div className="inventory-unit">{it.unit || "단위 미지정"}</div></div><span className="inventory-status" style={{ color: INVENTORY_COLORS[it.level] }}>{INVENTORY_LEVELS[it.level]}</span></div>
+                {it.notes && <p>{it.notes}</p>}
+                <div className="inventory-edit-hint">클릭하여 재고 편집</div>
+              </button>
+            ))}</div>) : <div className="empty">{editing ? "재료를 추가해주세요." : "등록된 재료가 없습니다. 편집 모드에서 추가할 수 있습니다."}</div>}
           </div>
         );
       }
@@ -1677,7 +1706,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.2.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2.2</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.0.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver3</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
