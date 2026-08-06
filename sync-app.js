@@ -9,6 +9,7 @@
   const DB_VERSION = 1;
   const RECORDS_STORE = "records";
   const OUTBOX_STORE = "outbox";
+  const INTENT_CLIENT_PREFIX = "intent-v3:";
   const SUPABASE_URL = "https://wajhlnpyxcnhoybwtdqe.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_Kp3KAxlyT1eXot9vHE1wlQ_h4C0BVeJ";
@@ -43,6 +44,7 @@
     localStorage.setItem(CLIENT_ID_KEY, created);
     return created;
   })();
+  const intentClientId = `${INTENT_CLIENT_PREFIX}${clientId}`;
 
   let currentSession = null;
   let channel = null;
@@ -113,6 +115,78 @@
     if (!left) return right;
     if (!right) return left;
     return compareRecords(left, right) >= 0 ? left : right;
+  };
+
+  const isIntentRecord = (record) =>
+    record?.local_intent === true ||
+    String(record?.client_id || "").startsWith(INTENT_CLIENT_PREFIX);
+
+  const isOwnRecord = (record) =>
+    record?.client_id === clientId || record?.client_id === intentClientId;
+
+  const activeRecordCount = (records, type) =>
+    [...(records?.values?.() || [])].filter(
+      (record) => record.entity_type === type && !record.deleted_at
+    ).length;
+
+  function storeContentScore(store) {
+    if (!store || typeof store !== "object") return 0;
+    let score = 0;
+    const projects = Array.isArray(store.projects) ? store.projects : [];
+    projects.forEach((project) => {
+      const projectName = String(project?.name || "").trim();
+      if (
+        projectName &&
+        !["기본 프로젝트", "새 프로젝트"].includes(projectName)
+      ) {
+        score += 1;
+      }
+      score += (Array.isArray(project?.experiments)
+        ? project.experiments.length
+        : 0) * 8;
+      score += (Array.isArray(project?.notes) ? project.notes.length : 0) * 8;
+      score += (Array.isArray(project?.inventory)
+        ? project.inventory.length
+        : 0) * 4;
+      score += (Array.isArray(project?.memoSnapshots)
+        ? project.memoSnapshots.length
+        : 0) * 4;
+      if (String(project?.memoScratch?.content || "").trim()) score += 3;
+    });
+    return score;
+  }
+
+  const recordsContentScore = (records, fallbackStore = {}) => {
+    if (!records?.size) return 0;
+    const childScore =
+      activeRecordCount(records, "project_experiment") * 8 +
+      activeRecordCount(records, "project_note") * 8 +
+      activeRecordCount(records, "project_inventory") * 4 +
+      activeRecordCount(records, "project_memo") * 4;
+    return Math.max(
+      childScore,
+      storeContentScore(recordsToStore(records, fallbackStore))
+    );
+  };
+
+  const intentRecordsFromStore = (store, timestamp = Date.now()) => {
+    const base = storeToRecords(
+      store,
+      new Date(timestamp).toISOString(),
+      intentClientId
+    );
+    const marked = new Map();
+    let sequence = 0;
+    base.forEach((record, key) => {
+      sequence += 1;
+      marked.set(key, {
+        ...record,
+        updated_at: new Date(timestamp + sequence).toISOString(),
+        client_id: intentClientId,
+        local_intent: true,
+      });
+    });
+    return marked;
   };
 
   const hashText = (text) => {
@@ -319,6 +393,85 @@
     return merged;
   }
 
+  function resolveInitialRecordState({
+    remote,
+    cached,
+    outbox,
+    localRecords,
+    pendingRecords,
+    remoteFetched,
+    localStore,
+  }) {
+    const trustedOutbox = new Map();
+    const legacyOutbox = new Map();
+    outbox.forEach((record, key) =>
+      (isIntentRecord(record) ? trustedOutbox : legacyOutbox).set(key, record)
+    );
+
+    if (!remoteFetched) {
+      const offlineRecords = mergeRecordMaps(cached, outbox, pendingRecords);
+      if (offlineRecords.size || storeContentScore(localStore) === 0) {
+        return {
+          records: offlineRecords,
+          outbox: new Map(outbox),
+          reason: "offline-local",
+        };
+      }
+      const recovered = intentRecordsFromStore(localStore);
+      return {
+        records: recovered,
+        outbox: recovered,
+        reason: "offline-recovery",
+      };
+    }
+
+    if (recordsContentScore(remote) > 0) {
+      return {
+        records: mergeRecordMaps(remote, trustedOutbox),
+        outbox: trustedOutbox,
+        reason: "cloud-authoritative",
+      };
+    }
+
+    if (trustedOutbox.size) {
+      return {
+        records: mergeRecordMaps(remote, trustedOutbox),
+        outbox: trustedOutbox,
+        reason: "intent-outbox",
+      };
+    }
+
+    const recoveryCandidates = [
+      localRecords,
+      cached,
+      legacyOutbox,
+      pendingRecords,
+    ];
+    let richest = new Map();
+    let richestScore = 0;
+    recoveryCandidates.forEach((candidate) => {
+      const score = recordsContentScore(candidate);
+      if (score > richestScore) {
+        richest = candidate;
+        richestScore = score;
+      }
+    });
+    if (richestScore > 0) {
+      const recoveredStore = recordsToStore(richest, localStore || {});
+      const recovered = intentRecordsFromStore(recoveredStore);
+      return {
+        records: mergeRecordMaps(remote, recovered),
+        outbox: recovered,
+        reason: "meaningful-local-recovery",
+      };
+    }
+    return {
+      records: new Map(remote),
+      outbox: new Map(),
+      reason: "empty-account",
+    };
+  }
+
   function openSyncDb() {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -364,6 +517,33 @@
       const transaction = db.transaction(storeName, "readwrite");
       const objectStore = transaction.objectStore(storeName);
       records.forEach((record) => {
+        objectStore.put({
+          ...clone(record),
+          user_id: userId,
+          local_key: localRecordKey(userId, record),
+        });
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  async function replaceStoredRecords(storeName, userId, records) {
+    const db = await openSyncDb();
+    const existingEntries = await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readonly");
+      const request = transaction.objectStore(storeName).getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
+      existingEntries
+        .filter((entry) => entry.user_id === userId)
+        .forEach((entry) => objectStore.delete(entry.local_key));
+      (records || []).forEach((record) => {
         objectStore.put({
           ...clone(record),
           user_id: userId,
@@ -520,10 +700,6 @@
     incomingProtocolTimer = window.setInterval(fetchIncomingProtocols, 12000);
   };
 
-  async function fetchLegacyStore() {
-    return null;
-  }
-
   const rpcPayload = (records) =>
     records.map((record) => ({
       entity_type: record.entity_type,
@@ -634,8 +810,9 @@
         changed.push({
           ...candidate,
           updated_at: new Date(now + sequence).toISOString(),
-          client_id: clientId,
+          client_id: intentClientId,
           deleted_at: null,
+          local_intent: true,
         });
       }
     });
@@ -648,7 +825,8 @@
           payload: null,
           updated_at: new Date(now + sequence).toISOString(),
           deleted_at: new Date(now + sequence).toISOString(),
-          client_id: clientId,
+          client_id: intentClientId,
+          local_intent: true,
         });
       }
     });
@@ -713,50 +891,6 @@
     }
   }
 
-  async function migrateIfNeeded(userId, remoteRecords) {
-    if (remoteRecords.size) return remoteRecords;
-    const localRaw = localStorage.getItem(STORAGE_KEY) || "";
-    let localStore = null;
-    try {
-      localStore = localRaw ? JSON.parse(localRaw) : null;
-    } catch {
-      localStore = null;
-    }
-    const legacy = await fetchLegacyStore(userId);
-    const localUpdatedAt =
-      Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || Date.now();
-    const localRecords = localStore
-      ? storeToRecords(
-          localStore,
-          new Date(localUpdatedAt).toISOString(),
-          clientId
-        )
-      : new Map();
-    const legacyRecords = legacy?.store
-      ? storeToRecords(
-          legacy.store,
-          legacy.updated_at || new Date(0).toISOString(),
-          "legacy-cloud"
-        )
-      : new Map();
-    const migrated = mergeRecordMaps(legacyRecords, localRecords);
-    if (migrated.size) {
-      await Promise.all([
-        putStoredRecords(
-          RECORDS_STORE,
-          userId,
-          [...migrated.values()]
-        ),
-        putStoredRecords(
-          OUTBOX_STORE,
-          userId,
-          [...migrated.values()]
-        ),
-      ]);
-    }
-    return migrated;
-  }
-
   async function subscribeRealtime(userId, generation) {
     channel = client
       .channel(`exp-note-records-${userId}`)
@@ -779,7 +913,7 @@
             deleted_at: payload.new.deleted_at,
             client_id: payload.new.client_id,
           };
-          if (incoming.client_id === clientId) return;
+          if (isOwnRecord(incoming)) return;
           await localCaptureChain.catch(() => undefined);
           const key = recordKey(incoming);
           const existing = appEditing
@@ -789,6 +923,23 @@
               )
             : currentRecords.get(key);
           if (existing && compareRecords(existing, incoming) >= 0) return;
+          if (!isIntentRecord(incoming) && existing) {
+            const beforeScore = recordsContentScore(currentRecords);
+            const candidateRecords = new Map(currentRecords);
+            candidateRecords.set(key, incoming);
+            const afterScore = recordsContentScore(candidateRecords);
+            if (beforeScore > 0 && afterScore < beforeScore) {
+              const repaired = {
+                ...clone(existing),
+                updated_at: new Date().toISOString(),
+                client_id: intentClientId,
+                local_intent: true,
+              };
+              setStatus("빈·오래된 기기의 덮어쓰기 차단 · 복구 중");
+              await queueRecords([repaired]);
+              return;
+            }
+          }
           await putStoredRecords(RECORDS_STORE, userId, [incoming]);
           if (appEditing) {
             deferRemoteRecord(
@@ -872,10 +1023,11 @@
     }
 
     let remote = new Map();
+    let remoteFetched = false;
     if (navigator.onLine !== false) {
       try {
         remote = await fetchRemoteRecords(userId);
-        remote = await migrateIfNeeded(userId, remote);
+        remoteFetched = true;
       } catch (error) {
         if (!cached.size && !outbox.size) {
           setStatus("새 동기화 구조 설정이 필요합니다");
@@ -886,59 +1038,74 @@
       }
     }
     if (generation !== syncGeneration) return;
-
-    currentRecords = mergeRecordMaps(cached, remote, outbox);
-
-    const legacyPending = readLegacyPending();
     const localRaw = localStorage.getItem(STORAGE_KEY) || "";
-    if (
-      legacyPending?.raw &&
-      fingerprintRaw(legacyPending.raw) === fingerprintRaw(localRaw)
-    ) {
-      const pendingRecords = storeToRecords(
-        JSON.parse(legacyPending.raw),
-        new Date(
-          Number(legacyPending.updatedAt) || Date.now()
-        ).toISOString(),
-        clientId
-      );
-      const changed = [];
-      pendingRecords.forEach((record, key) => {
-        const winner = newerRecord(currentRecords.get(key), record);
-        if (winner === record) changed.push(record);
-      });
-      if (changed.length) {
-        await Promise.all([
-          putStoredRecords(RECORDS_STORE, userId, changed),
-          putStoredRecords(OUTBOX_STORE, userId, changed),
-        ]);
-        currentRecords = mergeRecordMaps(currentRecords, pendingRecords);
+    let localStore = null;
+    try {
+      localStore = localRaw ? JSON.parse(localRaw) : null;
+    } catch {
+      localStore = null;
+    }
+    const localUpdatedAt =
+      Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || Date.now();
+    const localRecords = localStore
+      ? storeToRecords(
+          localStore,
+          new Date(localUpdatedAt).toISOString(),
+          "legacy-local"
+        )
+      : new Map();
+    const legacyPending = readLegacyPending();
+    let pendingRecords = new Map();
+    if (legacyPending?.raw) {
+      try {
+        pendingRecords = storeToRecords(
+          JSON.parse(legacyPending.raw),
+          new Date(
+            Number(legacyPending.updatedAt) || Date.now()
+          ).toISOString(),
+          "legacy-pending"
+        );
+      } catch {
+        pendingRecords = new Map();
       }
     }
 
-    if (!currentRecords.size && localRaw) {
-      const seeded = storeToRecords(
-        JSON.parse(localRaw),
-        new Date().toISOString(),
-        clientId
+    const initialState = resolveInitialRecordState({
+      remote,
+      cached,
+      outbox,
+      localRecords,
+      pendingRecords,
+      remoteFetched,
+      localStore,
+    });
+    currentRecords = initialState.records;
+    if (initialState.reason === "meaningful-local-recovery") {
+      setStatus("이 기기의 작업본으로 빈 클라우드 복구 중…");
+    }
+    if (remoteFetched) {
+      await replaceStoredRecords(
+        OUTBOX_STORE,
+        userId,
+        [...initialState.outbox.values()]
       );
-      currentRecords = seeded;
-      await Promise.all([
-        putStoredRecords(RECORDS_STORE, userId, [...seeded.values()]),
-        putStoredRecords(OUTBOX_STORE, userId, [...seeded.values()]),
-      ]);
+      localStorage.removeItem(LEGACY_PENDING_KEY);
+    } else if (initialState.reason === "offline-recovery") {
+      await replaceStoredRecords(
+        OUTBOX_STORE,
+        userId,
+        [...initialState.outbox.values()]
+      );
     }
 
-    await putStoredRecords(
+    await replaceStoredRecords(
       RECORDS_STORE,
       userId,
       [...currentRecords.values()]
     );
     initializedUserId = userId;
     // The iframe boots with a local/default snapshot before cloud hydration.
-    // Never replay that pre-hydration snapshot over records fetched from another
-    // device. Offline edits are already represented by the IndexedDB outbox,
-    // while a truly empty account is seeded from localRaw above.
+    // Never replay that snapshot; only v3 intent-marked edits can beat cloud.
     pendingLocalRaw = "";
     applyRecordsToApp(currentRecords);
     if (navigator.onLine === false) {
@@ -1111,6 +1278,89 @@
     }
     connectSync();
   });
+
+  if (new URLSearchParams(window.location.search).has("sync-test")) {
+    window.__expNoteSyncDiagnostics = Object.freeze({
+      simulate({
+        remoteStore = null,
+        cachedStore = null,
+        outboxStore = null,
+        outboxIntent = false,
+        localStore = null,
+        remoteFetched = true,
+      } = {}) {
+        const recordsFor = (store, time, source) =>
+          store
+            ? storeToRecords(store, new Date(time).toISOString(), source)
+            : new Map();
+        const remote = recordsFor(remoteStore, 1000, "cloud-device");
+        const cached = recordsFor(cachedStore, 2000, "cached-device");
+        const outbox = outboxIntent
+          ? intentRecordsFromStore(outboxStore, 4000)
+          : recordsFor(outboxStore, 4000, "legacy-phone");
+        const localRecords = recordsFor(
+          localStore,
+          3000,
+          "legacy-local"
+        );
+        const resolved = resolveInitialRecordState({
+          remote,
+          cached,
+          outbox,
+          localRecords,
+          pendingRecords: new Map(),
+          remoteFetched,
+          localStore,
+        });
+        return {
+          reason: resolved.reason,
+          contentScore: recordsContentScore(resolved.records),
+          outboxCount: resolved.outbox.size,
+          intentOnly: [...resolved.outbox.values()].every(isIntentRecord),
+        };
+      },
+    });
+    const blankTestStore = {
+      projects: [{
+        id: "default",
+        name: "기본 프로젝트",
+        experiments: [],
+        notes: [],
+        inventory: [],
+        memoSnapshots: [],
+        memoScratch: { content: "" },
+      }],
+    };
+    const richTestStore = {
+      projects: [{
+        ...blankTestStore.projects[0],
+        experiments: [{ id: "experiment-1", name: "실험", protocols: [] }],
+      }],
+    };
+    document.documentElement.dataset.syncDiagnostics = JSON.stringify({
+      richCloudVsBlankLegacyPhone:
+        window.__expNoteSyncDiagnostics.simulate({
+          remoteStore: richTestStore,
+          cachedStore: blankTestStore,
+          outboxStore: blankTestStore,
+          localStore: blankTestStore,
+        }),
+      blankCloudVsRichDesktop:
+        window.__expNoteSyncDiagnostics.simulate({
+          remoteStore: blankTestStore,
+          cachedStore: richTestStore,
+          outboxStore: blankTestStore,
+          localStore: richTestStore,
+        }),
+      intentionalOfflineEdit:
+        window.__expNoteSyncDiagnostics.simulate({
+          remoteStore: richTestStore,
+          outboxStore: richTestStore,
+          outboxIntent: true,
+          localStore: richTestStore,
+        }),
+    });
+  }
 
   client.auth.getSession().then(({ data }) => applySession(data.session));
   client.auth.onAuthStateChange((_event, session) => {
