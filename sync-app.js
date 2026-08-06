@@ -10,6 +10,7 @@
   const RECORDS_STORE = "records";
   const OUTBOX_STORE = "outbox";
   const INTENT_CLIENT_PREFIX = "intent-v3:";
+  const DELETE_INTENT_CLIENT_PREFIX = "delete-v3:";
   const SUPABASE_URL = "https://wajhlnpyxcnhoybwtdqe.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_Kp3KAxlyT1eXot9vHE1wlQ_h4C0BVeJ";
@@ -45,6 +46,7 @@
     return created;
   })();
   const intentClientId = `${INTENT_CLIENT_PREFIX}${clientId}`;
+  const deleteIntentClientId = `${DELETE_INTENT_CLIENT_PREFIX}${clientId}`;
 
   let currentSession = null;
   let channel = null;
@@ -58,6 +60,8 @@
   let pendingAppStore = null;
   let pendingAppFingerprint = "";
   let appEditing = false;
+  let uploadAfterEditing = false;
+  let reconnectAfterEditing = false;
   let deferredRemoteRecords = new Map();
   let deferredRemoteMessage = "";
   let localCaptureChain = Promise.resolve();
@@ -113,18 +117,235 @@
     );
   };
 
-  const newerRecord = (left, right) => {
-    if (!left) return right;
-    if (!right) return left;
-    return compareRecords(left, right) >= 0 ? left : right;
-  };
+  const EMPTY_PLACEHOLDERS = new Set([
+    "기본 프로젝트",
+    "새 프로젝트",
+    "새 실험",
+    "새 프로토콜",
+    "프로토콜",
+    "제목 없음",
+    "제목 없는 메모",
+    "v1",
+    "시약",
+    "반응 조건",
+    "실험 방법",
+    "freeform",
+    "pending",
+    "uL",
+  ]);
+  const STRUCTURAL_KEYS = new Set([
+    "id",
+    "parent_id",
+    "parent_project_id",
+    "parent_experiment_id",
+    "item_order",
+    "order",
+    "version",
+    "createdAt",
+    "savedAt",
+    "updatedAt",
+    "completedAt",
+    "date",
+    "color",
+    "activeVersionId",
+    "linkedProtocolId",
+    "linkedProtocolVersionId",
+    "linkedExperimentId",
+    "sourceStepGroupId",
+    "sourceProtocolId",
+  ]);
+
+  const isPlainObject = (value) =>
+    Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+  function hasMeaningfulValue(value, key = "") {
+    if (STRUCTURAL_KEYS.has(key)) return false;
+    if (value == null) return false;
+    if (typeof value === "string") {
+      const text = value.trim();
+      return Boolean(text) && !EMPTY_PLACEHOLDERS.has(text);
+    }
+    if (typeof value === "number" || typeof value === "boolean") return true;
+    if (Array.isArray(value)) {
+      return value.some((item) => hasMeaningfulValue(item));
+    }
+    if (isPlainObject(value)) {
+      return Object.entries(value).some(
+        ([childKey, childValue]) =>
+          !STRUCTURAL_KEYS.has(childKey) &&
+          hasMeaningfulValue(childValue, childKey)
+      );
+    }
+    return Boolean(value);
+  }
+
+  const arrayItemKey = (item) =>
+    isPlainObject(item) && item.id != null ? String(item.id) : "";
+
+  function mergeContentValues(
+    olderValue,
+    preferredValue,
+    preferredIntent = false
+  ) {
+    const olderMeaningful = hasMeaningfulValue(olderValue);
+    const preferredMeaningful = hasMeaningfulValue(preferredValue);
+    if (!preferredMeaningful && olderMeaningful) return clone(olderValue);
+    if (!olderMeaningful) return clone(preferredValue);
+
+    if (Array.isArray(olderValue) && Array.isArray(preferredValue)) {
+      const keyed = [...olderValue, ...preferredValue].every(
+        (item) => !isPlainObject(item) || Boolean(arrayItemKey(item))
+      );
+      if (keyed && [...olderValue, ...preferredValue].some(isPlainObject)) {
+        const olderById = new Map(
+          olderValue
+            .map((item) => [arrayItemKey(item), item])
+            .filter(([id]) => id)
+        );
+        const merged = preferredValue.map((item) => {
+          const id = arrayItemKey(item);
+          return id && olderById.has(id)
+            ? mergeContentValues(olderById.get(id), item, preferredIntent)
+            : clone(item);
+        });
+        const preferredIds = new Set(
+          preferredValue.map(arrayItemKey).filter(Boolean)
+        );
+        if (!preferredIntent) {
+          olderValue.forEach((item) => {
+            const id = arrayItemKey(item);
+            if (!id || !preferredIds.has(id)) merged.push(clone(item));
+          });
+        }
+        return merged;
+      }
+      const seen = new Set();
+      return [...preferredValue, ...olderValue]
+        .filter((item) => {
+          const fingerprint = fingerprintValue(item);
+          if (seen.has(fingerprint)) return false;
+          seen.add(fingerprint);
+          return true;
+        })
+        .map(clone);
+    }
+
+    if (isPlainObject(olderValue) && isPlainObject(preferredValue)) {
+      const merged = {};
+      new Set([...Object.keys(olderValue), ...Object.keys(preferredValue)])
+        .forEach((childKey) => {
+          if (!(childKey in preferredValue)) {
+            merged[childKey] = clone(olderValue[childKey]);
+          } else if (!(childKey in olderValue)) {
+            merged[childKey] = clone(preferredValue[childKey]);
+          } else {
+            merged[childKey] = mergeContentValues(
+              olderValue[childKey],
+              preferredValue[childKey],
+              preferredIntent
+            );
+          }
+        });
+      return merged;
+    }
+
+    return clone(preferredValue);
+  }
+
+  function contentAwareRecord(left, right) {
+    if (!left) return clone(right);
+    if (!right) return clone(left);
+    const preferred = compareRecords(left, right) >= 0 ? left : right;
+    const older = preferred === left ? right : left;
+    const preferredActive = !preferred.deleted_at && preferred.payload != null;
+    const olderActive = !older.deleted_at && older.payload != null;
+
+    if (
+      preferred.deleted_at &&
+      String(preferred.client_id || "").startsWith(
+        DELETE_INTENT_CLIENT_PREFIX
+      )
+    ) {
+      return clone(preferred);
+    }
+    if (!preferredActive && olderActive && hasMeaningfulValue(older.payload)) {
+      return clone(older);
+    }
+    if (!olderActive || !preferredActive) return clone(preferred);
+    if (
+      !hasMeaningfulValue(preferred.payload) &&
+      hasMeaningfulValue(older.payload)
+    ) {
+      return { ...clone(preferred), payload: clone(older.payload), deleted_at: null };
+    }
+    return {
+      ...clone(preferred),
+      payload: mergeContentValues(
+        older.payload,
+        preferred.payload,
+        isIntentRecord(preferred)
+      ),
+      deleted_at: null,
+    };
+  }
+
+  const sameRecordContent = (left, right) =>
+    Boolean(left) === Boolean(right) &&
+    (!left ||
+      (Boolean(left.deleted_at) === Boolean(right.deleted_at) &&
+        fingerprintValue(left.payload) === fingerprintValue(right.payload)));
+
+  function expandedRecords(record) {
+    if (
+      record?.entity_type !== "project_experiment" ||
+      record.deleted_at ||
+      !Array.isArray(record.payload?.item?.protocols)
+    ) {
+      return [record];
+    }
+    const projectId = String(record.payload.parent_id || "");
+    const experimentId = String(
+      record.payload.item.id ||
+        record.entity_id.split(":").slice(1).join(":")
+    );
+    const { protocols, ...experimentBase } = record.payload.item;
+    const expanded = [{
+      ...clone(record),
+      payload: { ...clone(record.payload), item: experimentBase },
+    }];
+    protocols.forEach((protocol, index) => {
+      const protocolId = stableItemId(
+        protocol,
+        experimentId,
+        index,
+        "experiment_protocol"
+      );
+      expanded.push({
+        ...clone(record),
+        entity_type: "experiment_protocol",
+        entity_id: `${projectId}:${experimentId}:${protocolId}`,
+        payload: {
+          parent_id: projectId,
+          experiment_id: experimentId,
+          item_order: index,
+          item: { ...(protocol || {}), id: protocolId },
+        },
+      });
+    });
+    return expanded;
+  }
 
   const isIntentRecord = (record) =>
     record?.local_intent === true ||
-    String(record?.client_id || "").startsWith(INTENT_CLIENT_PREFIX);
+    String(record?.client_id || "").startsWith(INTENT_CLIENT_PREFIX) ||
+    String(record?.client_id || "").startsWith(
+      DELETE_INTENT_CLIENT_PREFIX
+    );
 
   const isOwnRecord = (record) =>
-    record?.client_id === clientId || record?.client_id === intentClientId;
+    record?.client_id === clientId ||
+    record?.client_id === intentClientId ||
+    record?.client_id === deleteIntentClientId;
 
   const activeRecordCount = (records, type) =>
     [...(records?.values?.() || [])].filter(
@@ -162,6 +383,7 @@
     if (!records?.size) return 0;
     const childScore =
       activeRecordCount(records, "project_experiment") * 8 +
+      activeRecordCount(records, "experiment_protocol") * 6 +
       activeRecordCount(records, "project_note") * 8 +
       activeRecordCount(records, "project_inventory") * 4 +
       activeRecordCount(records, "project_memo") * 4;
@@ -255,8 +477,45 @@
         ...projectBase
       } = project || {};
       add("project", id, { ...projectBase, id });
+
+      (Array.isArray(experiments) ? experiments : []).forEach(
+        (experiment, experimentIndex) => {
+          const experimentId = stableItemId(
+            experiment,
+            id,
+            experimentIndex,
+            "project_experiment"
+          );
+          const { protocols = [], ...experimentBase } = experiment || {};
+          add("project_experiment", `${id}:${experimentId}`, {
+            parent_id: id,
+            item_order: experimentIndex,
+            item: { ...experimentBase, id: experimentId },
+          });
+          (Array.isArray(protocols) ? protocols : []).forEach(
+            (protocol, protocolIndex) => {
+              const protocolId = stableItemId(
+                protocol,
+                experimentId,
+                protocolIndex,
+                "experiment_protocol"
+              );
+              add(
+                "experiment_protocol",
+                `${id}:${experimentId}:${protocolId}`,
+                {
+                  parent_id: id,
+                  experiment_id: experimentId,
+                  item_order: protocolIndex,
+                  item: { ...(protocol || {}), id: protocolId },
+                }
+              );
+            }
+          );
+        }
+      );
+
       [
-        ["project_experiment", experiments],
         ["project_note", notes],
         ["project_inventory", inventory],
         ["project_memo", memoSnapshots],
@@ -301,6 +560,7 @@
 
     const projects = new Map();
     const childOrder = new Map();
+    const protocolOrder = new Map();
     activeRecordsOfType(records, "project").forEach((record) => {
       const payload = clone(record.payload) || {};
       const project = {
@@ -352,6 +612,33 @@
     });
 
     [...records.values()]
+      .filter((record) => record.entity_type === "experiment_protocol")
+      .sort(compareRecords)
+      .forEach((record) => {
+        const payload = record.payload || {};
+        const project = projects.get(payload.parent_id);
+        const experiment = project?.experiments?.find(
+          (item) => String(item?.id || "") === String(payload.experiment_id || "")
+        );
+        if (!experiment) return;
+        const protocolId = String(
+          payload.item?.id || record.entity_id.split(":").slice(2).join(":")
+        );
+        experiment.protocols = (experiment.protocols || []).filter(
+          (item) => String(item?.id || "") !== protocolId
+        );
+        if (!record.deleted_at && payload.item) {
+          experiment.protocols.push(clone(payload.item));
+          protocolOrder.set(
+            `${payload.parent_id}|${payload.experiment_id}|${protocolId}`,
+            Number.isFinite(payload.item_order)
+              ? payload.item_order
+              : experiment.protocols.length - 1
+          );
+        }
+      });
+
+    [...records.values()]
       .filter((record) => record.entity_type === "project_scratch")
       .sort(compareRecords)
       .forEach((record) => {
@@ -376,7 +663,24 @@
     store.projects = [...projects.values()]
       .map((project) => ({
         ...project,
-        experiments: sortChildren(project.id, "experiments", project.experiments || []),
+        experiments: sortChildren(project.id, "experiments", project.experiments || [])
+          .map((experiment) => ({
+            ...experiment,
+            protocols: [...(experiment.protocols || [])].sort((left, right) => {
+              const leftOrder = protocolOrder.get(
+                `${project.id}|${experiment.id}|${left?.id || ""}`
+              );
+              const rightOrder = protocolOrder.get(
+                `${project.id}|${experiment.id}|${right?.id || ""}`
+              );
+              if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder)) {
+                return leftOrder - rightOrder;
+              }
+              if (Number.isFinite(leftOrder)) return -1;
+              if (Number.isFinite(rightOrder)) return 1;
+              return itemSort(left, right);
+            }),
+          })),
         notes: sortChildren(project.id, "notes", project.notes || []),
         inventory: sortChildren(project.id, "inventory", project.inventory || []),
         memoSnapshots: sortChildren(project.id, "memoSnapshots", project.memoSnapshots || []),
@@ -389,10 +693,41 @@
     const merged = new Map();
     maps.forEach((records) => {
       records?.forEach((record, key) => {
-        merged.set(key, newerRecord(merged.get(key), record));
+        expandedRecords(record).forEach((expanded) => {
+          const expandedKey = recordKey(expanded);
+          merged.set(
+            expandedKey,
+            contentAwareRecord(merged.get(expandedKey), expanded)
+          );
+        });
       });
     });
     return merged;
+  }
+
+  function repairRecordsAgainstRemote(records, remoteRecords) {
+    const repairs = new Map();
+    let sequence = 0;
+    const now = Date.now();
+    records.forEach((record, key) => {
+      const remote = remoteRecords.get(key);
+      if (
+        sameRecordContent(record, remote) ||
+        (!remote && !hasMeaningfulValue(record.payload))
+      ) {
+        return;
+      }
+      sequence += 1;
+      repairs.set(key, {
+        ...clone(record),
+        updated_at: new Date(now + sequence).toISOString(),
+        client_id: record.deleted_at
+          ? deleteIntentClientId
+          : intentClientId,
+        local_intent: true,
+      });
+    });
+    return repairs;
   }
 
   function resolveInitialRecordState({
@@ -411,7 +746,12 @@
     );
 
     if (!remoteFetched) {
-      const offlineRecords = mergeRecordMaps(cached, outbox, pendingRecords);
+      const offlineRecords = mergeRecordMaps(
+        cached,
+        localRecords,
+        outbox,
+        pendingRecords
+      );
       if (offlineRecords.size || storeContentScore(localStore) === 0) {
         return {
           records: offlineRecords,
@@ -427,50 +767,32 @@
       };
     }
 
-    if (recordsContentScore(remote) > 0) {
-      return {
-        records: mergeRecordMaps(remote, trustedOutbox),
-        outbox: trustedOutbox,
-        reason: "cloud-authoritative",
-      };
-    }
-
-    if (trustedOutbox.size) {
-      return {
-        records: mergeRecordMaps(remote, trustedOutbox),
-        outbox: trustedOutbox,
-        reason: "intent-outbox",
-      };
-    }
-
-    const recoveryCandidates = [
-      localRecords,
+    const merged = mergeRecordMaps(
+      remote,
       cached,
+      localRecords,
       legacyOutbox,
       pendingRecords,
-    ];
-    let richest = new Map();
-    let richestScore = 0;
-    recoveryCandidates.forEach((candidate) => {
-      const score = recordsContentScore(candidate);
-      if (score > richestScore) {
-        richest = candidate;
-        richestScore = score;
-      }
-    });
-    if (richestScore > 0) {
-      const recoveredStore = recordsToStore(richest, localStore || {});
-      const recovered = intentRecordsFromStore(recoveredStore);
+      trustedOutbox
+    );
+    if (!recordsContentScore(merged) && storeContentScore(localStore) === 0) {
       return {
-        records: mergeRecordMaps(remote, recovered),
-        outbox: recovered,
-        reason: "meaningful-local-recovery",
+        records: mergeRecordMaps(remote),
+        outbox: new Map(),
+        reason: "empty-account",
       };
     }
+
+    const repairs = repairRecordsAgainstRemote(merged, remote);
+    const nextOutbox = mergeRecordMaps(trustedOutbox, repairs);
     return {
-      records: new Map(remote),
-      outbox: new Map(),
-      reason: "empty-account",
+      records: mergeRecordMaps(merged, repairs),
+      outbox: nextOutbox,
+      reason: repairs.size
+        ? recordsContentScore(remote) > 0
+          ? "content-aware-merge"
+          : "meaningful-local-recovery"
+        : "cloud-authoritative",
     };
   }
 
@@ -730,6 +1052,11 @@
     ) {
       return false;
     }
+    if (appEditing) {
+      uploadAfterEditing = true;
+      setStatus("입력 완료 후 변경사항 저장");
+      return false;
+    }
     const userId = currentSession.user.id;
     const outbox = await getStoredRecords(OUTBOX_STORE, userId);
     const records = [...outbox.values()];
@@ -773,6 +1100,12 @@
 
   const scheduleUpload = (delay = 350) => {
     if (uploadTimer) window.clearTimeout(uploadTimer);
+    if (appEditing) {
+      uploadTimer = null;
+      uploadAfterEditing = true;
+      setStatus("입력 완료 후 변경사항 저장");
+      return;
+    }
     uploadTimer = window.setTimeout(() => {
       uploadTimer = null;
       uploadOutbox();
@@ -819,25 +1152,34 @@
           fingerprintValue(candidate.payload)
       ) {
         sequence += 1;
-        changed.push({
+        const localCandidate = {
           ...candidate,
           updated_at: new Date(now + sequence).toISOString(),
           client_id: intentClientId,
           deleted_at: null,
           local_intent: true,
-        });
+        };
+        const mergedCandidate = contentAwareRecord(
+          existing,
+          localCandidate
+        );
+        if (!sameRecordContent(existing, mergedCandidate)) {
+          changed.push(mergedCandidate);
+        }
       }
     });
 
+    const blankSnapshot =
+      storeContentScore(store) === 0 && recordsContentScore(currentRecords) > 0;
     currentRecords.forEach((existing, key) => {
-      if (!existing.deleted_at && !desired.has(key)) {
+      if (!existing.deleted_at && !desired.has(key) && !blankSnapshot) {
         sequence += 1;
         changed.push({
           ...existing,
           payload: null,
           updated_at: new Date(now + sequence).toISOString(),
           deleted_at: new Date(now + sequence).toISOString(),
-          client_id: intentClientId,
+          client_id: deleteIntentClientId,
           local_intent: true,
         });
       }
@@ -874,42 +1216,74 @@
     return localCaptureChain;
   };
 
-  async function hasPendingLocalRecord(userId, key) {
-    try {
-      return (await getStoredRecords(OUTBOX_STORE, userId)).has(key);
-    } catch {
-      // If local persistence cannot be inspected, preserve the conservative rule.
-      return true;
-    }
-  }
-
   const deferRemoteRecord = (record, message = "") => {
-    const key = recordKey(record);
-    deferredRemoteRecords.set(
-      key,
-      newerRecord(deferredRemoteRecords.get(key), record)
-    );
+    expandedRecords(record).forEach((expanded) => {
+      const key = recordKey(expanded);
+      deferredRemoteRecords.set(
+        key,
+        contentAwareRecord(deferredRemoteRecords.get(key), expanded)
+      );
+    });
     if (message) deferredRemoteMessage = message;
   };
+
+  async function mergeIncomingRecords(userId, incomingRecords, message = "") {
+    const updates = [];
+    const repairs = [];
+    let sequence = 0;
+    const now = Date.now();
+    incomingRecords.forEach((incoming) => {
+      expandedRecords(incoming).forEach((expanded) => {
+        const key = recordKey(expanded);
+        const existing = currentRecords.get(key);
+        const merged = contentAwareRecord(existing, expanded);
+        currentRecords.set(key, merged);
+        updates.push(merged);
+        if (!sameRecordContent(merged, expanded)) {
+          sequence += 1;
+          repairs.push({
+            ...clone(merged),
+            updated_at: new Date(now + sequence).toISOString(),
+            client_id: merged.deleted_at
+              ? deleteIntentClientId
+              : intentClientId,
+            local_intent: true,
+          });
+        }
+      });
+    });
+    if (updates.length) {
+      await putStoredRecords(RECORDS_STORE, userId, updates);
+    }
+    if (repairs.length) {
+      setStatus("내용이 있는 항목 우선 병합 · 클라우드 복구 중");
+      await queueRecords(repairs);
+    }
+    applyRecordsToApp(currentRecords, message);
+  }
 
   async function flushDeferredRemote(raw = "") {
     if (raw) await queueLocalCapture(raw);
     else await localCaptureChain.catch(() => undefined);
 
     if (deferredRemoteRecords.size && initializedUserId) {
-      currentRecords = mergeRecordMaps(currentRecords, deferredRemoteRecords);
-      await putStoredRecords(
-        RECORDS_STORE,
-        initializedUserId,
-        [...currentRecords.values()]
-      );
+      const records = [...deferredRemoteRecords.values()];
       deferredRemoteRecords = new Map();
       const message =
         deferredRemoteMessage || "다른 기기의 변경사항을 받았습니다";
       deferredRemoteMessage = "";
-      applyRecordsToApp(currentRecords, message);
+      await mergeIncomingRecords(initializedUserId, records, message);
     }
-
+    if (reconnectAfterEditing && currentSession?.user) {
+      reconnectAfterEditing = false;
+      uploadAfterEditing = false;
+      await connectSync();
+      return;
+    }
+    if (uploadAfterEditing) {
+      uploadAfterEditing = false;
+      scheduleUpload(0);
+    }
   }
 
   function readLegacyPending() {
@@ -947,45 +1321,17 @@
           };
           if (isOwnRecord(incoming)) return;
           await localCaptureChain.catch(() => undefined);
-          const key = recordKey(incoming);
-          const deferForLocalEdit =
-            appEditing && (await hasPendingLocalRecord(userId, key));
-          const existing = deferForLocalEdit
-            ? newerRecord(
-                currentRecords.get(key),
-                deferredRemoteRecords.get(key)
-              )
-            : currentRecords.get(key);
-          if (existing && compareRecords(existing, incoming) >= 0) return;
-          if (!isIntentRecord(incoming) && existing) {
-            const beforeScore = recordsContentScore(currentRecords);
-            const candidateRecords = new Map(currentRecords);
-            candidateRecords.set(key, incoming);
-            const afterScore = recordsContentScore(candidateRecords);
-            if (beforeScore > 0 && afterScore < beforeScore) {
-              const repaired = {
-                ...clone(existing),
-                updated_at: new Date().toISOString(),
-                client_id: intentClientId,
-                local_intent: true,
-              };
-              setStatus("빈·오래된 기기의 덮어쓰기 차단 · 복구 중");
-              await queueRecords([repaired]);
-              return;
-            }
-          }
-          await putStoredRecords(RECORDS_STORE, userId, [incoming]);
-          if (deferForLocalEdit) {
+          if (appEditing) {
             deferRemoteRecord(
               incoming,
-              "편집 중인 항목의 다른 기기 변경사항을 받았습니다"
+              "입력 중 받은 다른 기기의 변경사항을 병합했습니다"
             );
-            setStatus("이 항목 입력 완료 후 다른 기기 변경사항 병합");
+            setStatus("입력 완료 후 다른 기기 변경사항 병합");
             return;
           }
-          currentRecords.set(key, incoming);
-          applyRecordsToApp(
-            currentRecords,
+          await mergeIncomingRecords(
+            userId,
+            [incoming],
             "다른 기기의 변경사항을 받았습니다"
           );
         }
@@ -1018,11 +1364,20 @@
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
       if (!currentSession?.user) return;
+      if (appEditing) {
+        reconnectAfterEditing = true;
+        return;
+      }
       connectSync();
     }, 4000);
   };
 
   async function connectSync() {
+    if (appEditing) {
+      reconnectAfterEditing = true;
+      setStatus("입력 완료 후 클라우드 연결 재개");
+      return;
+    }
     await localCaptureChain.catch(() => undefined);
     const reconnectingUserId = currentSession?.user?.id || "";
     const reconnectingSameUser = Boolean(
@@ -1111,6 +1466,8 @@
     currentRecords = initialState.records;
     if (initialState.reason === "meaningful-local-recovery") {
       setStatus("이 기기의 작업본으로 빈 클라우드 복구 중…");
+    } else if (initialState.reason === "content-aware-merge") {
+      setStatus("내용이 있는 항목 우선 병합 중…");
     }
     if (remoteFetched) {
       await replaceStoredRecords(
@@ -1172,6 +1529,8 @@
       currentRecords = new Map();
       deferredRemoteRecords = new Map();
       deferredRemoteMessage = "";
+      uploadAfterEditing = false;
+      reconnectAfterEditing = false;
       pendingLocalRaw = "";
       if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
       incomingProtocolTimer = null;
@@ -1271,6 +1630,9 @@
     }
     if (event.data?.type === "exp-note-editing") {
       appEditing = Boolean(event.data.editing);
+      if (new URLSearchParams(window.location.search).has("sync-test")) {
+        document.documentElement.dataset.syncEditing = String(appEditing);
+      }
       if (appEditing) return;
       await flushDeferredRemote(
         typeof event.data.raw === "string" ? event.data.raw : ""
@@ -1304,6 +1666,11 @@
   });
   window.addEventListener("online", () => {
     setStatus("연결됨 · 변경사항 병합 중…");
+    if (appEditing) {
+      reconnectAfterEditing = true;
+      setStatus("입력 완료 후 변경사항 병합");
+      return;
+    }
     connectSync();
   });
 
@@ -1313,6 +1680,11 @@
     resumeSyncTimer = window.setTimeout(() => {
       resumeSyncTimer = null;
       if (!currentSession?.user || navigator.onLine === false) return;
+      if (appEditing) {
+        reconnectAfterEditing = true;
+        setStatus("입력 완료 후 최신 변경사항 확인");
+        return;
+      }
       setStatus("앱 복귀 · 최신 변경사항 확인 중…");
       connectSync();
     }, 220);
@@ -1362,6 +1734,27 @@
           intentOnly: [...resolved.outbox.values()].every(isIntentRecord),
         };
       },
+      mergeStores(olderStore, newerStore) {
+        const older = storeToRecords(
+          olderStore,
+          new Date(1000).toISOString(),
+          "older-device"
+        );
+        const newer = storeToRecords(
+          newerStore,
+          new Date(2000).toISOString(),
+          "newer-device"
+        );
+        return recordsToStore(mergeRecordMaps(older, newer), olderStore);
+      },
+      state() {
+        return {
+          appEditing,
+          uploadAfterEditing,
+          reconnectAfterEditing,
+          deferredCount: deferredRemoteRecords.size,
+        };
+      },
     });
     const blankTestStore = {
       projects: [{
@@ -1379,6 +1772,106 @@
         ...blankTestStore.projects[0],
         experiments: [{ id: "experiment-1", name: "실험", protocols: [] }],
       }],
+    };
+    const mergeBaseStore = {
+      projects: [{
+        id: "project-1",
+        name: "동기화 프로젝트",
+        experiments: [{
+          id: "experiment-1",
+          name: "실험 A",
+          memo: "",
+          protocols: [{
+            id: "protocol-1",
+            name: "PCR",
+            summary: "기본 프로토콜",
+            versions: [],
+            beforeStarting: [],
+          }],
+        }],
+        notes: [{
+          id: "note-1",
+          title: "실험 노트",
+          purpose: "기존 목적",
+          resultSummary: "",
+        }],
+        inventory: [],
+        memoSnapshots: [],
+        memoScratch: { content: "" },
+      }],
+      activeProjectId: "project-1",
+    };
+    const desktopEditedStore = clone(mergeBaseStore);
+    desktopEditedStore.projects[0].notes[0].resultSummary = "데스크톱 결과";
+    const phoneEditedStore = clone(mergeBaseStore);
+    phoneEditedStore.projects[0].experiments[0].protocols[0].summary =
+      "휴대폰 프로토콜 수정";
+    const baseMergeRecords = storeToRecords(
+      mergeBaseStore,
+      new Date(1000).toISOString(),
+      "base"
+    );
+    const desktopNoteRecords = new Map(
+      [...storeToRecords(
+        desktopEditedStore,
+        new Date(2000).toISOString(),
+        "desktop"
+      )].filter(([, record]) => record.entity_type === "project_note")
+    );
+    const phoneProtocolRecords = new Map(
+      [...storeToRecords(
+        phoneEditedStore,
+        new Date(3000).toISOString(),
+        "phone"
+      )].filter(([, record]) => record.entity_type === "experiment_protocol")
+    );
+    const independentMergedStore = recordsToStore(
+      mergeRecordMaps(
+        baseMergeRecords,
+        desktopNoteRecords,
+        phoneProtocolRecords
+      ),
+      mergeBaseStore
+    );
+    const blankSameNoteStore = clone(mergeBaseStore);
+    blankSameNoteStore.projects[0].notes[0].purpose = "";
+    const conflictingNoteStore = clone(mergeBaseStore);
+    conflictingNoteStore.projects[0].notes[0].purpose = "최신 목적";
+    const legacyExperimentRecord = makeRecord(
+      "project_experiment",
+      "project-1:experiment-1",
+      {
+        parent_id: "project-1",
+        item_order: 0,
+        item: clone(mergeBaseStore.projects[0].experiments[0]),
+      },
+      new Date(1000).toISOString(),
+      "legacy-device"
+    );
+    const legacyProtocolMap = new Map([
+      [recordKey(legacyExperimentRecord), legacyExperimentRecord],
+    ]);
+    const expandedLegacyProtocols = mergeRecordMaps(legacyProtocolMap);
+    const legacyProtocolRepairs = repairRecordsAgainstRemote(
+      expandedLegacyProtocols,
+      legacyProtocolMap
+    );
+    const noteRecordForDelete = [...baseMergeRecords.values()].find(
+      (record) => record.entity_type === "project_note"
+    );
+    const blankPhoneDelete = {
+      ...clone(noteRecordForDelete),
+      payload: null,
+      updated_at: new Date(4000).toISOString(),
+      deleted_at: new Date(4000).toISOString(),
+      client_id: "legacy-empty-phone",
+    };
+    const explicitUserDelete = {
+      ...clone(blankPhoneDelete),
+      updated_at: new Date(5000).toISOString(),
+      deleted_at: new Date(5000).toISOString(),
+      client_id: deleteIntentClientId,
+      local_intent: true,
     };
     document.documentElement.dataset.syncDiagnostics = JSON.stringify({
       richCloudVsBlankLegacyPhone:
@@ -1402,6 +1895,45 @@
           outboxIntent: true,
           localStore: richTestStore,
         }),
+      blankFieldKeepsContent:
+        window.__expNoteSyncDiagnostics.mergeStores(
+          mergeBaseStore,
+          blankSameNoteStore
+        ).projects[0].notes[0].purpose,
+      newerContentWinsSameField:
+        window.__expNoteSyncDiagnostics.mergeStores(
+          mergeBaseStore,
+          conflictingNoteStore
+        ).projects[0].notes[0].purpose,
+      independentAreasMerge: {
+        note:
+          independentMergedStore.projects[0].notes[0].resultSummary,
+        protocol:
+          independentMergedStore.projects[0].experiments[0].protocols[0]
+            .summary,
+        protocolRecords: phoneProtocolRecords.size,
+      },
+      legacyProtocolMigration: {
+        experimentRecords: activeRecordCount(
+          expandedLegacyProtocols,
+          "project_experiment"
+        ),
+        protocolRecords: activeRecordCount(
+          expandedLegacyProtocols,
+          "experiment_protocol"
+        ),
+        repairRecords: legacyProtocolRepairs.size,
+      },
+      deletionPolicy: {
+        blankPhoneBlocked: !contentAwareRecord(
+          noteRecordForDelete,
+          blankPhoneDelete
+        ).deleted_at,
+        explicitDeleteApplied: Boolean(
+          contentAwareRecord(noteRecordForDelete, explicitUserDelete)
+            .deleted_at
+        ),
+      },
     });
   }
 
