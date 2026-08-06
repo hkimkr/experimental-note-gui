@@ -1,3 +1,4 @@
+// Experimental Note GUI v3.5.1 — clean deployment marker.
 (() => {
   "use strict";
 
