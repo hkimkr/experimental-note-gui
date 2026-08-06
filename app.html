@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#18553f" />
-    <title>실험 노트 GUI · ver2</title>
+    <title>실험 노트 GUI · ver2.1</title>
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
@@ -102,6 +102,9 @@
       const isImeComposing = (e) => e.nativeEvent?.isComposing || e.isComposing;
       const parseVolume = (v) => { const n = parseFloat(String(v).replace(/[^\d.-]/g, "")); return isNaN(n) ? 0 : n; };
       const sumVolumes = (rows) => rows.reduce((s, r) => s + parseVolume(r.volume), 0);
+      const isSampleMaterial = (material) => /sample|샘플/i.test(material || "");
+      const hasVolumeValue = (rows) => rows.some(r => String(r.volume ?? "").trim() !== "");
+      const formatVolumeTotal = (rows) => hasVolumeValue(rows) ? sumVolumes(rows).toFixed(2) : "—";
       const summarizePanel = (panel) => {
         if (!panel) return "";
         if (panel.type === "reagent") return (panel.rows || []).filter(r => r.material || r.volume).map(r => `${r.material || "시약"} ${r.volume || ""}${panel.unit || ""}`.trim()).join(", ");
@@ -330,10 +333,9 @@
 
       function ReagentPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
         const rows = panel.rows || [];
-        const total = sumVolumes(rows);
+        const nonSampleRows = rows.filter(r => !isSampleMaterial(r.material));
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
-        const isSample = (material) => /sample|샘플/i.test(material || "");
-        const missingAmounts = rows.filter(r => String(r.material || "").trim() && !isSample(r.material) && !String(r.volume || "").trim());
+        const missingAmounts = rows.filter(r => String(r.material || "").trim() && !isSampleMaterial(r.material) && !String(r.volume || "").trim());
         return (
           <div className="proto-panel reagent-panel">
             <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
@@ -343,7 +345,7 @@
                 <tbody>
                   {rows.map(r => {
                     const baseRow = diffBase?.rows?.find(br => br.id === r.id);
-                    const sampleRow = isSample(r.material);
+                    const sampleRow = isSampleMaterial(r.material);
                     const needsAmount = String(r.material || "").trim() && !sampleRow && !String(r.volume || "").trim();
                     return (
                       <tr key={r.id} className={`${sampleRow ? "sample-row" : ""} ${needsAmount ? "needs-amount" : ""}`.trim()}>
@@ -364,7 +366,8 @@
                   {readOnly && diffBase?.rows?.filter(br => !rows.some(r => r.id === br.id)).map(br => (
                     <tr key={`removed-${br.id}`} className="diff-removed-row"><td>{br.material || "(빈 시약명)"}</td><td>{br.volume}</td><td>삭제</td></tr>
                   ))}
-                  <tr className="total-row"><td>Total</td><td colSpan={2}>{total ? total.toFixed(1) : "—"} {panel.unit || ""}</td></tr>
+                  <tr className="total-row"><td>Total</td><td colSpan={2}>{formatVolumeTotal(rows)} {panel.unit || ""}</td></tr>
+                  <tr className="total-row"><td>Sample 제외</td><td colSpan={2}>{formatVolumeTotal(nonSampleRows)} {panel.unit || ""}</td></tr>
                 </tbody>
               </table>
               {!readOnly && <Button className="soft" style={{ marginTop: 8 }} onClick={() => onChange({ ...panel, rows: [...rows, emptyReagentRow()] })}>+ 행</Button>}
@@ -724,8 +727,9 @@
       function PrintPanel({ panel }) {
         if (panel.type === "reagent") {
           const rows = (panel.rows || []).filter(r => r.material || r.volume);
+          const nonSampleRows = rows.filter(r => !isSampleMaterial(r.material));
           return <div className="print-static-panel"><div className="print-static-head">{panel.title || "시약"} · {panel.unit || "단위 없음"}</div><div className="print-static-body">
-            {rows.length ? <table className="print-static-table"><thead><tr><th>Material</th><th>Amount</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.material || "—"}</td><td>{r.volume || "—"} {panel.unit || ""}</td></tr>)}<tr className="print-total"><td>Total</td><td>{sumVolumes(rows) ? sumVolumes(rows).toFixed(1) : "—"} {panel.unit || ""}</td></tr></tbody></table> : <span className="muted">입력된 시약 없음</span>}
+            {rows.length ? <table className="print-static-table"><thead><tr><th>Material</th><th>Amount</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.material || "—"}</td><td>{r.volume || "—"} {panel.unit || ""}</td></tr>)}<tr className="print-total"><td>Total</td><td>{formatVolumeTotal(rows)} {panel.unit || ""}</td></tr><tr className="print-total"><td>Sample 제외</td><td>{formatVolumeTotal(nonSampleRows)} {panel.unit || ""}</td></tr></tbody></table> : <span className="muted">입력된 시약 없음</span>}
             {(panel.notes || []).map(n => n.content && <div key={n.id} className="print-step-text">{n.content}</div>)}
           </div></div>;
         }
@@ -1668,7 +1672,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.0.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.1.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2.1</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>

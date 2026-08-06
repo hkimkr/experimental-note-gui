@@ -170,7 +170,34 @@
     add("root", "main", root);
     (Array.isArray(projects) ? projects : []).forEach((project, index) => {
       const id = stableItemId(project, "root", index, "project");
-      add("project", id, { ...project, id });
+      const {
+        experiments = [],
+        notes = [],
+        inventory = [],
+        memoSnapshots = [],
+        memoScratch = { content: "", updatedAt: null },
+        ...projectBase
+      } = project || {};
+      add("project", id, { ...projectBase, id });
+      [
+        ["project_experiment", experiments],
+        ["project_note", notes],
+        ["project_inventory", inventory],
+        ["project_memo", memoSnapshots],
+      ].forEach(([type, items]) => {
+        (Array.isArray(items) ? items : []).forEach((item, itemIndex) => {
+          const itemId = stableItemId(item, id, itemIndex, type);
+          add(type, `${id}:${itemId}`, {
+            parent_id: id,
+            item_order: itemIndex,
+            item: { ...(item || {}), id: itemId },
+          });
+        });
+      });
+      add("project_scratch", id, {
+        parent_id: id,
+        value: memoScratch || { content: "", updatedAt: null },
+      });
     });
     return result;
   }
@@ -196,8 +223,88 @@
       projects: [],
     };
 
-    store.projects = activeRecordsOfType(records, "project")
-      .map((record) => clone(record.payload))
+    const projects = new Map();
+    const childOrder = new Map();
+    activeRecordsOfType(records, "project").forEach((record) => {
+      const payload = clone(record.payload) || {};
+      const project = {
+        ...payload,
+        id: payload.id || record.entity_id,
+        experiments: Array.isArray(payload.experiments) ? payload.experiments : [],
+        notes: Array.isArray(payload.notes) ? payload.notes : [],
+        inventory: Array.isArray(payload.inventory) ? payload.inventory : [],
+        memoSnapshots: Array.isArray(payload.memoSnapshots) ? payload.memoSnapshots : [],
+        memoScratch: payload.memoScratch || { content: "", updatedAt: null },
+      };
+      ["experiments", "notes", "inventory", "memoSnapshots"].forEach(
+        (field) => project[field].forEach((item, index) => {
+          childOrder.set(`${record.entity_id}|${field}|${item?.id || ""}`, index);
+        })
+      );
+      projects.set(record.entity_id, project);
+    });
+
+    [
+      ["project_experiment", "experiments"],
+      ["project_note", "notes"],
+      ["project_inventory", "inventory"],
+      ["project_memo", "memoSnapshots"],
+    ].forEach(([type, field]) => {
+      [...records.values()]
+        .filter((record) => record.entity_type === type)
+        .sort(compareRecords)
+        .forEach((record) => {
+          const payload = record.payload || {};
+          const project = projects.get(payload.parent_id);
+          if (!project) return;
+          const itemId = String(
+            payload.item?.id || record.entity_id.split(":").slice(1).join(":")
+          );
+          project[field] = (project[field] || []).filter(
+            (item) => String(item?.id || "") !== itemId
+          );
+          if (!record.deleted_at && payload.item) {
+            project[field].push(clone(payload.item));
+            childOrder.set(
+              `${payload.parent_id}|${field}|${itemId}`,
+              Number.isFinite(payload.item_order)
+                ? payload.item_order
+                : project[field].length - 1
+            );
+          }
+        });
+    });
+
+    [...records.values()]
+      .filter((record) => record.entity_type === "project_scratch")
+      .sort(compareRecords)
+      .forEach((record) => {
+        const payload = record.payload || {};
+        const project = projects.get(payload.parent_id || record.entity_id);
+        if (!project) return;
+        project.memoScratch = record.deleted_at
+          ? { content: "", updatedAt: null }
+          : clone(payload.value || { content: "", updatedAt: null });
+      });
+
+    const sortChildren = (projectId, field, items) =>
+      [...items].sort((left, right) => {
+        const leftOrder = childOrder.get(`${projectId}|${field}|${left?.id || ""}`);
+        const rightOrder = childOrder.get(`${projectId}|${field}|${right?.id || ""}`);
+        if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder)) return leftOrder - rightOrder;
+        if (Number.isFinite(leftOrder)) return -1;
+        if (Number.isFinite(rightOrder)) return 1;
+        return itemSort(left, right);
+      });
+
+    store.projects = [...projects.values()]
+      .map((project) => ({
+        ...project,
+        experiments: sortChildren(project.id, "experiments", project.experiments || []),
+        notes: sortChildren(project.id, "notes", project.notes || []),
+        inventory: sortChildren(project.id, "inventory", project.inventory || []),
+        memoSnapshots: sortChildren(project.id, "memoSnapshots", project.memoSnapshots || []),
+      }))
       .sort(itemSort);
     return store;
   }
@@ -828,11 +935,11 @@
       [...currentRecords.values()]
     );
     initializedUserId = userId;
-    if (pendingLocalRaw) {
-      const raw = pendingLocalRaw;
-      pendingLocalRaw = "";
-      await queueLocalCapture(raw);
-    }
+    // The iframe boots with a local/default snapshot before cloud hydration.
+    // Never replay that pre-hydration snapshot over records fetched from another
+    // device. Offline edits are already represented by the IndexedDB outbox,
+    // while a truly empty account is seeded from localRaw above.
+    pendingLocalRaw = "";
     applyRecordsToApp(currentRecords);
     if (navigator.onLine === false) {
       setStatus("오프라인 · 이 기기에 안전하게 저장됨");
