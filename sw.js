@@ -1,4 +1,4 @@
-const CACHE = "exp-note-v3.5.1";
+const CACHE = "exp-note-v3.5.2";
 const ASSETS = [
   "./index.html",
   "./app.html",
