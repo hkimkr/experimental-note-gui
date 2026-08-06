@@ -14,7 +14,7 @@
       *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(91,124,250,.25);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}
       .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:40px;height:40px;border:1px solid #dbe5df;border-radius:12px;background:#f9faf7;display:block;overflow:hidden;box-shadow:0 3px 10px rgba(24,85,63,.1)}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
       .shell{max-width:1480px;margin:auto;padding:22px}.main{min-width:0}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 12px rgba(37,55,46,.035)}.card-pad{padding:18px}.card-head{padding:15px 18px;border-bottom:1px solid #edf0ed;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-head h2,.card-head h3{margin:0;font-size:15px}.eyebrow{color:var(--brand);font-weight:800;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.page-title{margin:3px 0 0;font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.25}.page-sub{color:var(--muted);font-size:13px;margin-top:5px}.muted{color:var(--muted)}.tiny{font-size:11px}.small{font-size:13px}.stack{display:flex;flex-direction:column;gap:12px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:0}.btn{min-height:38px;border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:700}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--brand2);border-color:transparent;color:var(--brand)}.btn.ghost{background:transparent;border-color:transparent}.btn.danger{color:var(--danger)}.field{width:100%;border:1px solid #d7ded9;background:#fff;border-radius:11px;padding:9px 11px;min-height:40px}.label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#566159}.textarea{min-height:92px;resize:vertical}.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}
-      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:none}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97)}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-handle{position:absolute;right:11px;top:11px;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:5px 8px;font-size:14px;cursor:grab}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}
+      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book-wrap.drop-target .book{outline:3px solid rgba(255,255,255,.9);outline-offset:4px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:pan-y}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97);touch-action:none}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-order-controls{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:3px;z-index:2}.book-order-button,.book-handle{width:28px;height:28px;border:0;background:rgba(255,255,255,.17);color:#fff;border-radius:8px;padding:0;display:grid;place-items:center;font-size:15px;font-weight:900}.book-order-button:hover,.book-handle:hover{background:rgba(255,255,255,.3)}.book-order-button:disabled{opacity:.3;cursor:not-allowed}.book-handle{cursor:grab;touch-action:none}.book-handle:active{cursor:grabbing}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}
       .project-hub{max-width:1100px;margin:0 auto;padding:10px 0 48px}.hub-hero{padding:34px;background:linear-gradient(135deg,#fff,#eef5f0);border-radius:26px;border:1px solid var(--line);margin-bottom:22px}.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.hub-tile{min-height:190px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:var(--shadow);transition:transform .16s,border-color .16s}.hub-tile:hover{transform:translateY(-3px);border-color:#a8c8b9}.hub-icon{width:48px;height:48px;border-radius:15px;background:var(--brand2);display:grid;place-items:center;font-size:22px;margin-bottom:22px}.hub-tile strong{font-size:20px;display:block}.hub-tile span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.back-library{border:0;background:transparent;color:var(--brand);font-weight:800;padding:0;margin-bottom:14px}
       .hero{padding:22px;background:linear-gradient(135deg,#fff 0%,#f3f6ff 100%);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
       .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
@@ -26,7 +26,7 @@
       .cond-table{width:100%;border-collapse:collapse;font-size:12px}.cond-table th,.cond-table td{border:1px solid var(--line);padding:6px 8px}.cond-table th{background:#f5f7fa;font-weight:800}.cond-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}
       .method-textarea{min-height:72px;line-height:1.45;padding:8px 10px;font-size:12px;resize:vertical}.warning-chip{display:inline-block;margin-top:6px;padding:4px 8px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:8px;font-size:11px;font-weight:700}.method-block{width:100%;border:1px solid #d8e4dd;border-left:4px solid var(--brand);border-radius:11px;background:#f7faf8;padding:10px 12px;text-align:left;white-space:pre-wrap;line-height:1.55;font-size:13px;font-weight:700}.method-block:hover{background:var(--brand2);border-color:#9fc6b4}.method-block .warning-chip{display:block;width:max-content;max-width:100%}.method-editor-actions{display:flex;justify-content:flex-end;margin-top:8px}
       .summary-block-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.summary-view-block{border:1px solid #dce6e0;border-radius:13px;background:#f8fbf9;padding:12px 14px;min-height:86px}.summary-view-block strong{display:block;color:var(--brand);font-size:10px;letter-spacing:.08em;margin-bottom:5px}.summary-view-block p{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.55}.summary-view-block.empty-block p{color:var(--muted);font-style:italic}.protocol-viewing .step-group{border-color:#ceddd4;box-shadow:0 5px 18px rgba(31,42,38,.055)}.protocol-viewing .step-head{background:#eef5f1;padding:14px 16px}.step-static-title{flex:1;min-width:120px;font-size:15px;font-weight:900}.step-static-timing{padding:4px 9px;border-radius:99px;background:#fff;color:var(--muted);font-size:11px;font-weight:800}.readonly-panel{background:#fcfdfc}.readonly-panel .proto-panel-head{background:#f3f7f5}.readonly-panel input.field{border:0;background:transparent;padding:2px 0;min-height:auto}.readonly-panel .delete-col{display:none}.readonly-panel .panel-note-static{cursor:default}.readonly-panel .panel-note-static:hover{background:#f6f9f7;border-color:#dfe7e2}
-      .diff-changed{color:var(--danger);font-weight:700}.diff-del,.diff-removed{color:var(--danger);text-decoration:line-through}.diff-removed-row{background:#fff2f2;color:var(--danger);text-decoration:line-through}.diff-removed-block{border:1px solid #f3b5b5;border-radius:14px;background:#fff7f7;padding:12px;color:var(--danger)}.diff-added-block{border-color:#f3b5b5}.diff-added-block input,.diff-added-block textarea{color:var(--danger);font-weight:700}
+      .compare-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:13px 16px;border:1px solid #b9d7c7;border-radius:14px;background:linear-gradient(135deg,#f4fbf7,#fff);box-shadow:0 6px 18px rgba(31,107,79,.06)}.compare-title{font-size:13px;font-weight:900}.compare-title span{color:var(--muted);font-weight:700}.compare-legend,.compare-stats{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.diff-legend,.diff-badge,.compare-stat{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:4px 9px;font-size:10px;font-weight:900}.diff-legend.added,.diff-badge.added{background:#dcfce7;color:#166534;border:1px solid #86d8a4}.diff-legend.modified,.diff-badge.modified{background:#fff3cd;color:#805b00;border:1px solid #edcc63}.diff-legend.removed,.diff-badge.removed{background:#fee2e2;color:#a91d1d;border:1px solid #ef9a9a}.compare-stat{background:#fff;border:1px solid var(--line);color:#566159}.diff-changed{display:inline;border-radius:4px;background:#dcfce7;color:#166534;font-weight:850;box-shadow:inset 0 -2px 0 #4caf72;padding:1px 2px}.diff-del,.diff-removed{display:inline;border-radius:4px;background:#fee2e2;color:#b42323;font-weight:750;text-decoration:line-through;text-decoration-thickness:2px;padding:1px 2px}.diff-removed-row{background:#fff0f0;color:#b42323;text-decoration:line-through}.diff-removed-block{border:2px solid #eda2a2;border-radius:14px;background:#fff3f3;padding:12px;color:#a91d1d}.diff-added-block{border:2px solid #72c991!important;background:#f1fff6!important;box-shadow:0 0 0 3px rgba(76,175,114,.1)}.diff-modified-block{border:2px solid #e1b83f!important;box-shadow:0 0 0 3px rgba(225,184,63,.12)}.diff-added-block input,.diff-added-block textarea{color:#166534;font-weight:800}.diff-panel-added>.proto-panel{border:2px solid #72c991;background:#f5fff8}.diff-panel-modified>.proto-panel{border:2px solid #e1b83f;background:#fffdf4}.diff-panel-label{display:flex;justify-content:flex-end;margin:0 0 5px}.diff-field{min-height:34px;border:1px solid #e5c766;border-radius:9px;background:#fffdf2;padding:6px 9px;font-size:12px;line-height:1.45}
       .deviation-highlight{background:var(--deviation-bg);outline:2px solid #ffcc80}.result-highlight{background:var(--result-bg);outline:2px solid #a5d6a7}.deviation-highlight.result-highlight{background:linear-gradient(135deg,var(--deviation-bg) 0 50%,var(--result-bg) 50% 100%);outline-color:#d6b36a}
       .condition-label-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid rgba(0,0,0,.08)}.condition-label-chip .dot{width:8px;height:8px;border-radius:50%}.condition-label-chip .btn{min-height:18px;padding:0 2px}.condition-label-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.condition-label-item{border:1px solid var(--line);border-left:4px solid var(--label-color);border-radius:12px;padding:10px 12px;background:#fff}.condition-label-item p{margin:5px 0 0;color:var(--muted);font-size:12px;white-space:pre-wrap}
       .note-records{display:flex;flex-direction:column;gap:7px;margin-top:8px}.note-record{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}.note-record.deviation{border-color:#ffcc80}.note-record.result{border-color:#a5d6a7}.note-record textarea{min-height:58px}.auto-deviation{margin-top:8px;padding:7px 9px;border-radius:9px;background:#fff3e0;color:#9a5a00;font-size:11px;font-weight:800}.panel-label-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:6px;padding:6px 7px;border:1px solid #dce7e1;border-radius:9px;background:#f7faf8}.panel-label-bar select{min-height:30px;width:auto;padding:3px 7px;font-size:11px}.execution-detail{margin:5px 0 0 0;border:1px solid #d2a94d;border-left:5px solid #d8921b;border-radius:9px;background:#fff8df;color:#4b3815;padding:8px 10px;text-align:left;font-size:13px;line-height:1.5}.execution-detail strong{display:block;color:#9b5b00;font-size:10px;letter-spacing:.06em;margin-bottom:2px}.execution-detail-editor{margin-top:5px;padding:8px;border:1px solid #d2a94d;border-radius:9px;background:#fffdf5}.execution-detail-editor textarea{min-height:66px;margin-bottom:5px}.execution-summary{position:sticky;top:76px;z-index:12;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid #cfe0d7;border-radius:14px;background:rgba(250,253,251,.96);backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(31,42,38,.08)}.execution-progress{flex:1;min-width:180px;height:8px;border-radius:99px;background:#e3ebe6;overflow:hidden}.execution-progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),#61a681);border-radius:inherit;transition:width .2s}.execution-stat{font-size:12px;font-weight:800;white-space:nowrap}.changed-filter{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}.run-card{padding:10px 14px;background:#f8fbf9;border-bottom:1px solid var(--line)}.run-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.run-status{display:flex;gap:4px;flex-wrap:wrap}.run-status button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:800}.run-status button.active{background:var(--brand);border-color:var(--brand);color:#fff}.run-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.run-field{border:1px solid var(--line);background:#fff;border-radius:11px;padding:8px}.run-field label{font-size:11px;font-weight:900;display:block;margin-bottom:4px}.run-field textarea{min-height:66px;border:0;padding:0;resize:vertical;line-height:1.45}.run-field.planned{border-color:#efcf8b;background:#fffdf7}.run-field.actual{border-color:#9fc6b4}.run-field.observation{border-color:#aed6b0;background:#fbfefb}.status-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;background:#edf2ef;color:var(--muted);font-size:10px;font-weight:900}.status-chip.running{background:#fff3d8;color:#946100}.status-chip.done{background:#e3f3e6;color:#2f7441}.status-chip.skipped{background:#f0f0f0;color:#777}.variation-count{font-size:11px;font-weight:800;color:#9a5a00}
@@ -39,6 +39,9 @@
       .before-starting-card{border-color:#c7d7cf;background:linear-gradient(135deg,#fff,#f5faf7)}.preparation-list{display:flex;flex-direction:column;gap:10px}.preparation-item{border:1px solid #a9c6b7;border-radius:13px;background:#fff;padding:11px;box-shadow:0 5px 16px rgba(31,107,79,.06)}.preparation-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.preparation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preparation-grid .full{grid-column:1/-1}.preparation-actions{display:flex;justify-content:flex-end;margin-top:9px}.preparation-block{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:6px;align-items:start}.preparation-summary{width:100%;border:1px solid #d6e3dc;border-left:4px solid var(--brand);border-radius:12px;padding:11px 12px;background:#fff;text-align:left;box-shadow:0 4px 14px rgba(31,107,79,.05)}.preparation-summary:hover{background:#f1f8f4;border-color:#9fc6b4}.preparation-summary h4,.preparation-static h4{margin:0 0 7px;font-size:13px}.preparation-summary p,.preparation-static p{margin:5px 0;white-space:pre-wrap;font-size:12px}.preparation-summary strong,.preparation-static strong{color:var(--brand);font-size:10px;letter-spacing:.05em}.preparation-static{border:1px solid #dce6e0;border-radius:12px;padding:10px;background:#fff}
       .between-step-editor.note-mode{border-color:#9fbdaE;background:#f3f8f5}.between-step-editor .field{font-weight:780}.share-summary{padding:10px 12px;border:1px solid #d6e3dc;border-radius:12px;background:#f6faf8}.share-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.share-mode-option{display:flex;gap:8px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}.share-mode-option:has(input:checked){border-color:#7fb19a;background:#eef7f2}.share-mode-option strong{display:block;font-size:13px}.share-mode-option span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.share-error{color:var(--danger);font-size:12px;font-weight:750}
       .protocol-import-list{display:flex;flex-direction:column;gap:9px}.protocol-import-card{border:1px solid #cdded5;border-radius:14px;background:#f8fbf9;padding:11px}.protocol-import-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.protocol-import-head strong{font-size:12px;color:var(--brand)}.protocol-import-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.protocol-import-steps{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dashed #cad9d1}.protocol-import-steps label{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700}.step-source-chip{display:inline-flex;align-items:center;max-width:170px;padding:3px 7px;border-radius:99px;background:#e6f1eb;color:#376a53;font-size:10px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.step-order-actions{display:inline-flex;gap:3px}.step-order-actions .btn{min-height:30px;padding:3px 8px}.protocol-import-empty{padding:12px;border:1px dashed #cbd8d1;border-radius:11px;color:var(--muted);font-size:12px;text-align:center}
+      .note-conclusion-section{margin-top:4px;border:1px solid #cdded5;border-radius:15px;background:linear-gradient(135deg,#fbfdfc,#f3f8f5);overflow:hidden}.note-conclusion-section-head{padding:11px 14px;border-bottom:1px solid #dce7e1;font-size:13px;font-weight:900}.note-conclusion-section .note-conclusion-grid{padding:13px}.note-protocol-workspace.no-overview{grid-template-columns:1fr}.note-step-overview{top:78px}.note-overview-list{display:flex;flex-direction:column;gap:7px;margin-top:13px}.note-overview-item{position:relative;border:1px solid #dbe5df;border-radius:11px;background:#f7faf8;transition:border-color .15s,background .15s,transform .15s}.note-overview-item.drop-target{border-color:#3f9270;background:#e9f6ef;transform:translateX(3px);box-shadow:0 0 0 2px rgba(63,146,112,.12)}.note-overview-main{width:100%;border:0;background:transparent;padding:9px 76px 9px 10px;text-align:left}.note-overview-main:hover{background:var(--brand2);border-radius:10px}.note-overview-main strong{display:block;font-size:12px}.note-overview-main span{display:block;margin-top:2px;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.note-overview-controls{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:2px}.note-overview-control,.note-overview-handle{width:22px;height:25px;border:0;border-radius:7px;background:#fff;color:#607068;padding:0;display:grid;place-items:center;font-size:12px;font-weight:900}.note-overview-control:hover,.note-overview-handle:hover{background:#dfeee6;color:var(--brand)}.note-overview-handle{cursor:grab;touch-action:none}.note-overview-handle:active{cursor:grabbing}.note-overview-item.dragging{opacity:.55}.note-overview-help{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);color:var(--muted);font-size:9px;line-height:1.45}
+      .note-mode-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border:1px solid #a9cbbb;border-left:5px solid var(--brand);border-radius:16px;background:linear-gradient(135deg,#f4fbf7,#fff);box-shadow:0 8px 24px rgba(31,107,79,.09)}.note-mode-copy{min-width:0}.note-mode-copy .eyebrow{margin-bottom:2px}.note-mode-copy strong{display:block;font-size:14px}.note-mode-copy span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.note-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:5px;min-width:250px;padding:5px;border:1px solid #c9d9d1;border-radius:13px;background:#e8f0ec}.note-mode-switch button{min-height:44px;border:0;border-radius:9px;background:transparent;color:#637169;padding:7px 16px;font-size:13px;font-weight:900;transition:background .15s,color .15s,box-shadow .15s,transform .15s}.note-mode-switch button:hover{background:rgba(255,255,255,.65);color:var(--brand)}.note-mode-switch button.active{background:var(--brand);color:#fff;box-shadow:0 5px 14px rgba(31,107,79,.24);transform:translateY(-1px)}.note-mode-switch .mode-icon{margin-right:6px;font-size:15px}
+      .note-viewing .card>.card-pad>.row:first-child .field,.note-viewing .card>.card-pad>div>.field[readonly],.note-viewing .note-hypothesis .field[readonly],.note-viewing .note-conclusion .field[readonly]{border-color:transparent;background:#f7faf8;box-shadow:none;resize:none}.note-viewing .note-conclusion-section{background:#fff}.note-viewing .step-group{border-color:#bdd3c7;box-shadow:0 7px 24px rgba(31,107,79,.08)}.note-viewing .step-head{background:#eaf4ee}.note-viewing .run-card.view{background:#fffaf0;border-bottom-color:#ead9ad}.note-viewing .run-card.view .run-fields{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.note-viewing .run-card.view textarea{min-height:44px;background:transparent;resize:none}.note-viewing .execution-detail{cursor:default}.note-viewing .auto-deviation{border:1px solid #f0c36c;font-size:12px}.note-viewing .panel-label-bar:empty{display:none}
       .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
       .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
       .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}
@@ -48,8 +51,8 @@
       .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-before-starting{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5mm;margin:0 0 5mm}.print-before-starting>.print-kicker{grid-column:1/-1}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
       .print-callout.critical{border-left-color:#d64444;background:#fff1f1;color:#b42323}
       @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
-      @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
-      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.summary-block-grid{grid-template-columns:1fr}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid,.text-editor-fields,.protocol-import-fields{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
+      @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}.note-overview-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.note-step-overview{position:static}.note-overview-help{display:block}}
+      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.summary-block-grid{grid-template-columns:1fr}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid,.text-editor-fields,.protocol-import-fields{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}.note-mode-bar{align-items:stretch;flex-direction:column;gap:10px;padding:13px}.note-mode-switch{width:100%;min-width:0}.note-mode-switch button{min-height:46px;padding:7px 10px}}
       @media(max-width:460px){.bookshelf{grid-template-columns:1fr}.book,.add-book{min-height:205px}}
     </style>
   </head>
@@ -326,9 +329,9 @@
         );
       }
 
-      function PanelHeader({ panel, onChange, readOnly, onDelete }) {
+      function PanelHeader({ panel, onChange, readOnly, diffBase, onDelete }) {
         return <div className="proto-panel-head">
-          {readOnly ? <h4>{panel.title || defaultPanelTitle(panel.type)}</h4> : <input className="panel-title-input" value={panel.title || ""} onChange={e => onChange({ ...panel, title: e.target.value })} placeholder={defaultPanelTitle(panel.type)} aria-label={`${defaultPanelTitle(panel.type)} 패널 이름`} />}
+          {readOnly ? <h4>{diffBase ? diffText(diffBase.title || defaultPanelTitle(panel.type), panel.title || defaultPanelTitle(panel.type)) : (panel.title || defaultPanelTitle(panel.type))}</h4> : <input className="panel-title-input" value={panel.title || ""} onChange={e => onChange({ ...panel, title: e.target.value })} placeholder={defaultPanelTitle(panel.type)} aria-label={`${defaultPanelTitle(panel.type)} 패널 이름`} />}
           {!readOnly && onDelete && <button type="button" className="panel-close" onClick={onDelete} aria-label={`${panel.title || defaultPanelTitle(panel.type)} 패널 삭제`} title="패널 삭제">×</button>}
         </div>;
       }
@@ -362,7 +365,7 @@
         const missingAmounts = rows.filter(r => String(r.material || "").trim() && !isSampleMaterial(r.material) && !String(r.volume || "").trim());
         return (
           <div className={`proto-panel reagent-panel ${readOnly ? "readonly-panel" : ""}`}>
-            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="reagent-table">
                 <thead><tr><th className="material-col">Material</th><th className="amount-col">{readOnly ? (panel.unit || "uL") : <input className="reagent-unit-input" value={panel.unit || ""} onChange={e => onChange({ ...panel, unit: e.target.value })} aria-label="시약 부피 단위" placeholder="단위" />}</th><th className="delete-col"></th></tr></thead>
@@ -407,7 +410,7 @@
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
         return (
           <div className={`proto-panel ${readOnly ? "readonly-panel" : ""}`}>
-            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="cond-table">
                 <thead><tr><th>온도(°C)</th><th>시간</th><th>비고</th><th></th></tr></thead>
@@ -441,7 +444,7 @@
         const showBlock = readOnly || (!editing && hasContent);
         return (
           <div className={`proto-panel ${readOnly ? "readonly-panel" : ""}`}>
-            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />
             <div className="proto-panel-body">
               {readOnly && diffBase ? (
                 <div className="small" style={{ lineHeight: 1.45 }}>{diffText(diffBase.content, panel.content)}</div>
@@ -529,17 +532,17 @@
               {editingTextId === line.id && !readOnly ? <div className="text-editor-fields"><TextCalloutSelect value={line.calloutType} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, calloutType: e.target.value } : t) }))} onBlur={e => textEditorBlur(e, () => finishTextEdit(row, line))} /><input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={e => textEditorBlur(e, () => finishTextEdit(row, line))} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /></div> : <TextContentBlock text={line} onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingTextId(line.id); } }} />}
               {!readOnly && <Button className="ghost danger" aria-label="텍스트 줄 삭제" onClick={() => { updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) })); if (activeTextId === line.id) setActiveTextId(null); }}>×</Button>}
             </div>
-            {noteMode && (editingDetailId === line.id ? <div className="execution-detail-editor">
+            {noteMode && (!readOnly && editingDetailId === line.id ? <div className="execution-detail-editor">
               <label className="label">실제로 어떻게 수행했는지</label>
               <textarea className="field" autoFocus value={line.detail || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, detail: e.target.value } : t) }))} placeholder="순서, 실제 시간·온도, 실수나 조정 사항 등을 기록하세요." />
               <Button className="soft" onClick={() => { setEditingDetailId(null); setActiveTextId(null); }}>메모 완료</Button>
-            </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(line.id); setEditingDetailId(line.id); }}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : null)}
-            {noteMode && (editingTextResultId === line.id ? <div className="execution-detail-editor result">
+            </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingDetailId(line.id); } }}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : null)}
+            {noteMode && (!readOnly && editingTextResultId === line.id ? <div className="execution-detail-editor result">
               <label className="label">결과 기록</label>
               <textarea className="field" autoFocus value={line.result || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, result: e.target.value } : t) }))} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
               <Button className="soft" onClick={() => { setEditingTextResultId(null); setActiveTextId(null); }}>메모 완료</Button>
-            </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(line.id); setEditingTextResultId(line.id); }}><strong>RESULT</strong>{line.result}</button> : null)}
-            {noteMode && activeTextId === line.id && editingDetailId !== line.id && editingTextResultId !== line.id && <div className="text-record-actions">
+            </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingTextResultId(line.id); } }}><strong>RESULT</strong>{line.result}</button> : null)}
+            {noteMode && !readOnly && activeTextId === line.id && editingDetailId !== line.id && editingTextResultId !== line.id && <div className="text-record-actions">
               {!line.detail && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingDetailId(line.id); }}>+ 실제 수행 메모</Button>}
               {!line.result && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingTextResultId(line.id); }}>+ 결과 기록</Button>}
             </div>}
@@ -547,24 +550,29 @@
         };
         const baseSg = diffBase?.stepGroups ? diffBase.stepGroups.find(s => s.id === stepGroup.id) : diffBase;
         const comparing = readOnly && Boolean(diffBase);
+        const stepAdded = comparing && !baseSg;
+        const stepModified = comparing && Boolean(baseSg) && JSON.stringify(baseSg) !== JSON.stringify(stepGroup);
         const run = stepRun || { status: "pending", planned: "", actual: "", observation: "" };
+        const hasRunContent = run.status !== "pending" || Boolean(run.planned || run.actual || run.observation);
         const stepVariationCount = (deviations || []).filter(d => d.stepGroupId === stepGroup.id).length + [...(autoDeviationKeys || [])].filter(k => k.startsWith(`${stepGroup.id}:`)).length;
         const currentPanelIds = new Set((stepGroup.panelRows || []).flatMap(pr => pr.panels).map(p => p.id));
         const removedPanels = readOnly && baseSg ? (baseSg.panelRows || []).flatMap(pr => pr.panels).filter(p => !currentPanelIds.has(p.id)) : [];
         return (
-          <div id={`step-${stepGroup.id}`} className={`step-group ${comparing && !baseSg ? "diff-added-block" : ""}`}>
+          <div id={`step-${stepGroup.id}`} className={`step-group ${stepAdded ? "diff-added-block" : ""} ${stepModified ? "diff-modified-block" : ""}`.trim()}>
             <div className="step-head">
               <span className={`step-num ${comparing && baseSg?.order !== stepGroup.order ? "diff-changed" : ""}`}>{stepGroup.order}</span>
+              {stepAdded && <span className="diff-badge added">추가된 단계</span>}
+              {stepModified && <span className="diff-badge modified">수정된 단계</span>}
               {comparing ? (
-                <div className="field grow" style={{ minWidth: 120 }}>{diffText(baseSg?.title, stepGroup.title)}</div>
+                <div className="diff-field grow" style={{ minWidth: 120 }}>{diffText(baseSg?.title, stepGroup.title)}</div>
               ) : readOnly ? (
                 <div className="step-static-title">{stepGroup.title || `단계 ${stepGroup.order}`}</div>
               ) : (
                 <input className="field grow" value={stepGroup.title || (noteMode ? `단계 ${stepGroup.order}` : "")} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, title: e.target.value })} placeholder="단계 제목" style={{ minWidth: 120 }} />
               )}
-              {!comparing && (readOnly ? (stepGroup.timing && <span className="step-static-timing">{stepGroup.timing}</span>) : <input className="field step-timing" value={stepGroup.timing || ""} onChange={e => onChange({ ...stepGroup, timing: e.target.value })} placeholder="소요 시간" aria-label="단계 소요 시간" />)}
+              {comparing ? ((stepGroup.timing || baseSg?.timing) && <span className="step-static-timing">시간 · {diffText(baseSg?.timing, stepGroup.timing)}</span>) : (readOnly ? (stepGroup.timing && <span className="step-static-timing">{stepGroup.timing}</span>) : <input className="field step-timing" value={stepGroup.timing || ""} onChange={e => onChange({ ...stepGroup, timing: e.target.value })} placeholder="소요 시간" aria-label="단계 소요 시간" />)}
               {noteMode && stepGroup.sourceProtocolName && <span className="step-source-chip" title={stepGroup.sourceProtocolName}>{stepGroup.sourceProtocolName}</span>}
-              {noteMode && <span className="step-order-actions"><Button className="ghost" aria-label={`${stepGroup.order}단계 위로 이동`} onClick={onMoveUp} disabled={!onMoveUp}>↑</Button><Button className="ghost" aria-label={`${stepGroup.order}단계 아래로 이동`} onClick={onMoveDown} disabled={!onMoveDown}>↓</Button></span>}
+              {noteMode && !readOnly && <span className="step-order-actions"><Button className="ghost" aria-label={`${stepGroup.order}단계 위로 이동`} onClick={onMoveUp} disabled={!onMoveUp}>↑</Button><Button className="ghost" aria-label={`${stepGroup.order}단계 아래로 이동`} onClick={onMoveDown} disabled={!onMoveDown}>↓</Button></span>}
               {noteMode && <span className={`status-chip ${run.status}`}>{run.status === "running" ? "진행 중" : run.status === "done" ? "완료" : run.status === "skipped" ? "건너뜀" : "대기"}</span>}
               {annotations?.length > 0 && annotations.map(a => {
                 const label = conditionLabels?.find(l => l.id === a.labelId);
@@ -579,20 +587,20 @@
               )}
               {!readOnly && <Button className="ghost danger" onClick={() => onChange(null)}>단계 삭제</Button>}
             </div>
-            {noteMode && <div className="run-card">
+            {noteMode && (!readOnly || hasRunContent) && <div className={`run-card ${readOnly ? "view" : ""}`}>
               <div className="run-card-head">
                 <div className="run-status">
-                  {[["pending","대기"],["running","진행 중"],["done","완료"],["skipped","건너뜀"]].map(([value,label]) => <button type="button" key={value} className={run.status === value ? "active" : ""} onClick={() => onPatchRun?.({ status: value, completedAt: value === "done" ? Date.now() : null })}>{label}</button>)}
+                  {readOnly ? <span className={`status-chip ${run.status}`}>{run.status === "running" ? "진행 중" : run.status === "done" ? "완료" : run.status === "skipped" ? "건너뜀" : "대기"}</span> : [["pending","대기"],["running","진행 중"],["done","완료"],["skipped","건너뜀"]].map(([value,label]) => <button type="button" key={value} className={run.status === value ? "active" : ""} onClick={() => onPatchRun?.({ status: value, completedAt: value === "done" ? Date.now() : null })}>{label}</button>)}
                 </div>
                 <div className="row">
                   {stepVariationCount > 0 && <span className="variation-count">variation {stepVariationCount}개</span>}
-                  <Button className="soft" onClick={() => onPatchRun?.({ actual: run.planned.trim() || "프로토콜대로 수행", status: run.status === "pending" ? "running" : run.status })}>계획대로 수행</Button>
+                  {!readOnly && <Button className="soft" onClick={() => onPatchRun?.({ actual: run.planned.trim() || "프로토콜대로 수행", status: run.status === "pending" ? "running" : run.status })}>계획대로 수행</Button>}
                 </div>
               </div>
               <div className="run-fields">
-                <div className="run-field planned"><label>계획한 variation</label><textarea className="field" value={run.planned || ""} onChange={e => onPatchRun?.({ planned: e.target.value })} placeholder="이 단계에서 바꿀 조건만 적기" /></div>
-                <div className="run-field actual"><label>실제로 수행한 내용</label><textarea className="field" value={run.actual || ""} onChange={e => onPatchRun?.({ actual: e.target.value, status: run.status === "pending" ? "running" : run.status })} placeholder="계획과 달랐던 점 또는 실제 조건" /></div>
-                <div className="run-field observation"><label>관찰 · 결과</label><textarea className="field" value={run.observation || ""} onChange={e => onPatchRun?.({ observation: e.target.value })} placeholder="색, 침전, 수율, 사진 번호 등" /></div>
+                {(!readOnly || run.planned) && <div className="run-field planned"><label>계획한 variation</label><textarea className="field" value={run.planned || ""} readOnly={readOnly} onChange={e => onPatchRun?.({ planned: e.target.value })} placeholder="이 단계에서 바꿀 조건만 적기" /></div>}
+                {(!readOnly || run.actual) && <div className="run-field actual"><label>실제로 수행한 내용</label><textarea className="field" value={run.actual || ""} readOnly={readOnly} onChange={e => onPatchRun?.({ actual: e.target.value, status: run.status === "pending" ? "running" : run.status })} placeholder="계획과 달랐던 점 또는 실제 조건" /></div>}
+                {(!readOnly || run.observation) && <div className="run-field observation"><label>관찰 · 결과</label><textarea className="field" value={run.observation || ""} readOnly={readOnly} onChange={e => onPatchRun?.({ observation: e.target.value })} placeholder="색, 침전, 수율, 사진 번호 등" /></div>}
               </div>
             </div>}
             {(stepGroup.panelRows || []).map(row => (
@@ -603,6 +611,8 @@
                 {(row.panels || []).map((panel, pi) => {
                   const basePanel = baseSg?.panelRows?.flatMap(pr => pr.panels)?.find(p => p.id === panel.id);
                   const panelDiffBase = comparing ? (basePanel || (panel.type === "reagent" || panel.type === "condition" ? { rows: [] } : { content: "", warnings: "" })) : basePanel;
+                  const panelAdded = comparing && !basePanel;
+                  const panelModified = comparing && Boolean(basePanel) && JSON.stringify(basePanel) !== JSON.stringify(panel);
                   const devKey = `${stepGroup.id}:${panel.id}`;
                   const hasDev = deviationKeys?.has(devKey);
                   const hasRes = resultKeys?.has(devKey);
@@ -611,13 +621,15 @@
                   const panelResults = (results || []).filter(r => r.stepGroupId === stepGroup.id && r.panelId === panel.id);
                   const appliedPanelAnnotations = (panelAnnotations || []).filter(a => a.stepGroupId === stepGroup.id && a.panelId === panel.id);
                   return (
-                    <div key={panel.id} className={`panel-instance ${panel.type === "reagent" ? "reagent" : ""} ${hasDev || hasAutoDev ? "deviation-highlight" : ""} ${hasRes ? "result-highlight" : ""}`.trim()}>
+                    <div key={panel.id} className={`panel-instance ${panel.type === "reagent" ? "reagent" : ""} ${hasDev || hasAutoDev ? "deviation-highlight" : ""} ${hasRes ? "result-highlight" : ""} ${panelAdded ? "diff-panel-added" : ""} ${panelModified ? "diff-panel-modified" : ""}`.trim()}>
+                      {panelAdded && <div className="diff-panel-label"><span className="diff-badge added">추가된 패널</span></div>}
+                      {panelModified && <div className="diff-panel-label"><span className="diff-badge modified">수정된 패널</span></div>}
                       {noteMode && <div className="panel-label-bar">
                         {appliedPanelAnnotations.map(a => {
                           const label = conditionLabels?.find(l => l.id === a.labelId);
                           return label ? <span key={a.labelId} className="condition-label-chip" style={{ background: `${label.color}22` }}><span className="dot" style={{ background: label.color }} />{label.name}<button type="button" className="btn ghost" aria-label={`${label.name} 패널 라벨 제거`} onClick={() => onRemovePanelAnnotation?.(stepGroup.id, panel.id, label.id)}>×</button></span> : null;
                         })}
-                        {conditionLabels?.length > 0 && <select className="field" value="" onChange={e => { if (e.target.value) onAnnotatePanel?.(stepGroup.id, panel.id, e.target.value); }} aria-label="패널 조건 라벨 추가"><option value="">+ 조건 라벨</option>{conditionLabels.filter(l => !appliedPanelAnnotations.some(a => a.labelId === l.id)).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>}
+                        {conditionLabels?.length > 0 && onAnnotatePanel && <select className="field" value="" onChange={e => { if (e.target.value) onAnnotatePanel?.(stepGroup.id, panel.id, e.target.value); }} aria-label="패널 조건 라벨 추가"><option value="">+ 조건 라벨</option>{conditionLabels.filter(l => !appliedPanelAnnotations.some(a => a.labelId === l.id)).map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select>}
                       </div>}
                       <ProtocolPanel
                         panel={panel}
@@ -629,22 +641,22 @@
                       {noteMode && (
                         <>
                           {hasAutoDev && <div className="auto-deviation">프로토콜과 다르게 편집된 패널</div>}
-                          <div className="inline-record-actions">
+                          {!readOnly && <div className="inline-record-actions">
                             <Button className="ghost" onClick={() => { const id = onDeviation?.(stepGroup.id, panel.id, "manual", summarizePanel(basePanel || panel), ""); if (id) setEditingPanelMemoId(id); }}>+ 실제 수행 메모</Button>
                             <Button className="ghost" onClick={() => { const id = onResult?.(stepGroup.id, panel.id, ""); if (id) setEditingPanelResultId(id); }}>+ 결과 기록</Button>
-                          </div>
+                          </div>}
                           {(panelDeviations.length > 0 || panelResults.length > 0) && <div className="record-block-list">
-                            {panelDeviations.map(d => { const memo = d.actual || d.planned || ""; return editingPanelMemoId === d.id || !memo ? <div key={d.id} className="execution-detail-editor">
+                            {panelDeviations.map(d => { const memo = d.actual || d.planned || ""; return !readOnly && (editingPanelMemoId === d.id || !memo) ? <div key={d.id} className="execution-detail-editor">
                               <div className="row between"><label className="label">실제 수행 메모</label><Button className="ghost danger" onClick={() => onDeleteDeviation?.(d.id)}>삭제</Button></div>
                               {d.original && <div className="tiny muted" style={{ marginBottom: 5 }}>프로토콜 기준 · {d.original}</div>}
                               <textarea className="field" autoFocus value={d.actual || ""} onChange={e => onPatchDeviation?.(d.id, { actual: e.target.value })} placeholder="이 패널에서 실제로 바꿔 수행한 내용을 기록하세요." />
                               <Button className="soft" onClick={() => setEditingPanelMemoId(null)}>메모 완료</Button>
-                            </div> : <button key={d.id} type="button" className="execution-detail" onClick={() => setEditingPanelMemoId(d.id)}><strong>ACTUAL EXECUTION</strong>{memo}</button>; })}
-                            {panelResults.map(r => editingPanelResultId === r.id || !r.content ? <div key={r.id} className="execution-detail-editor result">
+                            </div> : memo ? <button key={d.id} type="button" className="execution-detail" onClick={() => { if (!readOnly) setEditingPanelMemoId(d.id); }}><strong>ACTUAL EXECUTION</strong>{memo}</button> : null; })}
+                            {panelResults.map(r => !readOnly && (editingPanelResultId === r.id || !r.content) ? <div key={r.id} className="execution-detail-editor result">
                               <div className="row between"><label className="label">결과 기록</label><Button className="ghost danger" onClick={() => onDeleteResult?.(r.id)}>삭제</Button></div>
                               <textarea className="field" autoFocus value={r.content || ""} onChange={e => onPatchResult?.(r.id, { content: e.target.value })} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
                               <Button className="soft" onClick={() => setEditingPanelResultId(null)}>메모 완료</Button>
-                            </div> : <button key={r.id} type="button" className="execution-detail result" onClick={() => setEditingPanelResultId(r.id)}><strong>RESULT</strong>{r.content}</button>)}
+                            </div> : r.content ? <button key={r.id} type="button" className="execution-detail result" onClick={() => { if (!readOnly) setEditingPanelResultId(r.id); }}><strong>RESULT</strong>{r.content}</button> : null)}
                           </div>}
                         </>
                       )}
@@ -707,23 +719,99 @@
               {editingTextId === text.id && !readOnly ? <div className="text-editor-fields"><TextCalloutSelect value={text.calloutType} onChange={e => patchText(text.id, { calloutType: e.target.value })} onBlur={e => textEditorBlur(e, text)} /><input className="field" autoFocus value={text.content || ""} onChange={e => patchText(text.id, { content: e.target.value })} onBlur={e => textEditorBlur(e, text)} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="다음 단계로 넘어가기 전 설명" aria-label="단계 사이 텍스트" /></div> : <TextContentBlock text={text} onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingTextId(text.id); } }} />}
               {!readOnly && <Button className="ghost danger" onClick={() => removeText(text.id)} aria-label="단계 사이 텍스트 삭제">×</Button>}
             </div>
-            {noteMode && (editingDetailId === text.id ? <div className="execution-detail-editor">
+            {noteMode && (!readOnly && editingDetailId === text.id ? <div className="execution-detail-editor">
               <label className="label">실제로 어떻게 수행했는지</label>
               <textarea className="field" autoFocus value={text.detail || ""} onChange={e => patchText(text.id, { detail: e.target.value })} placeholder="단계 사이에 실제로 수행한 준비나 조정을 기록하세요." />
               <Button className="soft" onClick={() => { setEditingDetailId(null); setActiveTextId(null); }}>메모 완료</Button>
-            </div> : text.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(text.id); setEditingDetailId(text.id); }}><strong>ACTUAL EXECUTION</strong>{text.detail}</button> : null)}
-            {noteMode && (editingResultId === text.id ? <div className="execution-detail-editor result">
+            </div> : text.detail ? <button type="button" className="execution-detail" onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingDetailId(text.id); } }}><strong>ACTUAL EXECUTION</strong>{text.detail}</button> : null)}
+            {noteMode && (!readOnly && editingResultId === text.id ? <div className="execution-detail-editor result">
               <label className="label">결과 기록</label>
               <textarea className="field" autoFocus value={text.result || ""} onChange={e => patchText(text.id, { result: e.target.value })} placeholder="확인한 결과나 다음 단계에 영향을 준 관찰을 기록하세요." />
               <Button className="soft" onClick={() => { setEditingResultId(null); setActiveTextId(null); }}>메모 완료</Button>
-            </div> : text.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(text.id); setEditingResultId(text.id); }}><strong>RESULT</strong>{text.result}</button> : null)}
-            {noteMode && activeTextId === text.id && editingDetailId !== text.id && editingResultId !== text.id && <div className="text-record-actions">
+            </div> : text.result ? <button type="button" className="execution-detail result" onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingResultId(text.id); } }}><strong>RESULT</strong>{text.result}</button> : null)}
+            {noteMode && !readOnly && activeTextId === text.id && editingDetailId !== text.id && editingResultId !== text.id && <div className="text-record-actions">
               {!text.detail && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingDetailId(text.id); }}>+ 실제 수행 메모</Button>}
               {!text.result && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingResultId(text.id); }}>+ 결과 기록</Button>}
             </div>}
           </div>)}</div>}
           {!readOnly && <Button className="ghost" onClick={addText}>+ 단계 사이 텍스트</Button>}
         </div>;
+      }
+
+      function NoteStepOverview({ groups, onJump, onMove, onReorder, readOnly }) {
+        const [dragId, setDragId] = useState(null);
+        const [dropId, setDropId] = useState(null);
+        const dragRef = useRef(null);
+        const holdRef = useRef({ timer: null, active: false, draggedId: null, lastTargetId: null, startX: 0, startY: 0 });
+        const clearDrag = () => { dragRef.current = null; setDragId(null); setDropId(null); };
+        const clearHold = () => {
+          clearTimeout(holdRef.current.timer);
+          holdRef.current.active = false;
+          holdRef.current.lastTargetId = null;
+          setDragId(null);
+          setDropId(null);
+        };
+        const startDesktopDrag = (event, id) => {
+          if (readOnly) return;
+          dragRef.current = id;
+          setDragId(id);
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", id);
+        };
+        const startTouch = (event, id) => {
+          if (readOnly || event.pointerType === "mouse") return;
+          holdRef.current = {
+            timer: setTimeout(() => {
+              holdRef.current.active = true;
+              setDragId(id);
+              navigator.vibrate?.(30);
+            }, 480),
+            active: false, draggedId: id, lastTargetId: null,
+            startX: event.clientX, startY: event.clientY,
+          };
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        };
+        const moveTouch = event => {
+          if (readOnly) return;
+          if (!holdRef.current.active) {
+            if (Math.hypot(event.clientX - holdRef.current.startX, event.clientY - holdRef.current.startY) > 10) clearTimeout(holdRef.current.timer);
+            return;
+          }
+          event.preventDefault();
+          const targetId = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-note-step-id]")?.dataset?.noteStepId;
+          if (targetId && targetId !== holdRef.current.draggedId && targetId !== holdRef.current.lastTargetId) {
+            onReorder(holdRef.current.draggedId, targetId);
+            holdRef.current.lastTargetId = targetId;
+            setDropId(targetId);
+          }
+        };
+        return <aside className="protocol-overview note-step-overview">
+          <div className="eyebrow">EXPERIMENT OVERVIEW</div>
+          <h3>실험 단계</h3>
+          <div className="tiny muted">단계를 누르면 해당 위치로 이동합니다.</div>
+          <div className="note-overview-list">
+            {groups.map((group, index) => <div
+              key={group.id}
+              data-note-step-id={group.id}
+              className={`note-overview-item ${dragId === group.id ? "dragging" : ""} ${dropId === group.id ? "drop-target" : ""}`.trim()}
+              onDragEnter={() => { if (!readOnly && dragRef.current && dragRef.current !== group.id) setDropId(group.id); }}
+              onDragOver={event => { if (!readOnly) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; } }}
+              onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropId(null); }}
+              onDrop={event => { if (readOnly) return; event.preventDefault(); const fromId = event.dataTransfer.getData("text/plain") || dragRef.current; onReorder(fromId, group.id); clearDrag(); }}
+            >
+              <button type="button" className="note-overview-main" onClick={() => onJump(group.id)}>
+                <strong>{index + 1}. {group.title || "제목 없는 단계"}</strong>
+                <span>{group.sourceProtocolName || group.timing || "직접 추가한 단계"}</span>
+              </button>
+              {!readOnly && <div className="note-overview-controls">
+                <button type="button" className="note-overview-control" disabled={index === 0} onClick={() => onMove(group.id, -1)} aria-label={`${index + 1}단계 위로 이동`}>↑</button>
+                <button type="button" className="note-overview-handle" draggable onDragStart={event => startDesktopDrag(event, group.id)} onDragEnd={clearDrag} onPointerDown={event => startTouch(event, group.id)} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold} aria-label={`${index + 1}단계 순서 드래그`}>⠿</button>
+                <button type="button" className="note-overview-control" disabled={index === groups.length - 1} onClick={() => onMove(group.id, 1)} aria-label={`${index + 1}단계 아래로 이동`}>↓</button>
+              </div>}
+            </div>)}
+          </div>
+          {!readOnly && <div className="note-overview-help">데스크톱: ⠿ 드래그 · 모바일: ⠿를 길게 누른 뒤 이동</div>}
+        </aside>;
       }
 
       function BeforeStartingEditor({ protocol, patchProtocol, readOnly }) {
@@ -860,6 +948,18 @@
         const compareVersion = compareVersionId ? protocol.versions.find(v => v.id === compareVersionId) : null;
         const readOnly = viewMode !== "edit";
         const hasDraftChanges = JSON.stringify(version) !== JSON.stringify(savedVersion);
+        const compareStats = compareVersion ? (() => {
+          const currentIds = new Set(version.stepGroups.map(group => group.id));
+          const baseIds = new Set(compareVersion.stepGroups.map(group => group.id));
+          return {
+            added: version.stepGroups.filter(group => !baseIds.has(group.id)).length,
+            removed: compareVersion.stepGroups.filter(group => !currentIds.has(group.id)).length,
+            modified: version.stepGroups.filter(group => {
+              const base = compareVersion.stepGroups.find(item => item.id === group.id);
+              return base && JSON.stringify(base) !== JSON.stringify(group);
+            }).length,
+          };
+        })() : null;
 
         const patchProtocol = (fn) => updateProject(setStore, project.id, p => ({
           ...p, experiments: p.experiments.map(ex => ex.id !== experiment.id ? ex : {
@@ -938,6 +1038,11 @@
                 <Button className="primary" onClick={exportPdf}>PDF 저장</Button>
               </div>
             </div>
+            {viewMode === "compare" && (compareVersion ? <div className="compare-banner" role="status">
+              <div><div className="compare-title">현재 {version.label} <span>vs {compareVersion.label}</span></div><div className="tiny muted">초록색은 추가, 노란 테두리는 수정, 붉은색 취소선은 삭제된 내용입니다.</div></div>
+              <div className="compare-legend"><span className="diff-legend added">＋ 추가</span><span className="diff-legend modified">● 수정</span><span className="diff-legend removed">－ 삭제</span></div>
+              <div className="compare-stats"><span className="compare-stat">추가 단계 {compareStats.added}</span><span className="compare-stat">수정 단계 {compareStats.modified}</span><span className="compare-stat">삭제 단계 {compareStats.removed}</span></div>
+            </div> : <div className="empty">비교할 이전 버전을 선택하세요.</div>)}
             <Card title="프로토콜 개요" className="nature-card">
               {viewMode === "edit" ? <div className="card-pad nature-fields">
                 <div><label className="label">개요</label><textarea className="field textarea" value={protocol.summary || ""} onChange={e => patchProtocol(pr => ({ ...pr, summary: e.target.value }))} placeholder="무엇을 위한 프로토콜인지 요약하세요." /></div>
@@ -1089,6 +1194,8 @@
       function NoteEditor({ note, project, setStore, toast }) {
         const [showLabelModal, setShowLabelModal] = useState(false);
         const [showChangedOnly, setShowChangedOnly] = useState(false);
+        const [noteViewMode, setNoteViewMode] = useState("edit");
+        const noteReadOnly = noteViewMode === "view";
         const patchNote = (fn) => updateProject(setStore, project.id, p => ({
           ...p, notes: p.notes.map(n => n.id === note.id ? fn(n) : n),
         }));
@@ -1218,6 +1325,27 @@
             },
           };
         });
+        const reorderExecutionStep = (fromId, toId) => {
+          if (!fromId || !toId || fromId === toId) return;
+          patchNote(n => {
+            const groups = [...(n.execution.stepGroups || [])];
+            const fromIndex = groups.findIndex(group => group.id === fromId);
+            const toIndex = groups.findIndex(group => group.id === toId);
+            if (fromIndex < 0 || toIndex < 0) return n;
+            const [moved] = groups.splice(fromIndex, 1);
+            const targetIndex = groups.findIndex(group => group.id === toId);
+            groups.splice(targetIndex + (fromIndex < toIndex ? 1 : 0), 0, moved);
+            return { ...n, execution: { ...n.execution, stepGroups: groups.map((group, index) => ({ ...group, order: index + 1 })) } };
+          });
+        };
+        const jumpToExecutionStep = stepGroupId => {
+          if (showChangedOnly && !changedStepIds.has(stepGroupId)) {
+            setShowChangedOnly(false);
+            setTimeout(() => document.getElementById(`step-${stepGroupId}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+            return;
+          }
+          document.getElementById(`step-${stepGroupId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
         const finishedCount = executionGroups.filter(sg => ["done","skipped"].includes(getStepRun(sg.id).status)).length;
         const changedStepIds = new Set(executionGroups.filter(sg => {
           const run = getStepRun(sg.id);
@@ -1229,29 +1357,44 @@
         const visibleExecutionGroups = showChangedOnly ? executionGroups.filter(sg => changedStepIds.has(sg.id)) : executionGroups;
 
         return (
-          <div className="stack">
+          <div className={`stack ${noteReadOnly ? "note-viewing" : ""}`}>
             <div className="breadcrumb"><button type="button" onClick={() => window.__noteBack?.()}>← 노트 목록</button></div>
+            <div className="note-mode-bar">
+              <div className="note-mode-copy"><div className="eyebrow">NOTE MODE</div><strong>{noteReadOnly ? "보기 모드" : "편집 모드"}</strong><span>{noteReadOnly ? "과정과 variation 기록을 깔끔하게 확인합니다." : "프로토콜과 실행 기록을 추가하거나 수정합니다."}</span></div>
+              <div className="note-mode-switch" role="group" aria-label="실험 노트 표시 모드">
+                <button type="button" className={noteViewMode === "view" ? "active" : ""} aria-pressed={noteViewMode === "view"} onClick={() => setNoteViewMode("view")}><span className="mode-icon">▤</span>보기</button>
+                <button type="button" className={noteViewMode === "edit" ? "active" : ""} aria-pressed={noteViewMode === "edit"} onClick={() => setNoteViewMode("edit")}><span className="mode-icon">✎</span>편집</button>
+              </div>
+            </div>
             <Card title="실험 노트">
               <div className="card-pad stack">
                 <div className="row">
-                  <div style={{ flex: "0 0 140px" }}><label className="label">날짜</label><input type="date" className="field" value={note.date} onChange={e => patchNote(n => ({ ...n, date: e.target.value }))} /></div>
-                  <div className="grow"><label className="label">제목</label><input className="field" value={note.title} onChange={e => patchNote(n => ({ ...n, title: e.target.value }))} /></div>
+                  <div style={{ flex: "0 0 140px" }}><label className="label">날짜</label><input type="date" className="field" value={note.date} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, date: e.target.value }))} /></div>
+                  <div className="grow"><label className="label">제목</label><input className="field" value={note.title} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, title: e.target.value }))} /></div>
                 </div>
-                <div><label className="label">실험 목적</label><textarea className="field textarea" value={note.purpose} onChange={e => patchNote(n => ({ ...n, purpose: e.target.value }))} /></div>
-                <div className="note-hypothesis"><label className="label">이번 실험 가설</label><textarea className="field textarea" value={note.hypothesis || ""} onChange={e => patchNote(n => ({ ...n, hypothesis: e.target.value }))} placeholder="어떤 조건이 어떤 결과를 만들 것이라고 예상하는지 적으세요. 예: 코팅 농도를 높이면 세포 부착률이 증가할 것이다." /></div>
-                <div><label className="label">이번 실험의 공통 variation</label><textarea className="field textarea" value={note.conditionOverview} onChange={e => patchNote(n => ({ ...n, conditionOverview: e.target.value }))} placeholder="전체 단계에 공통으로 바꾼 샘플, 농도, 배치 조건만 적으세요." /></div>
+                <div><label className="label">실험 목적</label><textarea className="field textarea" value={note.purpose} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, purpose: e.target.value }))} /></div>
+                <div className="note-hypothesis"><label className="label">이번 실험 가설</label><textarea className="field textarea" value={note.hypothesis || ""} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, hypothesis: e.target.value }))} placeholder="어떤 조건이 어떤 결과를 만들 것이라고 예상하는지 적으세요. 예: 코팅 농도를 높이면 세포 부착률이 증가할 것이다." /></div>
+                <div><label className="label">이번 실험의 공통 variation</label><textarea className="field textarea" value={note.conditionOverview} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, conditionOverview: e.target.value }))} placeholder="전체 단계에 공통으로 바꾼 샘플, 농도, 배치 조건만 적으세요." /></div>
                 <div className="row between">
                   <label className="label" style={{ margin: 0 }}>조건 라벨</label>
-                  <Button className="soft" onClick={() => setShowLabelModal(true)}>+ 조건 라벨</Button>
+                  {!noteReadOnly && <Button className="soft" onClick={() => setShowLabelModal(true)}>+ 조건 라벨</Button>}
                 </div>
                 <div className="condition-label-list">
                   {note.conditionLabels.map(l => (
                     <div key={l.id} className="condition-label-item" style={{ "--label-color": l.color }}>
-                      <div className="row between"><span className="condition-label-chip" style={{ background: `${l.color}22` }}><span className="dot" style={{ background: l.color }} />{l.name}</span><button type="button" className="btn ghost danger" aria-label={`${l.name} 삭제`} onClick={() => patchNote(n => ({ ...n, conditionLabels: n.conditionLabels.filter(x => x.id !== l.id), execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => a.labelId !== l.id), panelAnnotations: (n.execution.panelAnnotations || []).filter(a => a.labelId !== l.id) } }))}>×</button></div>
+                      <div className="row between"><span className="condition-label-chip" style={{ background: `${l.color}22` }}><span className="dot" style={{ background: l.color }} />{l.name}</span>{!noteReadOnly && <button type="button" className="btn ghost danger" aria-label={`${l.name} 삭제`} onClick={() => patchNote(n => ({ ...n, conditionLabels: n.conditionLabels.filter(x => x.id !== l.id), execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => a.labelId !== l.id), panelAnnotations: (n.execution.panelAnnotations || []).filter(a => a.labelId !== l.id) } }))}>×</button>}</div>
                       {l.description && <p>{l.description}</p>}
                     </div>
                   ))}
                 </div>
+                <section className="note-conclusion-section">
+                  <div className="note-conclusion-section-head">실험 정리</div>
+                  <div className="note-conclusion-grid">
+                    <div className="note-conclusion result"><label className="label">실험 결과 요약</label><textarea className="field textarea" value={note.resultSummary || ""} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, resultSummary: e.target.value }))} placeholder="핵심 결과, 가설과의 일치 여부, 중요한 수치와 해석을 정리하세요." /></div>
+                    <div className="note-conclusion next"><label className="label">Next plan</label><textarea className="field textarea" value={note.nextPlan || ""} readOnly={noteReadOnly} onChange={e => patchNote(n => ({ ...n, nextPlan: e.target.value }))} placeholder="다음 실험에서 유지할 조건, 바꿀 조건, 확인할 항목과 우선순위를 적으세요." /></div>
+                  </div>
+                </section>
+                {!noteReadOnly && <>
                 <div className="divider" style={{ height: 1, background: "var(--line)" }} />
                 <div className="row between">
                   <div><label className="label" style={{ margin: 0 }}>불러올 프로토콜</label><div className="tiny muted">여러 프로토콜과 버전을 한 번에 선택할 수 있습니다.</div></div>
@@ -1291,69 +1434,59 @@
                   })}
                 </div>
                 <div className="row between"><span className="tiny muted">선택하지 않은 단계는 제외되며, 불러온 뒤에도 순서를 바꿀 수 있습니다.</span><Button className="primary" onClick={loadProtocols}>선택한 프로토콜 불러오기</Button></div>
+                </>}
               </div>
             </Card>
-            {executionGroups.length > 0 && <div className="execution-summary">
-              <span className="execution-stat">진행 {finishedCount}/{executionGroups.length}</span>
-              <div className="execution-progress" aria-label={`실험 진행률 ${executionGroups.length ? Math.round(finishedCount / executionGroups.length * 100) : 0}%`}><span style={{ width: `${executionGroups.length ? finishedCount / executionGroups.length * 100 : 0}%` }} /></div>
-              <span className="variation-count">변경 단계 {changedStepIds.size}</span>
-              <label className="changed-filter"><input type="checkbox" checked={showChangedOnly} onChange={e => setShowChangedOnly(e.target.checked)} /> 변경·기록 있는 단계만</label>
-            </div>}
-            {showChangedOnly && visibleExecutionGroups.length === 0 && <div className="empty">아직 variation이나 실행 기록이 없습니다.</div>}
-            {visibleExecutionGroups.map(sg => (
-              <React.Fragment key={sg.id}>
-              <StepGroupEditor
-                key={sg.id}
-                stepGroup={sg}
-                noteMode
-                stepRun={getStepRun(sg.id)}
-                onPatchRun={patch => patchStepRun(sg.id, patch)}
-                conditionLabels={note.conditionLabels}
-                annotations={note.execution.stepAnnotations.filter(a => a.stepGroupId === sg.id)}
-                panelAnnotations={(note.execution.panelAnnotations || []).filter(a => a.stepGroupId === sg.id)}
-                deviationKeys={deviationKeys}
-                resultKeys={resultKeys}
-                autoDeviationKeys={autoDeviationKeys}
-                deviations={note.execution.deviations}
-                results={note.execution.results}
-                onDeviation={markDeviation}
-                onResult={addResult}
-                onPatchDeviation={patchDeviation}
-                onDeleteDeviation={deleteDeviation}
-                onPatchResult={patchResult}
-                onDeleteResult={deleteResult}
-                onMoveUp={executionGroups.findIndex(group => group.id === sg.id) > 0 ? () => moveExecutionStep(sg.id, -1) : null}
-                onMoveDown={executionGroups.findIndex(group => group.id === sg.id) < executionGroups.length - 1 ? () => moveExecutionStep(sg.id, 1) : null}
-                onAnnotate={(sgId, labelId) => patchNote(n => ({
-                  ...n, execution: {
-                    ...n.execution,
-                    stepAnnotations: [...n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)), { stepGroupId: sgId, labelId, note: "" }],
-                  },
-                }))}
-                onRemoveAnnotation={(sgId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)) } }))}
-                onAnnotatePanel={(sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: [...(n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)), { stepGroupId: sgId, panelId, labelId }] } }))}
-                onRemovePanelAnnotation={(sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: (n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)) } }))}
-                onChange={val => patchNote(n => ({
-                  ...n, execution: { ...n.execution, stepGroups: val === null ? n.execution.stepGroups.filter(s => s.id !== sg.id).map((s, index) => ({ ...s, order: index + 1 })) : n.execution.stepGroups.map(s => s.id === sg.id ? val : s) },
-                }))}
-              />
-              <BetweenStepEditor
-                stepGroup={sg}
-                noteMode
-                onChange={val => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: n.execution.stepGroups.map(s => s.id === sg.id ? val : s) } }))}
-              />
-              </React.Fragment>
-            ))}
-            {removedBasePanels.length > 0 && <Card title="프로토콜에서 삭제된 과정">
-              <div className="card-pad stack">{removedBasePanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}</div>
-            </Card>}
-            <Button className="soft" onClick={() => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: [...n.execution.stepGroups, emptyStepGroup(Math.max(0, ...n.execution.stepGroups.map(s => Number(s.order) || 0)) + 1)] } }))}>+ 단계 추가</Button>
-            <Card title="실험 정리">
-              <div className="card-pad note-conclusion-grid">
-                <div className="note-conclusion result"><label className="label">실험 결과 요약</label><textarea className="field textarea" value={note.resultSummary || ""} onChange={e => patchNote(n => ({ ...n, resultSummary: e.target.value }))} placeholder="핵심 결과, 가설과의 일치 여부, 중요한 수치와 해석을 정리하세요." /></div>
-                <div className="note-conclusion next"><label className="label">Next plan</label><textarea className="field textarea" value={note.nextPlan || ""} onChange={e => patchNote(n => ({ ...n, nextPlan: e.target.value }))} placeholder="다음 실험에서 유지할 조건, 바꿀 조건, 확인할 항목과 우선순위를 적으세요." /></div>
+            <div className={`protocol-workspace note-protocol-workspace ${executionGroups.length ? "" : "no-overview"}`}>
+              {executionGroups.length > 0 && <NoteStepOverview groups={executionGroups} onJump={jumpToExecutionStep} onMove={moveExecutionStep} onReorder={reorderExecutionStep} readOnly={noteReadOnly} />}
+              <div className="stack">
+                {executionGroups.length > 0 && <div className="execution-summary">
+                  <span className="execution-stat">진행 {finishedCount}/{executionGroups.length}</span>
+                  <div className="execution-progress" aria-label={`실험 진행률 ${executionGroups.length ? Math.round(finishedCount / executionGroups.length * 100) : 0}%`}><span style={{ width: `${executionGroups.length ? finishedCount / executionGroups.length * 100 : 0}%` }} /></div>
+                  <span className="variation-count">변경 단계 {changedStepIds.size}</span>
+                  <label className="changed-filter"><input type="checkbox" checked={showChangedOnly} onChange={e => setShowChangedOnly(e.target.checked)} /> 변경·기록 있는 단계만</label>
+                </div>}
+                {showChangedOnly && visibleExecutionGroups.length === 0 && <div className="empty">아직 variation이나 실행 기록이 없습니다.</div>}
+                {visibleExecutionGroups.map(sg => (
+                  <React.Fragment key={sg.id}>
+                  <StepGroupEditor
+                    key={sg.id}
+                    stepGroup={sg}
+                    noteMode
+                    readOnly={noteReadOnly}
+                    stepRun={getStepRun(sg.id)}
+                    onPatchRun={patch => patchStepRun(sg.id, patch)}
+                    conditionLabels={note.conditionLabels}
+                    annotations={note.execution.stepAnnotations.filter(a => a.stepGroupId === sg.id)}
+                    panelAnnotations={(note.execution.panelAnnotations || []).filter(a => a.stepGroupId === sg.id)}
+                    deviationKeys={deviationKeys}
+                    resultKeys={resultKeys}
+                    autoDeviationKeys={autoDeviationKeys}
+                    deviations={note.execution.deviations}
+                    results={note.execution.results}
+                    onDeviation={markDeviation}
+                    onResult={addResult}
+                    onPatchDeviation={patchDeviation}
+                    onDeleteDeviation={deleteDeviation}
+                    onPatchResult={patchResult}
+                    onDeleteResult={deleteResult}
+                    onMoveUp={!noteReadOnly && executionGroups.findIndex(group => group.id === sg.id) > 0 ? () => moveExecutionStep(sg.id, -1) : null}
+                    onMoveDown={!noteReadOnly && executionGroups.findIndex(group => group.id === sg.id) < executionGroups.length - 1 ? () => moveExecutionStep(sg.id, 1) : null}
+                    onAnnotate={!noteReadOnly ? ((sgId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, stepAnnotations: [...n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)), { stepGroupId: sgId, labelId, note: "" }] } }))) : null}
+                    onRemoveAnnotation={!noteReadOnly ? ((sgId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, stepAnnotations: n.execution.stepAnnotations.filter(a => !(a.stepGroupId === sgId && a.labelId === labelId)) } }))) : null}
+                    onAnnotatePanel={!noteReadOnly ? ((sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: [...(n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)), { stepGroupId: sgId, panelId, labelId }] } }))) : null}
+                    onRemovePanelAnnotation={!noteReadOnly ? ((sgId, panelId, labelId) => patchNote(n => ({ ...n, execution: { ...n.execution, panelAnnotations: (n.execution.panelAnnotations || []).filter(a => !(a.stepGroupId === sgId && a.panelId === panelId && a.labelId === labelId)) } }))) : null}
+                    onChange={val => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: val === null ? n.execution.stepGroups.filter(s => s.id !== sg.id).map((s, index) => ({ ...s, order: index + 1 })) : n.execution.stepGroups.map(s => s.id === sg.id ? val : s) } }))}
+                  />
+                  <BetweenStepEditor stepGroup={sg} noteMode readOnly={noteReadOnly} onChange={val => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: n.execution.stepGroups.map(s => s.id === sg.id ? val : s) } }))} />
+                  </React.Fragment>
+                ))}
+                {removedBasePanels.length > 0 && <Card title="프로토콜에서 삭제된 과정">
+                  <div className="card-pad stack">{removedBasePanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}</div>
+                </Card>}
+                {!noteReadOnly && <Button className="soft" onClick={() => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: [...n.execution.stepGroups, emptyStepGroup(Math.max(0, ...n.execution.stepGroups.map(s => Number(s.order) || 0)) + 1)] } }))}>+ 단계 추가</Button>}
               </div>
-            </Card>
+            </div>
             {showLabelModal && (
               <ConditionLabelModal
                 onClose={() => setShowLabelModal(false)}
@@ -1607,27 +1740,68 @@
 
       function ProjectLibrary({ store, setStore, onOpen }) {
         const [dragId, setDragId] = useState(null);
-        const holdRef = useRef({ timer: null, active: false, moved: false, id: null });
+        const [dropId, setDropId] = useState(null);
+        const dragRef = useRef(null);
+        const holdRef = useRef({ timer: null, active: false, moved: false, draggedId: null, lastTargetId: null, startX: 0, startY: 0 });
         const reorder = (fromId, toId) => {
           if (!fromId || !toId || fromId === toId) return;
           setStore(s => {
             const from = s.projects.findIndex(p => p.id === fromId), to = s.projects.findIndex(p => p.id === toId);
             if (from < 0 || to < 0) return s;
-            const projects = [...s.projects], [item] = projects.splice(from, 1); projects.splice(to, 0, item);
+            const projects = [...s.projects], [item] = projects.splice(from, 1);
+            const targetIndex = projects.findIndex(p => p.id === toId);
+            projects.splice(targetIndex + (from < to ? 1 : 0), 0, item);
             return { ...s, projects };
           });
         };
-        const clearHold = () => { clearTimeout(holdRef.current.timer); holdRef.current.active = false; setDragId(null); };
+        const moveBy = (id, direction) => setStore(s => {
+          const from = s.projects.findIndex(p => p.id === id);
+          const to = from + direction;
+          if (from < 0 || to < 0 || to >= s.projects.length) return s;
+          const projects = [...s.projects];
+          [projects[from], projects[to]] = [projects[to], projects[from]];
+          return { ...s, projects };
+        });
+        const clearDrag = () => { dragRef.current = null; setDragId(null); setDropId(null); };
+        const clearHold = () => {
+          clearTimeout(holdRef.current.timer);
+          holdRef.current.active = false;
+          holdRef.current.lastTargetId = null;
+          setDragId(null);
+          setDropId(null);
+        };
+        const startDesktopDrag = (e, id) => {
+          dragRef.current = id; setDragId(id);
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", id);
+        };
         const startTouch = (e, id) => {
           if (e.pointerType === "mouse") return;
-          holdRef.current = { timer: setTimeout(() => { holdRef.current.active = true; setDragId(id); navigator.vibrate?.(30); }, 520), active: false, moved: false, id };
+          holdRef.current = {
+            timer: setTimeout(() => {
+              holdRef.current.active = true;
+              holdRef.current.moved = true;
+              setDragId(id);
+              navigator.vibrate?.(30);
+            }, 480),
+            active: false, moved: false, draggedId: id, lastTargetId: null,
+            startX: e.clientX, startY: e.clientY,
+          };
           e.currentTarget.setPointerCapture?.(e.pointerId);
         };
         const moveTouch = (e) => {
-          if (!holdRef.current.active) return;
+          if (!holdRef.current.active) {
+            if (Math.hypot(e.clientX - holdRef.current.startX, e.clientY - holdRef.current.startY) > 10) clearTimeout(holdRef.current.timer);
+            return;
+          }
           e.preventDefault(); holdRef.current.moved = true;
           const target = document.elementFromPoint(e.clientX, e.clientY)?.closest?.("[data-project-id]");
-          if (target?.dataset?.projectId) { reorder(holdRef.current.id, target.dataset.projectId); holdRef.current.id = target.dataset.projectId; }
+          const targetId = target?.dataset?.projectId;
+          if (targetId && targetId !== holdRef.current.draggedId && targetId !== holdRef.current.lastTargetId) {
+            reorder(holdRef.current.draggedId, targetId);
+            holdRef.current.lastTargetId = targetId;
+            setDropId(targetId);
+          }
         };
         return (
           <main className="library">
@@ -1635,11 +1809,15 @@
               <Button className="primary" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}>+ 프로젝트 추가</Button>
             </div>
             <div className="bookshelf">
-              {store.projects.map((p, index) => <div className="book-wrap" key={p.id} data-project-id={p.id} draggable onDragStart={() => setDragId(p.id)} onDragOver={e => e.preventDefault()} onDrop={() => { reorder(dragId, p.id); setDragId(null); }}>
+              {store.projects.map((p, index) => <div className={`book-wrap ${dropId === p.id ? "drop-target" : ""}`} key={p.id} data-project-id={p.id} onDragEnter={() => { if (dragRef.current && dragRef.current !== p.id) setDropId(p.id); }} onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }} onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDropId(null); }} onDrop={e => { e.preventDefault(); const fromId = e.dataTransfer.getData("text/plain") || dragRef.current; reorder(fromId, p.id); clearDrag(); }}>
                 <div className={`book ${dragId === p.id ? "dragging" : ""}`} style={{ background: `linear-gradient(145deg, ${p.color}, color-mix(in srgb, ${p.color} 70%, #17231d))` }} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onOpen(p.id); }} onClick={e => { if (holdRef.current.moved) { holdRef.current.moved = false; return; } if (!e.target.closest("input,button")) onOpen(p.id); }} onPointerDown={e => startTouch(e, p.id)} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold}>
                   <div><div className="book-kicker">LAB PROJECT · {String(index + 1).padStart(2,"0")}</div><input className="book-name" value={p.name} onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, name: e.target.value }))} aria-label={`${p.name} 프로젝트 이름`} /></div>
                   <div className="book-stats">실험 {p.experiments.length} · 노트 {p.notes.length} · 재고 {p.inventory.length}</div>
-                  <span className="book-handle" aria-hidden="true">⠿</span>
+                  <div className="book-order-controls">
+                    <button type="button" className="book-order-button" disabled={index === 0} onClick={e => { e.stopPropagation(); moveBy(p.id, -1); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 앞으로 이동`}>‹</button>
+                    <button type="button" className="book-handle" draggable onDragStart={e => startDesktopDrag(e, p.id)} onDragEnd={clearDrag} onClick={e => e.stopPropagation()} onPointerDown={e => { e.stopPropagation(); startTouch(e, p.id); }} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold} aria-label={`${p.name} 순서 드래그`}>⠿</button>
+                    <button type="button" className="book-order-button" disabled={index === store.projects.length - 1} onClick={e => { e.stopPropagation(); moveBy(p.id, 1); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 뒤로 이동`}>›</button>
+                  </div>
                 </div>
               </div>)}
               <button className="add-book" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}><div><span>＋</span>새 프로젝트 책 만들기</div></button>
@@ -1784,7 +1962,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.2.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver3.2</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.4.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver3.4</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
