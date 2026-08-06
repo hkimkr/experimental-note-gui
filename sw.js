@@ -1,4 +1,4 @@
-const CACHE = "exp-note-v1.0.0";
+const CACHE = "exp-note-preview-2026-08-06-b";
 const ASSETS = [
   "./index.html",
   "./app.html",
@@ -6,6 +6,11 @@ const ASSETS = [
   "./sync-app.js",
   "./html2pdf.bundle.min.js",
   "./manifest.webmanifest",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/apple-touch-icon.png",
+  "./assets/app-preview.png",
+  "./assets/link-preview.png",
 ];
 
 self.addEventListener("install", (event) => {

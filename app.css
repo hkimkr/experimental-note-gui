@@ -58,6 +58,32 @@ input {
   box-shadow: 0 9px 28px rgb(37 48 60 / 16%);
 }
 
+.app-install-launcher {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px 7px 8px;
+  color: #f9fbf8;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  background: #18553f;
+  border: 1px solid #18553f;
+  border-radius: 999px;
+  box-shadow: 0 9px 28px rgb(24 85 63 / 24%);
+}
+
+.app-install-launcher img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
 .cloud-sync-dot {
   width: 8px;
   height: 8px;
@@ -243,6 +269,12 @@ noscript {
     left: max(12px, env(safe-area-inset-left));
     bottom: max(12px, env(safe-area-inset-bottom));
     padding: 9px 12px;
+  }
+
+  .app-install-launcher {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    padding: 6px 10px 6px 7px;
   }
 
   .cloud-auth-actions {

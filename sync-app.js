@@ -61,6 +61,8 @@
   let deferredRemoteMessage = "";
   let localCaptureChain = Promise.resolve();
   let pendingLocalRaw = "";
+  let incomingProtocolTimer = null;
+  let incomingProtocolLoading = false;
 
   const canonicalize = (value) => {
     if (Array.isArray(value)) return value.map(canonicalize);
@@ -345,6 +347,71 @@
     (data || []).forEach((record) => records.set(recordKey(record), record));
     return records;
   }
+
+  const postShareResult = (requestId, result) => {
+    frame?.contentWindow?.postMessage(
+      { type: "exp-note-share-protocol-result", requestId, ...result },
+      window.location.origin
+    );
+  };
+
+  async function shareProtocol(message) {
+    if (!message?.requestId) return;
+    if (!currentSession?.user) {
+      postShareResult(message.requestId, { ok: false, message: "먼저 클라우드에 로그인해주세요." });
+      return;
+    }
+    if (!message.email || !message.protocol || !["copy", "move"].includes(message.mode)) {
+      postShareResult(message.requestId, { ok: false, message: "공유 정보가 올바르지 않습니다." });
+      return;
+    }
+    const { data, error } = await client.rpc("share_exp_note_protocol", {
+      p_recipient_email: message.email,
+      p_protocol: message.protocol,
+      p_source_project: message.projectName || "",
+      p_source_experiment: message.experimentName || "",
+      p_transfer_mode: message.mode,
+    });
+    if (error) {
+      const databaseMissing = /share_exp_note_protocol|schema cache|function/i.test(error.message || "");
+      postShareResult(message.requestId, { ok: false, message: databaseMissing ? "Supabase 공유 기능 SQL 설정이 필요합니다." : (error.message || "프로토콜을 공유하지 못했습니다.") });
+      return;
+    }
+    postShareResult(message.requestId, { ok: true, transferId: data });
+  }
+
+  async function fetchIncomingProtocols() {
+    if (!currentSession?.user || incomingProtocolLoading || navigator.onLine === false) return;
+    incomingProtocolLoading = true;
+    const { data, error } = await client.rpc("list_received_exp_note_protocols");
+    incomingProtocolLoading = false;
+    if (error || !Array.isArray(data) || !data.length) return;
+    frame?.contentWindow?.postMessage(
+      {
+        type: "exp-note-incoming-protocols",
+        transfers: data.map(item => ({
+          id: item.id,
+          protocol: item.protocol_payload,
+          sourceProject: item.source_project,
+          sourceExperiment: item.source_experiment,
+          senderEmail: item.sender_email,
+          mode: item.transfer_mode,
+          createdAt: item.created_at,
+        })),
+      },
+      window.location.origin
+    );
+  }
+
+  async function markIncomingProtocolsReceived(transferIds) {
+    if (!currentSession?.user || !Array.isArray(transferIds) || !transferIds.length) return;
+    await client.rpc("mark_exp_note_protocols_received", { p_transfer_ids: transferIds });
+  }
+
+  const scheduleIncomingProtocolCheck = () => {
+    if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
+    incomingProtocolTimer = window.setInterval(fetchIncomingProtocols, 12000);
+  };
 
   async function fetchLegacyStore() {
     return null;
@@ -773,6 +840,8 @@
       await uploadOutbox();
       if (generation !== syncGeneration) return;
       await subscribeRealtime(userId, generation);
+      await fetchIncomingProtocols();
+      scheduleIncomingProtocolCheck();
     }
   }
 
@@ -798,6 +867,8 @@
       deferredRemoteMessage = "";
       reconnectAfterEditing = false;
       pendingLocalRaw = "";
+      if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
+      incomingProtocolTimer = null;
       await disconnectRealtime();
       return;
     }
@@ -874,6 +945,15 @@
     }
     if (event.data?.type === "exp-note-ready") {
       if (pendingAppStore) postStoreToApp(pendingAppStore);
+      fetchIncomingProtocols();
+      return;
+    }
+    if (event.data?.type === "exp-note-share-protocol") {
+      await shareProtocol(event.data);
+      return;
+    }
+    if (event.data?.type === "exp-note-protocols-received") {
+      await markIncomingProtocolsReceived(event.data.transferIds);
       return;
     }
     if (

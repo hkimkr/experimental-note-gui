@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#5b7cfa" />
+    <meta name="theme-color" content="#18553f" />
     <title>실험 노트 GUI</title>
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -19,7 +19,7 @@
       .hero{padding:22px;background:linear-gradient(135deg,#fff 0%,#f3f6ff 100%);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
       .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
       .mobile-projects{display:none;margin-bottom:14px}.view-toggle{display:inline-flex;background:#f0f2f5;border-radius:11px;padding:3px}.view-toggle button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}.view-toggle button.active{background:#fff;color:var(--brand)}
-      .protocol-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}.protocol-overview{position:sticky;top:86px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow)}.protocol-overview h3{margin:0 0 4px;font-size:15px}.overview-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}.overview-step{width:100%;border:0;background:#f5f8f6;border-radius:10px;padding:9px 10px;text-align:left;font-size:12px}.overview-step:hover{background:var(--brand2);color:var(--brand)}.overview-step strong{display:block}.overview-step span{display:block;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nature-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.step-group{scroll-margin-top:92px;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin-bottom:14px}.step-head{padding:12px 14px;background:#f8faf8;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.step-num{width:28px;height:28px;border-radius:8px;background:var(--brand2);color:var(--brand);font-weight:900;display:grid;place-items:center;font-size:13px;flex:none}.step-timing{width:112px}.panel-line-editor{border-bottom:1px solid var(--line);padding:10px 14px}.panel-line-editor:last-of-type{border-bottom:0}.panel-row-layout{display:flex;align-items:flex-start;gap:10px;min-width:0}.panel-row{display:flex;flex:1;min-width:0;gap:10px;padding:0 0 5px;overflow-x:auto;overscroll-behavior-inline:contain;align-items:flex-start}.panel-row.stack-mobile{flex-direction:column}.panel-instance{flex:0 0 280px;min-width:0;max-width:280px}.panel-instance.reagent{flex-basis:340px;max-width:340px}.panel-line-tools,.panel-line-secondary{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.panel-primary-tools{flex:0 0 auto;margin-left:auto;padding:5px;background:#f5f8f6;border:1px solid var(--line);border-radius:10px}.panel-line-secondary{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line)}.panel-line-tools .btn,.panel-line-secondary .btn{min-height:31px;padding:4px 8px;font-size:12px}.panel-line-secondary .row-remove-button{margin-left:auto}.protocol-text-lines{display:flex;flex-direction:column;gap:5px;margin:0 0 8px}.protocol-text-lines.after{margin:6px 0 0}.protocol-text-line{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:5px;align-items:center}.protocol-text-line .field{min-height:34px;padding:5px 9px}.protocol-text-line .btn{min-height:30px;padding:3px}.protocol-text-block{width:100%;min-height:34px;border:1px solid #dfe7e2;background:#f6f9f7;border-radius:9px;padding:6px 10px;text-align:left;font-size:13px;line-height:1.45;white-space:pre-wrap}.protocol-text-block:hover{border-color:#9fc6b4;background:var(--brand2)}.protocol-text-block.empty{color:var(--muted);font-style:italic}.callout-row{display:flex;gap:8px;align-items:center;padding:9px 14px 11px;background:#fbfcfb}.callout-row select{width:150px}.callout-note{flex:1}
+      .protocol-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}.protocol-overview{position:sticky;top:86px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow)}.protocol-overview h3{margin:0 0 4px;font-size:15px}.overview-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}.overview-step{width:100%;border:0;background:#f5f8f6;border-radius:10px;padding:9px 10px;text-align:left;font-size:12px}.overview-step:hover{background:var(--brand2);color:var(--brand)}.overview-step strong{display:block}.overview-step span{display:block;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nature-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.step-group{scroll-margin-top:92px;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin-bottom:14px}.step-head{padding:12px 14px;background:#f8faf8;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.step-num{width:28px;height:28px;border-radius:8px;background:var(--brand2);color:var(--brand);font-weight:900;display:grid;place-items:center;font-size:13px;flex:none}.step-timing{width:112px}.panel-line-editor{border-bottom:1px solid var(--line);padding:10px 14px}.panel-line-editor:last-of-type{border-bottom:0}.panel-row-layout{display:flex;align-items:flex-start;gap:10px;min-width:0}.panel-row{display:flex;flex:1;min-width:0;gap:10px;padding:0 0 5px;overflow-x:auto;overscroll-behavior-inline:contain;align-items:flex-start}.panel-row.stack-mobile{flex-direction:column}.panel-instance{flex:0 0 280px;min-width:0;max-width:280px}.panel-instance.reagent{flex-basis:340px;max-width:340px}.panel-line-tools,.panel-line-secondary{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.panel-primary-tools{flex:0 0 auto;margin-left:auto;padding:5px;background:#f5f8f6;border:1px solid var(--line);border-radius:10px}.panel-line-secondary{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line)}.panel-line-tools .btn,.panel-line-secondary .btn{min-height:31px;padding:4px 8px;font-size:12px}.panel-line-secondary .row-remove-button{margin-left:auto}.protocol-text-lines{display:flex;flex-direction:column;gap:5px;margin:0 0 8px}.protocol-text-lines.after{margin:6px 0 0}.protocol-text-entry.active{padding:5px;border:1px solid #bfd4c8;border-radius:11px;background:#fbfdfc}.protocol-text-line{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:5px;align-items:center}.protocol-text-line .field{min-height:34px;padding:5px 9px;font-weight:780}.protocol-text-line .btn{min-height:30px;padding:3px}.protocol-text-block{width:100%;min-height:34px;border:1px solid #dfe7e2;background:#f6f9f7;border-radius:9px;padding:6px 10px;text-align:left;font-size:13px;font-weight:800;line-height:1.45;white-space:pre-wrap}.protocol-text-block:hover{border-color:#9fc6b4;background:var(--brand2)}.protocol-text-block.empty{color:var(--muted);font-style:italic}.text-record-actions{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 0}.text-record-actions .btn{min-height:29px;padding:3px 8px;font-size:11px}.callout-row{display:flex;gap:8px;align-items:center;padding:9px 14px 11px;background:#fbfcfb}.callout-row select{width:150px}.callout-note{flex:1}
       .proto-panel{width:100%;min-width:0;max-width:none;border:1px solid var(--panel-border);border-radius:14px;background:#fff;overflow:hidden}.proto-panel.reagent-panel{min-width:0;max-width:none}.proto-panel-head{padding:10px 12px;background:#fafbfc;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.proto-panel-head h4{margin:0;font-size:13px}.proto-panel-body{padding:10px 12px}
       .reagent-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}.reagent-table th,.reagent-table td{border:1px solid var(--line);padding:6px 8px;text-align:left}.reagent-table th{background:#f5f7fa;font-weight:800}.reagent-table .material-col{width:auto}.reagent-table .amount-col{width:64px}.reagent-table .delete-col{width:34px;padding-left:3px;padding-right:3px}.reagent-table .total-row{background:#faf6f0;font-weight:800}.reagent-table .sample-row{color:var(--danger);font-weight:700}.reagent-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}.reagent-table input.field:focus{background:#fff;border:1px solid #cad4cd;border-radius:6px}.reagent-unit-input{width:100%;min-width:0;border:0;background:transparent;font-size:11px;font-weight:800;text-align:center;padding:2px}.reagent-unit-input:focus{background:#fff;outline:2px solid rgba(31,107,79,.18)}
       .cond-table{width:100%;border-collapse:collapse;font-size:12px}.cond-table th,.cond-table td{border:1px solid var(--line);padding:6px 8px}.cond-table th{background:#f5f7fa;font-weight:800}.cond-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}
@@ -32,16 +32,21 @@
       .note-hypothesis{border:1px solid #c9b7e8;border-left:5px solid #7656ad;border-radius:12px;background:#faf7ff;padding:10px}.note-hypothesis .label{color:#65479a}.note-hypothesis textarea{min-height:82px;background:transparent}.note-conclusion-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.note-conclusion{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}.note-conclusion.result{border-color:#a9d1ae;background:#f7fcf8}.note-conclusion.next{border-color:#9fbce2;background:#f6f9fe}.note-conclusion .label{font-size:13px}.note-conclusion textarea{min-height:150px;background:transparent;line-height:1.6}
       .inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}
       .inventory-level{font-size:11px;font-weight:800;text-align:center;margin-top:4px}
+      .step-group{border-color:#c9d8d0;border-radius:18px;margin-bottom:0;box-shadow:0 7px 22px rgba(31,70,52,.07)}.step-head{padding:13px 14px;background:linear-gradient(135deg,#eef5f1,#f8fbf9);border-bottom-color:#cfdcd5;border-left:4px solid var(--brand)}.step-num{width:30px;height:30px;background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(31,107,79,.2)}.panel-line-editor{padding:12px 14px}.between-step-editor{margin:-1px 18px 0;padding:9px 12px;border-left:1px dashed #aebfb5;border-right:1px dashed #aebfb5;background:#f7faf8}.between-step-editor .protocol-text-lines{margin:0 0 6px}.between-step-editor>.btn{min-height:30px;padding:4px 9px;font-size:12px}.step-callout{margin:0 14px 12px;padding:9px 11px;border-radius:10px;border-left:4px solid #d8921b;background:#fff8df;color:#6f4700;font-size:12px;font-weight:750;white-space:pre-wrap}.step-callout strong{display:block;margin-bottom:2px;font-size:10px;letter-spacing:.08em}.step-callout.critical{border-color:#d64444;background:#fff1f1;color:#b42323}.step-callout.critical strong{color:#c52d2d}.step-callout.pause{border-color:#517fbd;background:#f1f6fd;color:#315f9b}.step-callout.troubleshooting{border-color:#7656ad;background:#f7f3fc;color:#65479a}
+      .proto-panel-head{padding:8px 9px 8px 12px}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{margin:6px 0 0;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;white-space:pre-wrap}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
+      .before-starting-card{border-color:#c7d7cf;background:linear-gradient(135deg,#fff,#f5faf7)}.preparation-list{display:flex;flex-direction:column;gap:10px}.preparation-item{border:1px solid #d6e1db;border-radius:13px;background:#fff;padding:11px}.preparation-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.preparation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preparation-grid .full{grid-column:1/-1}.preparation-static{border:1px solid #dce6e0;border-radius:12px;padding:10px;background:#fff}.preparation-static h4{margin:0 0 7px;font-size:13px}.preparation-static p{margin:5px 0;white-space:pre-wrap;font-size:12px}.preparation-static strong{color:var(--brand);font-size:10px;letter-spacing:.05em}
+      .between-step-editor.note-mode{border-color:#9fbdaE;background:#f3f8f5}.between-step-editor .field{font-weight:780}.share-summary{padding:10px 12px;border:1px solid #d6e3dc;border-radius:12px;background:#f6faf8}.share-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.share-mode-option{display:flex;gap:8px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}.share-mode-option:has(input:checked){border-color:#7fb19a;background:#eef7f2}.share-mode-option strong{display:block;font-size:13px}.share-mode-option span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.share-error{color:var(--danger);font-size:12px;font-weight:750}
       .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
       .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
       .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}
       .color-palette{display:flex;gap:10px;flex-wrap:wrap}.color-palette button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.color-palette button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
       .breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}.breadcrumb button{border:0;background:transparent;color:var(--brand);font-weight:700;padding:0}
       .toast{position:fixed;right:22px;bottom:22px;z-index:100;background:#2c3340;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px}
-      .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-root.exporting{display:block;position:absolute;left:0;top:0;z-index:1000;pointer-events:none;box-shadow:0 20px 60px rgba(0,0,0,.18)}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
+      .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-root.exporting{display:block;position:absolute;left:0;top:0;z-index:1000;pointer-events:none;box-shadow:0 20px 60px rgba(0,0,0,.18)}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-before-starting{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5mm;margin:0 0 5mm}.print-before-starting>.print-kicker{grid-column:1/-1}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
+      .print-callout.critical{border-left-color:#d64444;background:#fff1f1;color:#b42323}
       @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
       @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
-      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid{grid-template-columns:1fr}.execution-summary{top:64px}}
+      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
       @media(max-width:460px){.bookshelf{grid-template-columns:1fr}.book,.add-book{min-height:205px}}
     </style>
   </head>
@@ -102,24 +107,49 @@
         if (panel.type === "condition") return (panel.rows || []).map(r => [r.temp && `${r.temp}°C`, r.duration, r.rpm && `${r.rpm} rpm`, r.note].filter(Boolean).join(" · ")).filter(Boolean).join(" / ");
         return panel.content || "";
       };
+      const protocolShareRequests = new Map();
+      const requestProtocolShare = ({ email, mode, protocol, projectName, experimentName }) => new Promise((resolve, reject) => {
+        if (window.parent === window) {
+          reject(new Error("클라우드 로그인 화면에서 공유를 이용해주세요."));
+          return;
+        }
+        const requestId = uid();
+        const timer = window.setTimeout(() => {
+          protocolShareRequests.delete(requestId);
+          reject(new Error("공유 요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요."));
+        }, 20000);
+        protocolShareRequests.set(requestId, { resolve, reject, timer });
+        window.parent.postMessage({ type: "exp-note-share-protocol", requestId, email, mode, protocol: clone(protocol), projectName, experimentName }, window.location.origin);
+      });
+      window.addEventListener("message", event => {
+        if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "exp-note-share-protocol-result") return;
+        const pending = protocolShareRequests.get(event.data.requestId);
+        if (!pending) return;
+        window.clearTimeout(pending.timer);
+        protocolShareRequests.delete(event.data.requestId);
+        if (event.data.ok) pending.resolve(event.data);
+        else pending.reject(new Error(event.data.message || "프로토콜을 공유하지 못했습니다."));
+      });
 
       const emptyReagentRow = () => ({ id: uid(), material: "", volume: "", highlight: false });
       const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", rpm: "", note: "" });
+      const defaultPanelTitle = (type) => type === "reagent" ? "시약" : type === "condition" ? "반응 조건" : "실험 방법";
       const emptyPanel = (type) => {
-        if (type === "reagent") return { id: uid(), type, unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()] };
-        if (type === "condition") return { id: uid(), type, rows: [emptyConditionRow()] };
-        return { id: uid(), type: "method", content: "", warnings: "" };
+        if (type === "reagent") return { id: uid(), type, title: defaultPanelTitle(type), unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()], notes: [] };
+        if (type === "condition") return { id: uid(), type, title: defaultPanelTitle(type), rows: [emptyConditionRow()], notes: [] };
+        return { id: uid(), type: "method", title: defaultPanelTitle("method"), content: "", warnings: "" };
       };
       const emptyPanelRow = () => ({ id: uid(), panels: [], texts: [] });
       const emptyTextLine = (position = "before") => ({ id: uid(), content: "", detail: "", result: "", position });
-      const emptyStepGroup = (order) => ({ id: uid(), title: "", timing: "", text: "", calloutType: "", callout: "", order, panelRows: [emptyPanelRow()] });
+      const emptyStepGroup = (order) => ({ id: uid(), title: "", timing: "", text: "", calloutType: "", callout: "", afterStepTexts: [], order, panelRows: [emptyPanelRow()] });
+      const emptyPreparation = () => ({ id: uid(), title: "", composition: "", instructions: "", storage: "" });
       const emptyProtocolVersion = (label) => ({
         id: uid(), label: label || "v1", savedAt: Date.now(), note: "",
         stepGroups: [emptyStepGroup(1)],
       });
       const emptyProtocol = (name) => {
         const v = emptyProtocolVersion("v1");
-        return { id: uid(), name: name || "새 프로토콜", summary: "", scope: "", anticipatedResults: "", troubleshooting: "", activeVersionId: v.id, versions: [v], draftVersion: clone(v) };
+        return { id: uid(), name: name || "새 프로토콜", summary: "", scope: "", anticipatedResults: "", troubleshooting: "", beforeStarting: [], activeVersionId: v.id, versions: [v], draftVersion: clone(v) };
       };
       const emptyExperiment = (name) => ({ id: uid(), name: name || "새 실험", memo: "", protocols: [] });
       const emptyNote = () => ({
@@ -145,12 +175,14 @@
 
       const normalizePanel = (p) => {
         if (!p || typeof p !== "object") return emptyPanel("method");
-        if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })) };
-        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, id: r.id || uid() })) };
-        return { id: p.id || uid(), type: "method", content: p.content || "", warnings: p.warnings || "" };
+        const notes = (p.notes || []).map(n => typeof n === "string" ? { id: uid(), content: n } : { id: n.id || uid(), content: n.content || "" });
+        if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", title: p.title || defaultPanelTitle("reagent"), unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })), notes };
+        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, id: r.id || uid() })), notes };
+        return { id: p.id || uid(), type: "method", title: p.title || defaultPanelTitle("method"), content: p.content || "", warnings: p.warnings || "" };
       };
       const normalizeStepGroup = (sg, i) => ({
         id: sg.id || uid(), title: sg.title || "", timing: sg.timing || "", text: sg.text || "", calloutType: sg.calloutType || "", callout: sg.callout || "", order: sg.order ?? i + 1,
+        afterStepTexts: (sg.afterStepTexts || []).map(t => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "" } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "" }),
         panelRows: (sg.panelRows?.length ? sg.panelRows : [emptyPanelRow()]).map(pr => ({
           id: pr.id || uid(),
           panels: (pr.panels || []).map(normalizePanel),
@@ -167,7 +199,7 @@
         const activeVersionId = p.activeVersionId && versions.some(v => v.id === p.activeVersionId) ? p.activeVersionId : versions[0].id;
         const activeVersion = versions.find(v => v.id === activeVersionId) || versions[0];
         const draftVersion = p.draftVersion && p.draftVersion.id === activeVersionId ? normalizeVersion(p.draftVersion) : clone(activeVersion);
-        return { id: p.id || uid(), name: p.name || "프로토콜", summary: p.summary || "", scope: p.scope || "", anticipatedResults: p.anticipatedResults || "", troubleshooting: p.troubleshooting || "", activeVersionId, versions, draftVersion };
+        return { id: p.id || uid(), name: p.name || "프로토콜", summary: p.summary || "", scope: p.scope || "", anticipatedResults: p.anticipatedResults || "", troubleshooting: p.troubleshooting || "", beforeStarting: (p.beforeStarting || []).map(item => ({ id: item.id || uid(), title: item.title || "", composition: item.composition || "", instructions: item.instructions || "", storage: item.storage || "" })), activeVersionId, versions, draftVersion };
       };
       const getProtocolWorkingVersion = (protocol) => protocol?.draftVersion?.id === protocol?.activeVersionId
         ? protocol.draftVersion
@@ -274,22 +306,45 @@
         );
       }
 
-      function ReagentPanel({ panel, onChange, readOnly, diffBase }) {
+      function PanelHeader({ panel, onChange, readOnly, onDelete }) {
+        return <div className="proto-panel-head">
+          {readOnly ? <h4>{panel.title || defaultPanelTitle(panel.type)}</h4> : <input className="panel-title-input" value={panel.title || ""} onChange={e => onChange({ ...panel, title: e.target.value })} placeholder={defaultPanelTitle(panel.type)} aria-label={`${defaultPanelTitle(panel.type)} 패널 이름`} />}
+          {!readOnly && onDelete && <button type="button" className="panel-close" onClick={onDelete} aria-label={`${panel.title || defaultPanelTitle(panel.type)} 패널 삭제`} title="패널 삭제">×</button>}
+        </div>;
+      }
+
+      function PanelNotes({ panel, onChange, readOnly }) {
+        const notes = panel.notes || [];
+        if (readOnly) return notes.some(n => n.content) ? <div className="panel-notes">{notes.map(n => n.content && <div key={n.id} className="panel-note-static">{n.content}</div>)}</div> : null;
+        const addNote = () => onChange({ ...panel, notes: [...notes, { id: uid(), content: "" }] });
+        return <div className="panel-notes">
+          {notes.map(note => <div key={note.id} className="panel-note-row">
+            <input className="field" value={note.content || ""} onChange={e => onChange({ ...panel, notes: notes.map(n => n.id === note.id ? { ...n, content: e.target.value } : n) })} placeholder="표 아래에 표시할 텍스트" />
+            <button type="button" className="btn ghost danger" onClick={() => onChange({ ...panel, notes: notes.filter(n => n.id !== note.id) })} aria-label="패널 텍스트 삭제">×</button>
+          </div>)}
+          <Button className="ghost panel-note-add" onClick={addNote}>+ 텍스트</Button>
+        </div>;
+      }
+
+      function ReagentPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
         const rows = panel.rows || [];
         const total = sumVolumes(rows);
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
+        const isSample = (material) => /sample|샘플/i.test(material || "");
+        const missingAmounts = rows.filter(r => String(r.material || "").trim() && !isSample(r.material) && !String(r.volume || "").trim());
         return (
           <div className="proto-panel reagent-panel">
-            <div className="proto-panel-head"><h4>시약</h4></div>
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="reagent-table">
                 <thead><tr><th className="material-col">Material</th><th className="amount-col">{readOnly ? (panel.unit || "uL") : <input className="reagent-unit-input" value={panel.unit || ""} onChange={e => onChange({ ...panel, unit: e.target.value })} aria-label="시약 부피 단위" placeholder="단위" />}</th><th className="delete-col"></th></tr></thead>
                 <tbody>
                   {rows.map(r => {
                     const baseRow = diffBase?.rows?.find(br => br.id === r.id);
-                    const isSample = /sample/i.test(r.material);
+                    const sampleRow = isSample(r.material);
+                    const needsAmount = String(r.material || "").trim() && !sampleRow && !String(r.volume || "").trim();
                     return (
-                      <tr key={r.id} className={isSample ? "sample-row" : ""}>
+                      <tr key={r.id} className={`${sampleRow ? "sample-row" : ""} ${needsAmount ? "needs-amount" : ""}`.trim()}>
                         <td>
                           {readOnly && diffBase ? diffText(baseRow?.material, r.material) : (
                             <input className="field" value={r.material} readOnly={readOnly} onChange={e => patchRow(r.id, { material: e.target.value })} placeholder="시약명" />
@@ -297,7 +352,7 @@
                         </td>
                         <td className="amount-col">
                           {readOnly && diffBase ? diffText(baseRow?.volume, r.volume) : (
-                            <input className="field" value={r.volume} readOnly={readOnly} onChange={e => patchRow(r.id, { volume: e.target.value })} placeholder="0" />
+                            <input className="field" value={r.volume} readOnly={readOnly} onChange={e => patchRow(r.id, { volume: e.target.value })} placeholder={sampleRow ? "선택" : "필수"} aria-label={`${r.material || "시약"} 투입량`} />
                           )}
                         </td>
                         <td className="delete-col">{!readOnly && <button className="btn ghost danger" type="button" onClick={() => onChange({ ...panel, rows: rows.filter(x => x.id !== r.id) })}>×</button>}</td>
@@ -311,17 +366,19 @@
                 </tbody>
               </table>
               {!readOnly && <Button className="soft" style={{ marginTop: 8 }} onClick={() => onChange({ ...panel, rows: [...rows, emptyReagentRow()] })}>+ 행</Button>}
+              {!readOnly && missingAmounts.length > 0 && <div className="amount-required">sample을 제외한 시약은 투입량을 입력해주세요.</div>}
+              <PanelNotes panel={panel} onChange={onChange} readOnly={readOnly} />
             </div>
           </div>
         );
       }
 
-      function ConditionPanel({ panel, onChange, readOnly, diffBase }) {
+      function ConditionPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
         const rows = panel.rows || [];
         const patchRow = (rid, patch) => onChange({ ...panel, rows: rows.map(r => r.id === rid ? { ...r, ...patch } : r) });
         return (
           <div className="proto-panel">
-            <div className="proto-panel-head"><h4>반응 조건</h4></div>
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               <table className="cond-table">
                 <thead><tr><th>온도(°C)</th><th>시간</th><th>rpm</th><th></th></tr></thead>
@@ -343,15 +400,16 @@
                 </tbody>
               </table>
               {!readOnly && <Button className="soft" style={{ marginTop: 8 }} onClick={() => onChange({ ...panel, rows: [...rows, emptyConditionRow()] })}>+ 행</Button>}
+              <PanelNotes panel={panel} onChange={onChange} readOnly={readOnly} />
             </div>
           </div>
         );
       }
 
-      function MethodPanel({ panel, onChange, readOnly, diffBase }) {
+      function MethodPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
         return (
           <div className="proto-panel">
-            <div className="proto-panel-head"><h4>실험 방법</h4></div>
+            <PanelHeader panel={panel} onChange={onChange} readOnly={readOnly} onDelete={onDelete} />
             <div className="proto-panel-body">
               {readOnly && diffBase ? (
                 <div className="small" style={{ lineHeight: 1.45 }}>{diffText(diffBase.content, panel.content)}</div>
@@ -376,14 +434,15 @@
         );
       }
 
-      function ProtocolPanel({ panel, onChange, readOnly, diffBase }) {
-        if (panel.type === "reagent") return <ReagentPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
-        if (panel.type === "condition") return <ConditionPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
-        return <MethodPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} />;
+      function ProtocolPanel({ panel, onChange, readOnly, diffBase, onDelete }) {
+        if (panel.type === "reagent") return <ReagentPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />;
+        if (panel.type === "condition") return <ConditionPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />;
+        return <MethodPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />;
       }
 
       function StepGroupEditor({ stepGroup, onChange, readOnly, diffBase, annotations, panelAnnotations, conditionLabels, onAnnotate, onRemoveAnnotation, onAnnotatePanel, onRemovePanelAnnotation, deviationKeys, resultKeys, autoDeviationKeys, deviations, results, noteMode, stepRun, onPatchRun, onDeviation, onResult, onPatchDeviation, onDeleteDeviation, onPatchResult, onDeleteResult }) {
         const [editingTextId, setEditingTextId] = useState(null);
+        const [activeTextId, setActiveTextId] = useState(null);
         const [editingDetailId, setEditingDetailId] = useState(null);
         const [editingTextResultId, setEditingTextResultId] = useState(null);
         const [editingPanelMemoId, setEditingPanelMemoId] = useState(null);
@@ -406,21 +465,31 @@
         const renderTextLines = (row, position) => {
           const lines = (row.texts || []).filter(line => (line.position === "after" ? "after" : "before") === position);
           if (!lines.length) return null;
-          return <div className={`protocol-text-lines ${position === "after" ? "after" : ""}`}>{lines.map(line => <div key={line.id} className="protocol-text-entry">
+          return <div className={`protocol-text-lines ${position === "after" ? "after" : ""}`}>{lines.map(line => <div key={line.id} className={`protocol-text-entry ${activeTextId === line.id ? "active" : ""}`}>
             <div className="protocol-text-line">
-              {editingTextId === line.id && !readOnly ? <input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={() => setEditingTextId(null)} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /> : <button type="button" className={`protocol-text-block ${line.content ? "" : "empty"}`} onClick={() => !readOnly && setEditingTextId(line.id)}>{line.content || "빈 텍스트 — 클릭하여 입력"}</button>}
-              {!readOnly && <Button className="ghost danger" aria-label="텍스트 줄 삭제" onClick={() => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) }))}>×</Button>}
+              {editingTextId === line.id && !readOnly ? <input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={() => {
+                if (noteMode && !(line.content || "").trim()) {
+                  updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) }));
+                  setActiveTextId(null);
+                }
+                setEditingTextId(null);
+              }} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /> : <button type="button" className={`protocol-text-block ${line.content ? "" : "empty"}`} onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingTextId(line.id); } }}>{line.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+              {!readOnly && <Button className="ghost danger" aria-label="텍스트 줄 삭제" onClick={() => { updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) })); if (activeTextId === line.id) setActiveTextId(null); }}>×</Button>}
             </div>
             {noteMode && (editingDetailId === line.id ? <div className="execution-detail-editor">
               <label className="label">실제로 어떻게 수행했는지</label>
               <textarea className="field" autoFocus value={line.detail || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, detail: e.target.value } : t) }))} placeholder="순서, 실제 시간·온도, 실수나 조정 사항 등을 기록하세요." />
-              <Button className="soft" onClick={() => setEditingDetailId(null)}>메모 완료</Button>
-            </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => setEditingDetailId(line.id)}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : <Button className="ghost" onClick={() => setEditingDetailId(line.id)}>+ 실제 수행 메모</Button>)}
+              <Button className="soft" onClick={() => { setEditingDetailId(null); if (!(line.detail || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+            </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(line.id); setEditingDetailId(line.id); }}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : null)}
             {noteMode && (editingTextResultId === line.id ? <div className="execution-detail-editor result">
               <label className="label">결과 기록</label>
               <textarea className="field" autoFocus value={line.result || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, result: e.target.value } : t) }))} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
-              <Button className="soft" onClick={() => setEditingTextResultId(null)}>메모 완료</Button>
-            </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => setEditingTextResultId(line.id)}><strong>RESULT</strong>{line.result}</button> : <Button className="ghost" onClick={() => setEditingTextResultId(line.id)}>+ 결과 기록</Button>)}
+              <Button className="soft" onClick={() => { setEditingTextResultId(null); if (!(line.result || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+            </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(line.id); setEditingTextResultId(line.id); }}><strong>RESULT</strong>{line.result}</button> : null)}
+            {noteMode && activeTextId === line.id && editingDetailId !== line.id && editingTextResultId !== line.id && <div className="text-record-actions">
+              {!line.detail && <Button className="ghost" onClick={() => setEditingDetailId(line.id)}>+ 실제 수행 메모</Button>}
+              {!line.result && <Button className="ghost" onClick={() => setEditingTextResultId(line.id)}>+ 결과 기록</Button>}
+            </div>}
           </div>)}</div>;
         };
         const baseSg = diffBase?.stepGroups ? diffBase.stepGroups.find(s => s.id === stepGroup.id) : diffBase;
@@ -498,12 +567,8 @@
                         diffBase={panelDiffBase}
                         readOnly={readOnly}
                         onChange={np => updateRow(row.id, r => ({ ...r, panels: r.panels.map((p, i) => i === pi ? np : p) }))}
+                        onDelete={() => updateRow(row.id, r => ({ ...r, panels: r.panels.filter((_, i) => i !== pi) }))}
                       />
-                      {!readOnly && (
-                        <div className="row" style={{ marginTop: 4 }}>
-                          <Button className="ghost danger" onClick={() => updateRow(row.id, r => ({ ...r, panels: r.panels.filter((_, i) => i !== pi) }))}>패널 삭제</Button>
-                        </div>
-                      )}
                       {noteMode && (
                         <>
                           {hasAutoDev && <div className="auto-deviation">프로토콜과 다르게 편집된 패널</div>}
@@ -554,23 +619,98 @@
                 </select>
                 <input className="field callout-note" value={stepGroup.callout || ""} onChange={e => onChange({ ...stepGroup, callout: e.target.value })} placeholder="주의점이나 재개 조건" />
             </div>}
-            {readOnly && stepGroup.callout && <div style={{ padding: "0 14px 10px" }}><span className="warning-chip">{stepGroup.calloutType || "NOTE"}: {stepGroup.callout}</span></div>}
+            {stepGroup.callout && <div className={`step-callout ${stepGroup.calloutType === "CRITICAL" ? "critical" : stepGroup.calloutType === "PAUSE" ? "pause" : stepGroup.calloutType === "TROUBLESHOOTING" ? "troubleshooting" : ""}`}><strong>{stepGroup.calloutType || "NOTE"}</strong>{stepGroup.callout}</div>}
           </div>
         );
+      }
+
+      function BetweenStepEditor({ stepGroup, onChange, readOnly, noteMode }) {
+        const texts = stepGroup.afterStepTexts || [];
+        const [editingTextId, setEditingTextId] = useState(null);
+        const [activeTextId, setActiveTextId] = useState(null);
+        const [editingDetailId, setEditingDetailId] = useState(null);
+        const [editingResultId, setEditingResultId] = useState(null);
+        const patchText = (id, patch) => onChange({ ...stepGroup, afterStepTexts: texts.map(t => t.id === id ? { ...t, ...patch } : t) });
+        const removeText = (id) => {
+          onChange({ ...stepGroup, afterStepTexts: texts.filter(t => t.id !== id) });
+          if (activeTextId === id) setActiveTextId(null);
+        };
+        const addText = () => {
+          const text = { id: uid(), content: "", detail: "", result: "" };
+          onChange({ ...stepGroup, afterStepTexts: [...texts, text] });
+          setActiveTextId(text.id);
+          setEditingTextId(text.id);
+        };
+        if (readOnly && !texts.some(t => t.content)) return null;
+        return <div className={`between-step-editor ${noteMode ? "note-mode" : ""}`}>
+          {texts.length > 0 && <div className="protocol-text-lines after">{texts.map(text => <div key={text.id} className={`protocol-text-entry ${activeTextId === text.id ? "active" : ""}`}>
+            <div className="protocol-text-line">
+              {editingTextId === text.id && !readOnly ? <input className="field" autoFocus value={text.content || ""} onChange={e => patchText(text.id, { content: e.target.value })} onBlur={() => {
+                if (noteMode && !(text.content || "").trim()) removeText(text.id);
+                setEditingTextId(null);
+              }} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="다음 단계로 넘어가기 전 설명" aria-label="단계 사이 텍스트" /> : <button type="button" className={`protocol-text-block ${text.content ? "" : "empty"}`} onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingTextId(text.id); } }}>{text.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+              {!readOnly && <Button className="ghost danger" onClick={() => removeText(text.id)} aria-label="단계 사이 텍스트 삭제">×</Button>}
+            </div>
+            {noteMode && (editingDetailId === text.id ? <div className="execution-detail-editor">
+              <label className="label">실제로 어떻게 수행했는지</label>
+              <textarea className="field" autoFocus value={text.detail || ""} onChange={e => patchText(text.id, { detail: e.target.value })} placeholder="단계 사이에 실제로 수행한 준비나 조정을 기록하세요." />
+              <Button className="soft" onClick={() => { setEditingDetailId(null); if (!(text.detail || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+            </div> : text.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(text.id); setEditingDetailId(text.id); }}><strong>ACTUAL EXECUTION</strong>{text.detail}</button> : null)}
+            {noteMode && (editingResultId === text.id ? <div className="execution-detail-editor result">
+              <label className="label">결과 기록</label>
+              <textarea className="field" autoFocus value={text.result || ""} onChange={e => patchText(text.id, { result: e.target.value })} placeholder="확인한 결과나 다음 단계에 영향을 준 관찰을 기록하세요." />
+              <Button className="soft" onClick={() => { setEditingResultId(null); if (!(text.result || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+            </div> : text.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(text.id); setEditingResultId(text.id); }}><strong>RESULT</strong>{text.result}</button> : null)}
+            {noteMode && activeTextId === text.id && editingDetailId !== text.id && editingResultId !== text.id && <div className="text-record-actions">
+              {!text.detail && <Button className="ghost" onClick={() => setEditingDetailId(text.id)}>+ 실제 수행 메모</Button>}
+              {!text.result && <Button className="ghost" onClick={() => setEditingResultId(text.id)}>+ 결과 기록</Button>}
+            </div>}
+          </div>)}</div>}
+          {!readOnly && <Button className="ghost" onClick={addText}>+ 단계 사이 텍스트</Button>}
+        </div>;
+      }
+
+      function BeforeStartingEditor({ protocol, patchProtocol, readOnly }) {
+        const preparations = protocol.beforeStarting || [];
+        const patchItem = (id, patch) => patchProtocol(pr => ({ ...pr, beforeStarting: (pr.beforeStarting || []).map(item => item.id === id ? { ...item, ...patch } : item) }));
+        const deleteItem = (item) => {
+          if (!window.confirm(`“${item.title || "제목 없는 조제"}” 항목을 삭제할까요?`)) return;
+          patchProtocol(pr => ({ ...pr, beforeStarting: (pr.beforeStarting || []).filter(x => x.id !== item.id) }));
+        };
+        return <Card title="Before starting · 시약 조제" className="before-starting-card">
+          <div className="card-pad stack">
+            <div className="small muted">실험을 시작하기 전에 준비해야 할 buffer, stock solution, working solution을 기록하세요.</div>
+            {preparations.length > 0 ? <div className="preparation-list">{preparations.map(item => readOnly ? <div key={item.id} className="preparation-static">
+              <h4>{item.title || "제목 없는 조제"}</h4>
+              {item.composition && <p><strong>COMPOSITION</strong><br />{item.composition}</p>}
+              {item.instructions && <p><strong>PREPARATION</strong><br />{item.instructions}</p>}
+              {item.storage && <p><strong>STORAGE</strong><br />{item.storage}</p>}
+            </div> : <div key={item.id} className="preparation-item">
+              <div className="preparation-head"><input className="field grow" value={item.title || ""} onChange={e => patchItem(item.id, { title: e.target.value })} placeholder="조제명 · 예: 10× Wash buffer" aria-label="시약 조제 이름" /><button type="button" className="panel-close" onClick={() => deleteItem(item)} aria-label="시약 조제 항목 삭제">×</button></div>
+              <div className="preparation-grid">
+                <div><label className="label">조성 · 농도 · 부피</label><textarea className="field textarea" value={item.composition || ""} onChange={e => patchItem(item.id, { composition: e.target.value })} placeholder="각 성분과 최종 농도 또는 부피" /></div>
+                <div><label className="label">조제 방법</label><textarea className="field textarea" value={item.instructions || ""} onChange={e => patchItem(item.id, { instructions: e.target.value })} placeholder="혼합 순서, pH 조정, 멸균 방법" /></div>
+                <div className="full"><label className="label">보관 · 사용 기한</label><input className="field" value={item.storage || ""} onChange={e => patchItem(item.id, { storage: e.target.value })} placeholder="예: 4°C, 1개월 · 사용 전 실온 평형" /></div>
+              </div>
+            </div>)}</div> : <div className="empty">등록된 사전 시약 조제가 없습니다.</div>}
+            {!readOnly && <Button className="soft" onClick={() => patchProtocol(pr => ({ ...pr, beforeStarting: [...(pr.beforeStarting || []), emptyPreparation()] }))}>+ 시약 조제 추가</Button>}
+          </div>
+        </Card>;
       }
 
       function PrintPanel({ panel }) {
         if (panel.type === "reagent") {
           const rows = (panel.rows || []).filter(r => r.material || r.volume);
-          return <div className="print-static-panel"><div className="print-static-head">시약 · {panel.unit || "단위 없음"}</div><div className="print-static-body">
+          return <div className="print-static-panel"><div className="print-static-head">{panel.title || "시약"} · {panel.unit || "단위 없음"}</div><div className="print-static-body">
             {rows.length ? <table className="print-static-table"><thead><tr><th>Material</th><th>Amount</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.material || "—"}</td><td>{r.volume || "—"} {panel.unit || ""}</td></tr>)}<tr className="print-total"><td>Total</td><td>{sumVolumes(rows) ? sumVolumes(rows).toFixed(1) : "—"} {panel.unit || ""}</td></tr></tbody></table> : <span className="muted">입력된 시약 없음</span>}
+            {(panel.notes || []).map(n => n.content && <div key={n.id} className="print-step-text">{n.content}</div>)}
           </div></div>;
         }
         if (panel.type === "condition") {
           const rows = panel.rows || [];
-          return <div className="print-static-panel"><div className="print-static-head">반응 조건</div><div className="print-static-body"><table className="print-static-table"><thead><tr><th>온도</th><th>시간</th><th>rpm</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.temp ? `${r.temp}°C` : "—"}</td><td>{r.duration || "—"}</td><td>{r.rpm || "—"}</td></tr>)}</tbody></table></div></div>;
+          return <div className="print-static-panel"><div className="print-static-head">{panel.title || "반응 조건"}</div><div className="print-static-body"><table className="print-static-table"><thead><tr><th>온도</th><th>시간</th><th>rpm</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td>{r.temp ? `${r.temp}°C` : "—"}</td><td>{r.duration || "—"}</td><td>{r.rpm || "—"}</td></tr>)}</tbody></table>{(panel.notes || []).map(n => n.content && <div key={n.id} className="print-step-text">{n.content}</div>)}</div></div>;
         }
-        return <div className="print-static-panel"><div className="print-static-head">실험 방법</div><div className="print-static-body print-method">{panel.content || "입력된 방법 없음"}{panel.warnings && <div className="print-callout">CAUTION · {panel.warnings}</div>}</div></div>;
+        return <div className="print-static-panel"><div className="print-static-head">{panel.title || "실험 방법"}</div><div className="print-static-body print-method">{panel.content || "입력된 방법 없음"}{panel.warnings && <div className="print-callout">CAUTION · {panel.warnings}</div>}</div></div>;
       }
 
       function PrintLayout({ protocol, version, projectName, experimentName }) {
@@ -579,6 +719,7 @@
           <div className="print-root" id="print-layout">
             <header className="print-header"><div className="print-kicker">LAB PROTOCOL</div><h1 className="print-title">{protocol.name || "Protocol"}</h1><div className="print-subtitle"><span>{projectName}</span><span>{experimentName}</span><span>{version.label}</span><span>{version.stepGroups.length} steps</span></div></header>
             {summaryItems.length > 0 && <div className="print-summary-grid">{summaryItems.map(([label,value]) => <div key={label} className="print-summary-block"><strong>{label}</strong>{value}</div>)}</div>}
+            {(protocol.beforeStarting || []).length > 0 && <section className="print-before-starting"><div className="print-kicker">BEFORE STARTING · REAGENT PREPARATION</div>{protocol.beforeStarting.map(item => <div key={item.id} className="print-summary-block"><strong>{item.title || "제목 없는 조제"}</strong>{[item.composition, item.instructions, item.storage].filter(Boolean).join("\n")}</div>)}</section>}
             <div className="print-steps-grid">
               {[...version.stepGroups].sort((a, b) => a.order - b.order).map(sg => <article key={sg.id} className="print-step">
                 <div className="print-step-head"><span className="print-step-num">{sg.order}</span><span className="print-step-title">{sg.title || "제목 없는 단계"}</span>{sg.timing && <span className="print-timing">{sg.timing}</span>}</div>
@@ -589,7 +730,8 @@
                     {(pr.texts || []).filter(t => t.position === "after").map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
                   </React.Fragment>)}
                   {sg.text && <div className="print-step-text">{sg.text}</div>}
-                  {sg.callout && <div className="print-callout">{sg.calloutType || "NOTE"} · {sg.callout}</div>}
+                  {sg.callout && <div className={`print-callout ${sg.calloutType === "CRITICAL" ? "critical" : ""}`}>{sg.calloutType || "NOTE"} · {sg.callout}</div>}
+                  {(sg.afterStepTexts || []).map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
                 </div>
               </article>)}
             </div>
@@ -598,9 +740,47 @@
         );
       }
 
+      function ProtocolShareModal({ protocol, projectName, experimentName, onClose, onShared }) {
+        const [email, setEmail] = useState("");
+        const [mode, setMode] = useState("copy");
+        const [busy, setBusy] = useState(false);
+        const [error, setError] = useState("");
+        const submit = async () => {
+          const trimmedEmail = email.trim();
+          if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) { setError("받는 사람의 이메일을 정확히 입력해주세요."); return; }
+          if (mode === "move" && !window.confirm("이동이 완료되면 내 실험에서 이 프로토콜이 삭제됩니다. 계속할까요?")) return;
+          setBusy(true); setError("");
+          try {
+            await requestProtocolShare({ email: trimmedEmail, mode, protocol, projectName, experimentName });
+            onShared(mode, trimmedEmail);
+          } catch (shareError) {
+            setError(shareError?.message || "프로토콜을 공유하지 못했습니다.");
+          } finally {
+            setBusy(false);
+          }
+        };
+        return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="프로토콜 공유">
+            <div className="modal-head"><div><div className="eyebrow">SHARE PROTOCOL</div><h3>프로토콜 공유</h3></div><Button className="ghost" onClick={onClose} disabled={busy}>닫기</Button></div>
+            <div className="modal-body">
+              <div className="share-summary"><strong>{protocol.name || "제목 없는 프로토콜"}</strong><div className="tiny muted">{projectName} · {experimentName}</div></div>
+              <div><label className="label">받는 사용자 이메일</label><input type="email" className="field" autoFocus value={email} onChange={e => setEmail(e.target.value)} placeholder="colleague@example.com" aria-label="받는 사용자 이메일" /></div>
+              <div className="share-mode-options">
+                <label className="share-mode-option"><input type="radio" name="share-mode" value="copy" checked={mode === "copy"} onChange={() => setMode("copy")} /><span><strong>복사</strong><span>내 프로토콜을 유지하고 상대에게 사본을 보냅니다.</span></span></label>
+                <label className="share-mode-option"><input type="radio" name="share-mode" value="move" checked={mode === "move"} onChange={() => setMode("move")} /><span><strong>이동</strong><span>전달 완료 후 내 실험에서 프로토콜을 제거합니다.</span></span></label>
+              </div>
+              <div className="tiny muted">받는 사용자는 같은 이메일로 실험 노트 클라우드 계정을 만든 상태여야 합니다.</div>
+              {error && <div className="share-error" role="alert">{error}</div>}
+            </div>
+            <div className="modal-foot"><Button className="ghost" onClick={onClose} disabled={busy}>취소</Button><Button className="primary" onClick={submit} disabled={busy}>{busy ? "전달 중…" : mode === "move" ? "이동하기" : "복사 보내기"}</Button></div>
+          </div>
+        </div>;
+      }
+
       function ProtocolEditor({ project, experiment, protocol, setStore, toast }) {
         const [compareVersionId, setCompareVersionId] = useState(null);
         const [viewMode, setViewMode] = useState("edit");
+        const [showShareModal, setShowShareModal] = useState(false);
         const savedVersion = protocol.versions.find(v => v.id === protocol.activeVersionId) || protocol.versions[0];
         const version = protocol.draftVersion?.id === savedVersion.id ? protocol.draftVersion : savedVersion;
         const compareVersion = compareVersionId ? protocol.versions.find(v => v.id === compareVersionId) : null;
@@ -692,6 +872,7 @@
                   </select>
                 )}
                 <Button className="soft" onClick={saveNewVersion}>수정 버전 저장</Button>
+                <Button className="soft" onClick={() => setShowShareModal(true)}>공유</Button>
                 <Button className="soft" onClick={() => window.print()}>인쇄</Button>
                 <Button className="primary" onClick={exportPdf}>PDF 저장</Button>
               </div>
@@ -704,6 +885,7 @@
                 <div><label className="label">트러블슈팅</label><textarea className="field textarea" value={protocol.troubleshooting || ""} onChange={e => patchProtocol(pr => ({ ...pr, troubleshooting: e.target.value }))} placeholder="문제 · 원인 · 해결 방법" /></div>
               </div>
             </Card>
+            <BeforeStartingEditor protocol={protocol} patchProtocol={patchProtocol} readOnly={readOnly} />
             <div className="protocol-workspace">
               <aside className="protocol-overview">
                 <div className="eyebrow">PROTOCOL OVERVIEW</div><h3>전체 단계</h3>
@@ -715,7 +897,10 @@
               </aside>
               <div className="stack">
                 {sortedSteps.length === 0 ? <div className="empty">첫 실험 단계를 추가하세요. 시약 패널은 자동으로 생성되지 않습니다.</div> : sortedSteps.map(sg => (
-                  <StepGroupEditor key={sg.id} stepGroup={sg} readOnly={readOnly} diffBase={compareVersion} onChange={val => updateStep(sg.id, val)} />
+                  <React.Fragment key={sg.id}>
+                    <StepGroupEditor stepGroup={sg} readOnly={readOnly} diffBase={compareVersion} onChange={val => updateStep(sg.id, val)} />
+                    <BetweenStepEditor stepGroup={sg} readOnly={readOnly} onChange={val => updateStep(sg.id, val)} />
+                  </React.Fragment>
                 ))}
                 {readOnly && compareVersion && compareVersion.stepGroups.filter(baseSg => !version.stepGroups.some(sg => sg.id === baseSg.id)).map(baseSg => (
                   <div key={`removed-${baseSg.id}`} className="diff-removed-block stack"><strong>삭제된 단계</strong><StepGroupEditor stepGroup={baseSg} readOnly onChange={() => {}} /></div>
@@ -725,6 +910,21 @@
             </div>
           </div>
           <PrintLayout protocol={protocol} version={version} projectName={project.name} experimentName={experiment.name} />
+          {showShareModal && <ProtocolShareModal
+            protocol={protocol}
+            projectName={project.name}
+            experimentName={experiment.name}
+            onClose={() => setShowShareModal(false)}
+            onShared={(mode, email) => {
+              setShowShareModal(false);
+              if (mode === "move") {
+                updateProject(setStore, project.id, p => ({ ...p, experiments: p.experiments.map(ex => ex.id === experiment.id ? { ...ex, protocols: ex.protocols.filter(pr => pr.id !== protocol.id) } : ex) }));
+                toast(`${email} 사용자에게 프로토콜을 이동했습니다`);
+              } else {
+                toast(`${email} 사용자에게 프로토콜 사본을 보냈습니다`);
+              }
+            }}
+          />}
           </>
         );
       }
@@ -740,6 +940,15 @@
         }, []);
 
         const patchProject = (fn) => updateProject(setStore, project.id, fn);
+        const deleteExperiment = (experiment) => {
+          if (!experiment) return;
+          const protocolCount = experiment.protocols?.length || 0;
+          const warning = protocolCount > 0 ? `\n이 안에는 프로토콜 ${protocolCount}개가 있으며 함께 삭제됩니다.` : "";
+          if (!window.confirm(`“${experiment.name || "제목 없는 실험"}” 실험을 삭제할까요?${warning}\n\n삭제 후에는 되돌릴 수 없습니다.`)) return;
+          patchProject(p => ({ ...p, experiments: p.experiments.filter(e => e.id !== experiment.id) }));
+          if (selExp === experiment.id) { setSelProto(null); setSelExp(null); }
+          toast("실험을 삭제했습니다");
+        };
 
         if (selExp && selProto) {
           const exp = project.experiments.find(e => e.id === selExp);
@@ -753,11 +962,11 @@
             <div className="stack">
               <div className="breadcrumb"><button type="button" onClick={() => setSelExp(null)}>← 실험 목록</button><span>/</span><strong>{exp?.name}</strong></div>
               <div className="hero"><div className="grow"><div className="eyebrow">EXPERIMENT</div><input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={exp?.name || ""} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === selExp ? { ...x, name: ev.target.value } : x) }))} aria-label="실험 이름" /></div>
-                <Button className="primary" onClick={() => {
+                <div className="row"><Button className="ghost danger" onClick={() => deleteExperiment(exp)}>실험 삭제</Button><Button className="primary" onClick={() => {
                   const p = emptyProtocol("새 프로토콜");
                   patchProject(pr => ({ ...pr, experiments: pr.experiments.map(e => e.id === selExp ? { ...e, protocols: [...e.protocols, p] } : e) }));
                   setSelProto(p.id);
-                }}>+ 프로토콜 추가</Button>
+                }}>+ 프로토콜 추가</Button></div>
               </div>
               {exp?.protocols.length ? exp.protocols.map(p => (
                 <Card key={p.id} title={p.name} action={<Button className="soft" onClick={() => setSelProto(p.id)}>열기</Button>}>
@@ -779,7 +988,7 @@
               }}>+ 실험 추가</Button>
             </div>
             {project.experiments.length ? project.experiments.map(e => (
-              <Card key={e.id} title={e.name} action={<Button className="soft" onClick={() => setSelExp(e.id)}>열기 ({e.protocols.length})</Button>}>
+              <Card key={e.id} title={e.name} action={<div className="row"><Button className="ghost danger" onClick={() => deleteExperiment(e)}>삭제</Button><Button className="soft" onClick={() => setSelExp(e.id)}>열기 ({e.protocols.length})</Button></div>}>
                 <div className="card-pad stack">
                   <div><label className="label">실험 이름</label><input className="field" value={e.name} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, name: ev.target.value } : x) }))} /></div>
                   <div><label className="label">실험 메모</label><input className="field" value={e.memo} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, memo: ev.target.value } : x) }))} placeholder="실험 메모" /></div>
@@ -826,7 +1035,7 @@
         const loadProtocol = () => {
           const proto = allProtocols.find(p => p.id === note.linkedProtocolId);
           if (!proto) { toast("프로토콜을 선택해주세요"); return; }
-          const hasRunRecords = (note.execution.deviations || []).length || (note.execution.results || []).length || (note.execution.panelAnnotations || []).length || (note.execution.stepRuns || []).some(r => r.planned || r.actual || r.observation || r.status !== "pending") || (note.execution.stepGroups || []).some(sg => (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)));
+          const hasRunRecords = (note.execution.deviations || []).length || (note.execution.results || []).length || (note.execution.panelAnnotations || []).length || (note.execution.stepRuns || []).some(r => r.planned || r.actual || r.observation || r.status !== "pending") || (note.execution.stepGroups || []).some(sg => (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)) || (sg.afterStepTexts || []).some(t => t.detail || t.result));
           if (hasRunRecords && !window.confirm("현재 variation과 실행 기록을 지우고 프로토콜을 다시 불러올까요?")) return;
           const ver = getSelectedProtocolVersion(proto, note.linkedProtocolVersionId);
           if (!ver) { toast("불러올 프로토콜 버전이 없습니다"); return; }
@@ -891,7 +1100,7 @@
           const run = getStepRun(sg.id);
           return run.status !== "pending" || run.planned || run.actual || run.observation ||
             note.execution.deviations.some(d => d.stepGroupId === sg.id) || note.execution.results.some(r => r.stepGroupId === sg.id) ||
-            (note.execution.panelAnnotations || []).some(a => a.stepGroupId === sg.id) || (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)) ||
+            (note.execution.panelAnnotations || []).some(a => a.stepGroupId === sg.id) || (sg.panelRows || []).some(pr => (pr.texts || []).some(t => t.detail || t.result)) || (sg.afterStepTexts || []).some(t => t.detail || t.result) ||
             [...autoDeviationKeys].some(key => key.startsWith(`${sg.id}:`));
         }).map(sg => sg.id));
         const visibleExecutionGroups = showChangedOnly ? executionGroups.filter(sg => changedStepIds.has(sg.id)) : executionGroups;
@@ -969,6 +1178,7 @@
             </div>}
             {showChangedOnly && visibleExecutionGroups.length === 0 && <div className="empty">아직 variation이나 실행 기록이 없습니다.</div>}
             {visibleExecutionGroups.map(sg => (
+              <React.Fragment key={sg.id}>
               <StepGroupEditor
                 key={sg.id}
                 stepGroup={sg}
@@ -1002,6 +1212,12 @@
                   ...n, execution: { ...n.execution, stepGroups: val === null ? n.execution.stepGroups.filter(s => s.id !== sg.id).map((s, index) => ({ ...s, order: index + 1 })) : n.execution.stepGroups.map(s => s.id === sg.id ? val : s) },
                 }))}
               />
+              <BetweenStepEditor
+                stepGroup={sg}
+                noteMode
+                onChange={val => patchNote(n => ({ ...n, execution: { ...n.execution, stepGroups: n.execution.stepGroups.map(s => s.id === sg.id ? val : s) } }))}
+              />
+              </React.Fragment>
             ))}
             {removedBasePanels.length > 0 && <Card title="프로토콜에서 삭제된 과정">
               <div className="card-pad stack">{removedBasePanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}</div>
@@ -1349,11 +1565,37 @@
 
         useEffect(() => {
           const receive = (event) => {
-            if (event.origin !== window.location.origin || event.source !== window.parent || event.data?.type !== "exp-note-cloud-store" || !event.data.store) return;
-            skipRef.current = true;
-            setStore(normalizeStore(event.data.store));
-            setSaveState("저장됨");
-            window.parent.postMessage({ type: "exp-note-cloud-store-applied", fingerprint: event.data.fingerprint || "" }, window.location.origin);
+            if (event.origin !== window.location.origin || event.source !== window.parent) return;
+            if (event.data?.type === "exp-note-cloud-store" && event.data.store) {
+              skipRef.current = true;
+              setStore(normalizeStore(event.data.store));
+              setSaveState("저장됨");
+              window.parent.postMessage({ type: "exp-note-cloud-store-applied", fingerprint: event.data.fingerprint || "" }, window.location.origin);
+              return;
+            }
+            if (event.data?.type === "exp-note-incoming-protocols" && Array.isArray(event.data.transfers)) {
+              const transferIds = event.data.transfers.map(t => t.id).filter(Boolean);
+              const alreadyReceived = new Set(storeRef.current.settings?.receivedProtocolTransferIds || []);
+              const freshTransfers = event.data.transfers.filter(t => t.id && t.protocol && !alreadyReceived.has(t.id));
+              if (freshTransfers.length) {
+                setStore(current => {
+                  const currentReceived = new Set(current.settings?.receivedProtocolTransferIds || []);
+                  const activeProjectId = current.projects.some(p => p.id === current.activeProjectId) ? current.activeProjectId : current.projects[0]?.id;
+                  const nextProjects = current.projects.map(p => {
+                    if (p.id !== activeProjectId) return p;
+                    const receivedExperiment = p.experiments.find(ex => ex.name === "공유받은 프로토콜");
+                    const importedProtocols = freshTransfers.filter(t => !currentReceived.has(t.id)).map(t => normalizeProtocol({ ...t.protocol, id: uid(), name: t.protocol.name || "공유받은 프로토콜" }));
+                    if (!importedProtocols.length) return p;
+                    if (receivedExperiment) return { ...p, experiments: p.experiments.map(ex => ex.id === receivedExperiment.id ? { ...ex, protocols: [...ex.protocols, ...importedProtocols] } : ex) };
+                    return { ...p, experiments: [...p.experiments, { ...emptyExperiment("공유받은 프로토콜"), memo: "다른 사용자에게 받은 프로토콜", protocols: importedProtocols }] };
+                  });
+                  freshTransfers.forEach(t => currentReceived.add(t.id));
+                  return { ...current, projects: nextProjects, settings: { ...current.settings, receivedProtocolTransferIds: [...currentReceived] } };
+                });
+                toast(`${freshTransfers.length}개의 공유 프로토콜을 받았습니다`);
+              }
+              window.setTimeout(() => window.parent.postMessage({ type: "exp-note-protocols-received", transferIds }, window.location.origin), 700);
+            }
           };
           window.addEventListener("message", receive);
           if (window.parent !== window) window.parent.postMessage({ type: "exp-note-ready" }, window.location.origin);
@@ -1419,10 +1661,10 @@
             {screen === "library" && <ProjectLibrary store={store} setStore={setStore} onOpen={id => { setStore(s => ({ ...s, activeProjectId: id })); setScreen("hub"); }} />}
             {screen === "hub" && <div className="shell"><ProjectHub project={project} onBack={() => setScreen("library")} onSelect={v => { setView(v); setScreen("tool"); }} /></div>}
             {screen === "tool" && <div className="shell"><main className="main"><button className="back-library" onClick={() => setScreen("hub")}>← {project.name}</button>
-              {view === "protocol" && <ProtocolView project={project} setStore={setStore} toast={toast} />}
-              {view === "notes" && <NotesView project={project} setStore={setStore} toast={toast} />}
-              {view === "memo" && <MemoView project={project} setStore={setStore} toast={toast} />}
-              {view === "inventory" && <InventoryView project={project} setStore={setStore} />}
+              <section hidden={view !== "protocol"}><ProtocolView project={project} setStore={setStore} toast={toast} /></section>
+              <section hidden={view !== "notes"}><NotesView project={project} setStore={setStore} toast={toast} /></section>
+              <section hidden={view !== "memo"}><MemoView project={project} setStore={setStore} toast={toast} /></section>
+              <section hidden={view !== "inventory"}><InventoryView project={project} setStore={setStore} /></section>
             </main></div>}
             {toastMsg && <div className="toast no-print">{toastMsg}</div>}
           </div>

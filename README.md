@@ -33,17 +33,17 @@ python3 -m http.server 8080
 `sync-app.js`에 설정된 Supabase 프로젝트를 사용합니다.
 
 1. [Supabase Dashboard](https://supabase.com/dashboard) → SQL Editor
-2. `supabase/note_records.sql` 전체 실행 (테이블 + RLS + RPC + **Realtime** 포함)
+2. `supabase/note_records.sql` 전체 실행 (동기화·프로토콜 공유 테이블 + RLS + RPC + **Realtime** 포함)
 3. 앱에서 왼쪽 아래 **클라우드 로그인** → 계정으로 로그인
 
-> SQL을 이미 실행했다면 Realtime 블록만 다시 실행해도 됩니다 (파일 맨 아래 `replica identity` / `supabase_realtime` 부분).
+> 기존 SQL을 실행한 프로젝트도 이메일 기반 프로토콜 공유를 사용하려면 최신 `supabase/note_records.sql` 전체를 다시 실행해야 합니다. 모든 구문은 재실행 가능하게 작성되어 있습니다.
 
 별도 Supabase 프로젝트를 쓰려면 `sync-app.js`의 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`를 변경하세요.
 
 ## 기능
 
-- **프로토콜**: 실험 → 프로토콜 → 단계 그룹 → 시약/반응조건/방법 패널 (가로 배치), 버전 저장, diff 비교, 2단 PDF
-- **실험 노트**: 날짜/목적, 조건 라벨, 프로토콜 불러오기, deviation·결과 하이라이트
+- **프로토콜**: 실험 → 프로토콜 → 단계 그룹 → 시약/반응조건/방법 패널 (가로 배치), 버전 저장, diff 비교, 2단 PDF, 이메일 복사·이동
+- **실험 노트**: 날짜/목적, 조건 라벨, 프로토콜 불러오기, 단계 사이 텍스트, 텍스트별 실제 수행 메모·결과 기록
 - **실험 메모**: planner 스타일 메모장 + 포스트잇 보드/목록
 - **재고 관리**: 5단계 정성 슬라이더 (전부 소진 → 넉넉함)
 

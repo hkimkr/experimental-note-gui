@@ -2,9 +2,19 @@
   "name": "실험 노트 GUI",
   "short_name": "실험노트",
   "description": "실험 프로토콜, 노트, 메모, 재고 관리",
+  "id": "./",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f7f8fa",
-  "theme_color": "#5b7cfa",
-  "lang": "ko"
+  "theme_color": "#18553f",
+  "lang": "ko",
+  "categories": ["productivity", "education", "utilities"],
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "./assets/app-preview.png", "sizes": "1024x1024", "type": "image/png", "label": "실험 노트 앱 미리보기" }
+  ]
 }
