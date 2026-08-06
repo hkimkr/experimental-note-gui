@@ -58,13 +58,15 @@
   let pendingAppStore = null;
   let pendingAppFingerprint = "";
   let appEditing = false;
-  let reconnectAfterEditing = false;
   let deferredRemoteRecords = new Map();
   let deferredRemoteMessage = "";
   let localCaptureChain = Promise.resolve();
+  let latestQueuedLocalRaw = "";
+  let localCaptureRunning = false;
   let pendingLocalRaw = "";
   let incomingProtocolTimer = null;
   let incomingProtocolLoading = false;
+  let resumeSyncTimer = null;
 
   const canonicalize = (value) => {
     if (Array.isArray(value)) return value.map(canonicalize);
@@ -590,6 +592,16 @@
     if (currentSession) label.textContent = message;
   };
 
+  const appliedStatus = () => {
+    const time = new Intl.DateTimeFormat("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(new Date());
+    setStatus(`이 기기 반영됨 · ${time}`);
+  };
+
   const postStoreToApp = (store) => {
     if (!frame?.contentWindow || !store) return;
     const fingerprint = fingerprintValue(store);
@@ -759,7 +771,7 @@
     return true;
   }
 
-  const scheduleUpload = (delay = 650) => {
+  const scheduleUpload = (delay = 350) => {
     if (uploadTimer) window.clearTimeout(uploadTimer);
     uploadTimer = window.setTimeout(() => {
       uploadTimer = null;
@@ -841,11 +853,35 @@
       pendingLocalRaw = raw;
       return localCaptureChain;
     }
-    localCaptureChain = localCaptureChain
-      .catch(() => undefined)
-      .then(() => captureLocalChanges(raw));
+    // While typing, keep only the newest complete snapshot. Processing every
+    // intermediate keystroke serially made large notebooks several seconds late.
+    latestQueuedLocalRaw = raw;
+    if (localCaptureRunning) return localCaptureChain;
+    localCaptureRunning = true;
+    localCaptureChain = (async () => {
+      while (latestQueuedLocalRaw) {
+        const newestRaw = latestQueuedLocalRaw;
+        latestQueuedLocalRaw = "";
+        try {
+          await captureLocalChanges(newestRaw);
+        } catch {
+          // IndexedDB/network retries are handled by the outbox and reconnect path.
+        }
+      }
+    })().finally(() => {
+      localCaptureRunning = false;
+    });
     return localCaptureChain;
   };
+
+  async function hasPendingLocalRecord(userId, key) {
+    try {
+      return (await getStoredRecords(OUTBOX_STORE, userId)).has(key);
+    } catch {
+      // If local persistence cannot be inspected, preserve the conservative rule.
+      return true;
+    }
+  }
 
   const deferRemoteRecord = (record, message = "") => {
     const key = recordKey(record);
@@ -874,10 +910,6 @@
       applyRecordsToApp(currentRecords, message);
     }
 
-    if (reconnectAfterEditing && currentSession?.user) {
-      reconnectAfterEditing = false;
-      await connectSync();
-    }
   }
 
   function readLegacyPending() {
@@ -916,7 +948,9 @@
           if (isOwnRecord(incoming)) return;
           await localCaptureChain.catch(() => undefined);
           const key = recordKey(incoming);
-          const existing = appEditing
+          const deferForLocalEdit =
+            appEditing && (await hasPendingLocalRecord(userId, key));
+          const existing = deferForLocalEdit
             ? newerRecord(
                 currentRecords.get(key),
                 deferredRemoteRecords.get(key)
@@ -941,12 +975,12 @@
             }
           }
           await putStoredRecords(RECORDS_STORE, userId, [incoming]);
-          if (appEditing) {
+          if (deferForLocalEdit) {
             deferRemoteRecord(
               incoming,
-              "다른 기기의 변경사항을 받았습니다"
+              "편집 중인 항목의 다른 기기 변경사항을 받았습니다"
             );
-            setStatus("입력 완료 후 다른 기기 변경사항 병합");
+            setStatus("이 항목 입력 완료 후 다른 기기 변경사항 병합");
             return;
           }
           currentRecords.set(key, incoming);
@@ -984,21 +1018,16 @@
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
       if (!currentSession?.user) return;
-      if (appEditing) {
-        reconnectAfterEditing = true;
-        return;
-      }
       connectSync();
     }, 4000);
   };
 
   async function connectSync() {
-    if (appEditing) {
-      reconnectAfterEditing = true;
-      setStatus("입력 완료 후 클라우드 연결 재개");
-      return;
-    }
     await localCaptureChain.catch(() => undefined);
+    const reconnectingUserId = currentSession?.user?.id || "";
+    const reconnectingSameUser = Boolean(
+      reconnectingUserId && initializedUserId === reconnectingUserId
+    );
     const generation = ++syncGeneration;
     initializedUserId = "";
     if (reconnectTimer) {
@@ -1104,9 +1133,13 @@
       [...currentRecords.values()]
     );
     initializedUserId = userId;
-    // The iframe boots with a local/default snapshot before cloud hydration.
-    // Never replay that snapshot; only v3 intent-marked edits can beat cloud.
+    // On first boot, discard the iframe's default snapshot. During a reconnect,
+    // however, keep edits that arrived while the remote fetch was in flight.
+    const reconnectRaw = reconnectingSameUser ? pendingLocalRaw : "";
     pendingLocalRaw = "";
+    if (reconnectRaw) {
+      await queueLocalCapture(reconnectRaw).catch(() => undefined);
+    }
     applyRecordsToApp(currentRecords);
     if (navigator.onLine === false) {
       setStatus("오프라인 · 이 기기에 안전하게 저장됨");
@@ -1139,7 +1172,6 @@
       currentRecords = new Map();
       deferredRemoteRecords = new Map();
       deferredRemoteMessage = "";
-      reconnectAfterEditing = false;
       pendingLocalRaw = "";
       if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
       incomingProtocolTimer = null;
@@ -1251,6 +1283,7 @@
     ) {
       pendingAppStore = null;
       pendingAppFingerprint = "";
+      appliedStatus();
     }
   });
 
@@ -1271,13 +1304,23 @@
   });
   window.addEventListener("online", () => {
     setStatus("연결됨 · 변경사항 병합 중…");
-    if (appEditing) {
-      reconnectAfterEditing = true;
-      setStatus("입력 완료 후 변경사항 병합");
-      return;
-    }
     connectSync();
   });
+
+  const syncAfterResume = () => {
+    if (document.visibilityState === "hidden" || !currentSession?.user) return;
+    if (resumeSyncTimer) window.clearTimeout(resumeSyncTimer);
+    resumeSyncTimer = window.setTimeout(() => {
+      resumeSyncTimer = null;
+      if (!currentSession?.user || navigator.onLine === false) return;
+      setStatus("앱 복귀 · 최신 변경사항 확인 중…");
+      connectSync();
+    }, 220);
+  };
+
+  document.addEventListener("visibilitychange", syncAfterResume);
+  window.addEventListener("pageshow", syncAfterResume);
+  window.addEventListener("focus", syncAfterResume);
 
   if (new URLSearchParams(window.location.search).has("sync-test")) {
     window.__expNoteSyncDiagnostics = Object.freeze({

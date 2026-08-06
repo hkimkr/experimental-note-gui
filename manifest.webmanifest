@@ -3,7 +3,7 @@
   "short_name": "실험노트 3",
   "description": "실험 프로토콜, 노트, 메모, 재고 관리",
   "id": "./",
-  "start_url": "./index.html?v=3.1.0",
+  "start_url": "./index.html?v=3.2.0",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f7f8fa",
