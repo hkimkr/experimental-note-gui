@@ -1,4 +1,4 @@
-const CACHE = "exp-note-preview-2026-08-06-b";
+const CACHE = "exp-note-v2.0.0";
 const ASSETS = [
   "./index.html",
   "./app.html",
@@ -9,6 +9,8 @@ const ASSETS = [
   "./assets/icon-192.png",
   "./assets/icon-512.png",
   "./assets/apple-touch-icon.png",
+  "./assets/favicon-32.png",
+  "./assets/favicon-48.png",
   "./assets/app-preview.png",
   "./assets/link-preview.png",
 ];

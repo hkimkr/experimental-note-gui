@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#18553f" />
-    <title>실험 노트 GUI</title>
+    <title>실험 노트 GUI · ver2</title>
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
@@ -12,7 +12,7 @@
     <style>
       :root{--ink:#1f2a26;--muted:#738079;--line:#e3e9e5;--paper:#fff;--bg:#f4f7f4;--brand:#1f6b4f;--brand2:#e7f3ed;--danger:#c94f4f;--warn-bg:#fff8e6;--warn-line:#efcf8b;--deviation-bg:#fff3e0;--result-bg:#e8f5e9;--panel-border:#dfe7e2;--shadow:0 18px 48px rgba(31,42,38,.08)}
       *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(91,124,250,.25);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}
-      .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:36px;height:36px;border-radius:12px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:16px;font-weight:800}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
+      .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:40px;height:40px;border:1px solid #dbe5df;border-radius:12px;background:#f9faf7;display:block;overflow:hidden;box-shadow:0 3px 10px rgba(24,85,63,.1)}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
       .shell{max-width:1480px;margin:auto;padding:22px}.main{min-width:0}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 12px rgba(37,55,46,.035)}.card-pad{padding:18px}.card-head{padding:15px 18px;border-bottom:1px solid #edf0ed;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-head h2,.card-head h3{margin:0;font-size:15px}.eyebrow{color:var(--brand);font-weight:800;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.page-title{margin:3px 0 0;font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.25}.page-sub{color:var(--muted);font-size:13px;margin-top:5px}.muted{color:var(--muted)}.tiny{font-size:11px}.small{font-size:13px}.stack{display:flex;flex-direction:column;gap:12px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:0}.btn{min-height:38px;border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:700}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--brand2);border-color:transparent;color:var(--brand)}.btn.ghost{background:transparent;border-color:transparent}.btn.danger{color:var(--danger)}.field{width:100%;border:1px solid #d7ded9;background:#fff;border-radius:11px;padding:9px 11px;min-height:40px}.label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#566159}.textarea{min-height:92px;resize:vertical}.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}
       .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:none}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97)}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-handle{position:absolute;right:11px;top:11px;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:8px;padding:5px 8px;font-size:14px;cursor:grab}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}
       .project-hub{max-width:1100px;margin:0 auto;padding:10px 0 48px}.hub-hero{padding:34px;background:linear-gradient(135deg,#fff,#eef5f0);border-radius:26px;border:1px solid var(--line);margin-bottom:22px}.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.hub-tile{min-height:190px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:var(--shadow);transition:transform .16s,border-color .16s}.hub-tile:hover{transform:translateY(-3px);border-color:#a8c8b9}.hub-icon{width:48px;height:48px;border-radius:15px;background:var(--brand2);display:grid;place-items:center;font-size:22px;margin-bottom:22px}.hub-tile strong{font-size:20px;display:block}.hub-tile span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.back-library{border:0;background:transparent;color:var(--brand);font-weight:800;padding:0;margin-bottom:14px}
@@ -20,6 +20,7 @@
       .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
       .mobile-projects{display:none;margin-bottom:14px}.view-toggle{display:inline-flex;background:#f0f2f5;border-radius:11px;padding:3px}.view-toggle button{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;color:var(--muted)}.view-toggle button.active{background:#fff;color:var(--brand)}
       .protocol-workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}.protocol-overview{position:sticky;top:86px;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow)}.protocol-overview h3{margin:0 0 4px;font-size:15px}.overview-list{display:flex;flex-direction:column;gap:6px;margin-top:14px}.overview-step{width:100%;border:0;background:#f5f8f6;border-radius:10px;padding:9px 10px;text-align:left;font-size:12px}.overview-step:hover{background:var(--brand2);color:var(--brand)}.overview-step strong{display:block}.overview-step span{display:block;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nature-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.step-group{scroll-margin-top:92px;border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden;margin-bottom:14px}.step-head{padding:12px 14px;background:#f8faf8;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}.step-num{width:28px;height:28px;border-radius:8px;background:var(--brand2);color:var(--brand);font-weight:900;display:grid;place-items:center;font-size:13px;flex:none}.step-timing{width:112px}.panel-line-editor{border-bottom:1px solid var(--line);padding:10px 14px}.panel-line-editor:last-of-type{border-bottom:0}.panel-row-layout{display:flex;align-items:flex-start;gap:10px;min-width:0}.panel-row{display:flex;flex:1;min-width:0;gap:10px;padding:0 0 5px;overflow-x:auto;overscroll-behavior-inline:contain;align-items:flex-start}.panel-row.stack-mobile{flex-direction:column}.panel-instance{flex:0 0 280px;min-width:0;max-width:280px}.panel-instance.reagent{flex-basis:340px;max-width:340px}.panel-line-tools,.panel-line-secondary{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.panel-primary-tools{flex:0 0 auto;margin-left:auto;padding:5px;background:#f5f8f6;border:1px solid var(--line);border-radius:10px}.panel-line-secondary{margin-top:7px;padding-top:6px;border-top:1px dashed var(--line)}.panel-line-tools .btn,.panel-line-secondary .btn{min-height:31px;padding:4px 8px;font-size:12px}.panel-line-secondary .row-remove-button{margin-left:auto}.protocol-text-lines{display:flex;flex-direction:column;gap:5px;margin:0 0 8px}.protocol-text-lines.after{margin:6px 0 0}.protocol-text-entry.active{padding:5px;border:1px solid #bfd4c8;border-radius:11px;background:#fbfdfc}.protocol-text-line{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:5px;align-items:center}.protocol-text-line .field{min-height:34px;padding:5px 9px;font-weight:780}.protocol-text-line .btn{min-height:30px;padding:3px}.protocol-text-block{width:100%;min-height:34px;border:1px solid #dfe7e2;background:#f6f9f7;border-radius:9px;padding:6px 10px;text-align:left;font-size:13px;font-weight:800;line-height:1.45;white-space:pre-wrap}.protocol-text-block:hover{border-color:#9fc6b4;background:var(--brand2)}.protocol-text-block.empty{color:var(--muted);font-style:italic}.text-record-actions{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 0}.text-record-actions .btn{min-height:29px;padding:3px 8px;font-size:11px}.callout-row{display:flex;gap:8px;align-items:center;padding:9px 14px 11px;background:#fbfcfb}.callout-row select{width:150px}.callout-note{flex:1}
+      .text-editor-fields{display:grid;grid-template-columns:145px minmax(0,1fr);gap:6px}.text-editor-fields select{font-size:12px}.protocol-text-block.special{border-left:4px solid #d64444;background:#fff1f1;color:#a92727}.protocol-text-block.caution{border-left-color:#d87818;background:#fff5e8;color:#934b08}.protocol-text-block.pause{border-left-color:#517fbd;background:#f1f6fd;color:#315f9b}.protocol-text-block.troubleshooting{border-left-color:#7656ad;background:#f7f3fc;color:#65479a}.text-type-label{display:block;margin-bottom:2px;font-size:10px;font-weight:900;letter-spacing:.07em}
       .proto-panel{width:100%;min-width:0;max-width:none;border:1px solid var(--panel-border);border-radius:14px;background:#fff;overflow:hidden}.proto-panel.reagent-panel{min-width:0;max-width:none}.proto-panel-head{padding:10px 12px;background:#fafbfc;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}.proto-panel-head h4{margin:0;font-size:13px}.proto-panel-body{padding:10px 12px}
       .reagent-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}.reagent-table th,.reagent-table td{border:1px solid var(--line);padding:6px 8px;text-align:left}.reagent-table th{background:#f5f7fa;font-weight:800}.reagent-table .material-col{width:auto}.reagent-table .amount-col{width:64px}.reagent-table .delete-col{width:34px;padding-left:3px;padding-right:3px}.reagent-table .total-row{background:#faf6f0;font-weight:800}.reagent-table .sample-row{color:var(--danger);font-weight:700}.reagent-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}.reagent-table input.field:focus{background:#fff;border:1px solid #cad4cd;border-radius:6px}.reagent-unit-input{width:100%;min-width:0;border:0;background:transparent;font-size:11px;font-weight:800;text-align:center;padding:2px}.reagent-unit-input:focus{background:#fff;outline:2px solid rgba(31,107,79,.18)}
       .cond-table{width:100%;border-collapse:collapse;font-size:12px}.cond-table th,.cond-table td{border:1px solid var(--line);padding:6px 8px}.cond-table th{background:#f5f7fa;font-weight:800}.cond-table input.field{min-height:32px;padding:5px 8px;font-size:12px;border:0;background:transparent}
@@ -46,7 +47,7 @@
       .print-callout.critical{border-left-color:#d64444;background:#fff1f1;color:#b42323}
       @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
       @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
-      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
+      @media(max-width:760px){.header-inner{padding:10px 12px;gap:9px}.brand small,.save-state{display:none}.nav{order:3;width:100%;overflow:auto}.nav button{flex:1}.shell{padding:12px}.library{padding:20px 14px}.library-head{align-items:flex-start;flex-direction:column}.library-head h1{font-size:30px}.bookshelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.book,.add-book{min-height:220px}.book-title{font-size:20px}.book-name{font-size:17px}.hub-grid{grid-template-columns:1fr}.page-title{font-size:23px}.panel-row-layout{flex-direction:column}.panel-row{width:100%;flex-direction:column}.panel-instance,.panel-instance.reagent{width:100%;max-width:none;flex-basis:auto}.panel-primary-tools{margin-left:0}.proto-panel,.proto-panel.reagent-panel{max-width:none;min-width:0}.inventory-row{grid-template-columns:1fr;gap:8px}.hero{display:block}.condition-label-list{grid-template-columns:1fr}.step-timing{width:100%}.run-fields,.note-conclusion-grid,.preparation-grid,.text-editor-fields{grid-template-columns:1fr}.preparation-grid .full{grid-column:auto}.execution-summary{top:64px}}
       @media(max-width:460px){.bookshelf{grid-template-columns:1fr}.book,.add-book{min-height:205px}}
     </style>
   </head>
@@ -140,7 +141,7 @@
         return { id: uid(), type: "method", title: defaultPanelTitle("method"), content: "", warnings: "" };
       };
       const emptyPanelRow = () => ({ id: uid(), panels: [], texts: [] });
-      const emptyTextLine = (position = "before") => ({ id: uid(), content: "", detail: "", result: "", position });
+      const emptyTextLine = (position = "before") => ({ id: uid(), content: "", detail: "", result: "", calloutType: "", position });
       const emptyStepGroup = (order) => ({ id: uid(), title: "", timing: "", text: "", calloutType: "", callout: "", afterStepTexts: [], order, panelRows: [emptyPanelRow()] });
       const emptyPreparation = () => ({ id: uid(), title: "", composition: "", instructions: "", storage: "" });
       const emptyProtocolVersion = (label) => ({
@@ -180,13 +181,14 @@
         if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, id: r.id || uid() })), notes };
         return { id: p.id || uid(), type: "method", title: p.title || defaultPanelTitle("method"), content: p.content || "", warnings: p.warnings || "" };
       };
+      const normalizeTextLine = (t, position) => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "", calloutType: "", ...(position ? { position } : {}) } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "", calloutType: t.calloutType || "", ...(position ? { position: t.position === "after" ? "after" : position } : {}) };
       const normalizeStepGroup = (sg, i) => ({
-        id: sg.id || uid(), title: sg.title || "", timing: sg.timing || "", text: sg.text || "", calloutType: sg.calloutType || "", callout: sg.callout || "", order: sg.order ?? i + 1,
-        afterStepTexts: (sg.afterStepTexts || []).map(t => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "" } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "" }),
+        id: sg.id || uid(), title: sg.title || "", timing: sg.timing || "", text: sg.text || "", calloutType: "", callout: "", order: sg.order ?? i + 1,
+        afterStepTexts: [...(sg.afterStepTexts || []).map(t => normalizeTextLine(t)), ...(sg.callout ? [{ id: uid(), content: sg.callout, detail: "", result: "", calloutType: sg.calloutType || "CRITICAL" }] : [])],
         panelRows: (sg.panelRows?.length ? sg.panelRows : [emptyPanelRow()]).map(pr => ({
           id: pr.id || uid(),
           panels: (pr.panels || []).map(normalizePanel),
-          texts: (pr.texts || []).map(t => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "", position: "before" } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "", position: t.position === "after" ? "after" : "before" }),
+          texts: (pr.texts || []).map(t => normalizeTextLine(t, "before")),
         })),
       });
       const normalizeVersion = (v) => ({
@@ -440,6 +442,19 @@
         return <MethodPanel panel={panel} onChange={onChange} readOnly={readOnly} diffBase={diffBase} onDelete={onDelete} />;
       }
 
+      const TEXT_CALLOUTS = [
+        ["", "일반 텍스트"], ["CRITICAL", "CRITICAL STEP"], ["CAUTION", "CAUTION"], ["PAUSE", "PAUSE POINT"], ["TROUBLESHOOTING", "TROUBLESHOOTING"],
+      ];
+      const textCalloutLabel = (type) => TEXT_CALLOUTS.find(([value]) => value === type)?.[1] || "";
+      const textCalloutClass = (type) => type === "CAUTION" ? "special caution" : type === "PAUSE" ? "special pause" : type === "TROUBLESHOOTING" ? "special troubleshooting" : type ? "special" : "";
+      function TextCalloutSelect({ value, onChange, onBlur }) {
+        return <select className="field" value={value || ""} onChange={onChange} onBlur={onBlur} aria-label="텍스트 강조 종류">{TEXT_CALLOUTS.map(([optionValue, label]) => <option key={optionValue || "normal"} value={optionValue}>{label}</option>)}</select>;
+      }
+      function TextContentBlock({ text, onClick }) {
+        const type = text.calloutType || "";
+        return <button type="button" className={`protocol-text-block ${text.content ? "" : "empty"} ${textCalloutClass(type)}`.trim()} onClick={onClick}>{type && <span className="text-type-label">{textCalloutLabel(type)}</span>}{text.content || "빈 텍스트 — 클릭하여 입력"}</button>;
+      }
+
       function StepGroupEditor({ stepGroup, onChange, readOnly, diffBase, annotations, panelAnnotations, conditionLabels, onAnnotate, onRemoveAnnotation, onAnnotatePanel, onRemovePanelAnnotation, deviationKeys, resultKeys, autoDeviationKeys, deviations, results, noteMode, stepRun, onPatchRun, onDeviation, onResult, onPatchDeviation, onDeleteDeviation, onPatchResult, onDeleteResult }) {
         const [editingTextId, setEditingTextId] = useState(null);
         const [activeTextId, setActiveTextId] = useState(null);
@@ -462,33 +477,36 @@
           if (hasContent && !window.confirm("이 패널 줄의 패널과 텍스트를 모두 삭제할까요?")) return;
           onChange({ ...stepGroup, panelRows: stepGroup.panelRows.filter(r => r.id !== rowId) });
         };
+        const finishTextEdit = (row, line) => {
+          if (noteMode && !(line.content || "").trim()) updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) }));
+          setEditingTextId(null);
+          if (noteMode) setActiveTextId(null);
+        };
+        const textEditorBlur = (event, finish) => {
+          if (event.relatedTarget && event.currentTarget.parentElement?.contains(event.relatedTarget)) return;
+          finish();
+        };
         const renderTextLines = (row, position) => {
           const lines = (row.texts || []).filter(line => (line.position === "after" ? "after" : "before") === position);
           if (!lines.length) return null;
           return <div className={`protocol-text-lines ${position === "after" ? "after" : ""}`}>{lines.map(line => <div key={line.id} className={`protocol-text-entry ${activeTextId === line.id ? "active" : ""}`}>
             <div className="protocol-text-line">
-              {editingTextId === line.id && !readOnly ? <input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={() => {
-                if (noteMode && !(line.content || "").trim()) {
-                  updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) }));
-                  setActiveTextId(null);
-                }
-                setEditingTextId(null);
-              }} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /> : <button type="button" className={`protocol-text-block ${line.content ? "" : "empty"}`} onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingTextId(line.id); } }}>{line.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+              {editingTextId === line.id && !readOnly ? <div className="text-editor-fields"><TextCalloutSelect value={line.calloutType} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, calloutType: e.target.value } : t) }))} onBlur={e => textEditorBlur(e, () => finishTextEdit(row, line))} /><input className="field" autoFocus value={line.content || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, content: e.target.value } : t) }))} onBlur={e => textEditorBlur(e, () => finishTextEdit(row, line))} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="텍스트를 입력하세요" /></div> : <TextContentBlock text={line} onClick={() => { if (!readOnly) { setActiveTextId(line.id); setEditingTextId(line.id); } }} />}
               {!readOnly && <Button className="ghost danger" aria-label="텍스트 줄 삭제" onClick={() => { updateRow(row.id, r => ({ ...r, texts: (r.texts || []).filter(t => t.id !== line.id) })); if (activeTextId === line.id) setActiveTextId(null); }}>×</Button>}
             </div>
             {noteMode && (editingDetailId === line.id ? <div className="execution-detail-editor">
               <label className="label">실제로 어떻게 수행했는지</label>
               <textarea className="field" autoFocus value={line.detail || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, detail: e.target.value } : t) }))} placeholder="순서, 실제 시간·온도, 실수나 조정 사항 등을 기록하세요." />
-              <Button className="soft" onClick={() => { setEditingDetailId(null); if (!(line.detail || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+              <Button className="soft" onClick={() => { setEditingDetailId(null); setActiveTextId(null); }}>메모 완료</Button>
             </div> : line.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(line.id); setEditingDetailId(line.id); }}><strong>ACTUAL EXECUTION</strong>{line.detail}</button> : null)}
             {noteMode && (editingTextResultId === line.id ? <div className="execution-detail-editor result">
               <label className="label">결과 기록</label>
               <textarea className="field" autoFocus value={line.result || ""} onChange={e => updateRow(row.id, r => ({ ...r, texts: (r.texts || []).map(t => t.id === line.id ? { ...t, result: e.target.value } : t) }))} placeholder="관찰 결과, 수치, 이미지 번호 등을 기록하세요." />
-              <Button className="soft" onClick={() => { setEditingTextResultId(null); if (!(line.result || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+              <Button className="soft" onClick={() => { setEditingTextResultId(null); setActiveTextId(null); }}>메모 완료</Button>
             </div> : line.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(line.id); setEditingTextResultId(line.id); }}><strong>RESULT</strong>{line.result}</button> : null)}
             {noteMode && activeTextId === line.id && editingDetailId !== line.id && editingTextResultId !== line.id && <div className="text-record-actions">
-              {!line.detail && <Button className="ghost" onClick={() => setEditingDetailId(line.id)}>+ 실제 수행 메모</Button>}
-              {!line.result && <Button className="ghost" onClick={() => setEditingTextResultId(line.id)}>+ 결과 기록</Button>}
+              {!line.detail && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingDetailId(line.id); }}>+ 실제 수행 메모</Button>}
+              {!line.result && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingTextResultId(line.id); }}>+ 결과 기록</Button>}
             </div>}
           </div>)}</div>;
         };
@@ -613,13 +631,6 @@
               {removedPanels.map(p => <div key={p.id} className="diff-removed-block stack"><strong>삭제된 {p.type === "reagent" ? "시약" : p.type === "condition" ? "반응 조건" : "실험 방법"} 패널</strong><ProtocolPanel panel={p} readOnly onChange={() => {}} /></div>)}
             </div>}
             {stepGroup.text && <div className="protocol-text-lines" style={{ padding: "0 14px 8px" }}><div className="protocol-text-line"><input className="field" value={stepGroup.text} readOnly={readOnly} onChange={e => onChange({ ...stepGroup, text: e.target.value })} aria-label="기존 단계 설명" /><span /></div></div>}
-            {!readOnly && <div className="callout-row">
-                <select className="field" value={stepGroup.calloutType || ""} onChange={e => onChange({ ...stepGroup, calloutType: e.target.value })} aria-label="주의 표시 종류">
-                  <option value="">표시 없음</option><option value="CRITICAL">CRITICAL STEP</option><option value="CAUTION">CAUTION</option><option value="PAUSE">PAUSE POINT</option><option value="TROUBLESHOOTING">TROUBLESHOOTING</option>
-                </select>
-                <input className="field callout-note" value={stepGroup.callout || ""} onChange={e => onChange({ ...stepGroup, callout: e.target.value })} placeholder="주의점이나 재개 조건" />
-            </div>}
-            {stepGroup.callout && <div className={`step-callout ${stepGroup.calloutType === "CRITICAL" ? "critical" : stepGroup.calloutType === "PAUSE" ? "pause" : stepGroup.calloutType === "TROUBLESHOOTING" ? "troubleshooting" : ""}`}><strong>{stepGroup.calloutType || "NOTE"}</strong>{stepGroup.callout}</div>}
           </div>
         );
       }
@@ -636,34 +647,40 @@
           if (activeTextId === id) setActiveTextId(null);
         };
         const addText = () => {
-          const text = { id: uid(), content: "", detail: "", result: "" };
+          const text = { id: uid(), content: "", detail: "", result: "", calloutType: "" };
           onChange({ ...stepGroup, afterStepTexts: [...texts, text] });
           setActiveTextId(text.id);
           setEditingTextId(text.id);
+        };
+        const finishTextEdit = (text) => {
+          if (noteMode && !(text.content || "").trim()) removeText(text.id);
+          setEditingTextId(null);
+          if (noteMode) setActiveTextId(null);
+        };
+        const textEditorBlur = (event, text) => {
+          if (event.relatedTarget && event.currentTarget.parentElement?.contains(event.relatedTarget)) return;
+          finishTextEdit(text);
         };
         if (readOnly && !texts.some(t => t.content)) return null;
         return <div className={`between-step-editor ${noteMode ? "note-mode" : ""}`}>
           {texts.length > 0 && <div className="protocol-text-lines after">{texts.map(text => <div key={text.id} className={`protocol-text-entry ${activeTextId === text.id ? "active" : ""}`}>
             <div className="protocol-text-line">
-              {editingTextId === text.id && !readOnly ? <input className="field" autoFocus value={text.content || ""} onChange={e => patchText(text.id, { content: e.target.value })} onBlur={() => {
-                if (noteMode && !(text.content || "").trim()) removeText(text.id);
-                setEditingTextId(null);
-              }} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="다음 단계로 넘어가기 전 설명" aria-label="단계 사이 텍스트" /> : <button type="button" className={`protocol-text-block ${text.content ? "" : "empty"}`} onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingTextId(text.id); } }}>{text.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+              {editingTextId === text.id && !readOnly ? <div className="text-editor-fields"><TextCalloutSelect value={text.calloutType} onChange={e => patchText(text.id, { calloutType: e.target.value })} onBlur={e => textEditorBlur(e, text)} /><input className="field" autoFocus value={text.content || ""} onChange={e => patchText(text.id, { content: e.target.value })} onBlur={e => textEditorBlur(e, text)} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="다음 단계로 넘어가기 전 설명" aria-label="단계 사이 텍스트" /></div> : <TextContentBlock text={text} onClick={() => { if (!readOnly) { setActiveTextId(text.id); setEditingTextId(text.id); } }} />}
               {!readOnly && <Button className="ghost danger" onClick={() => removeText(text.id)} aria-label="단계 사이 텍스트 삭제">×</Button>}
             </div>
             {noteMode && (editingDetailId === text.id ? <div className="execution-detail-editor">
               <label className="label">실제로 어떻게 수행했는지</label>
               <textarea className="field" autoFocus value={text.detail || ""} onChange={e => patchText(text.id, { detail: e.target.value })} placeholder="단계 사이에 실제로 수행한 준비나 조정을 기록하세요." />
-              <Button className="soft" onClick={() => { setEditingDetailId(null); if (!(text.detail || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+              <Button className="soft" onClick={() => { setEditingDetailId(null); setActiveTextId(null); }}>메모 완료</Button>
             </div> : text.detail ? <button type="button" className="execution-detail" onClick={() => { setActiveTextId(text.id); setEditingDetailId(text.id); }}><strong>ACTUAL EXECUTION</strong>{text.detail}</button> : null)}
             {noteMode && (editingResultId === text.id ? <div className="execution-detail-editor result">
               <label className="label">결과 기록</label>
               <textarea className="field" autoFocus value={text.result || ""} onChange={e => patchText(text.id, { result: e.target.value })} placeholder="확인한 결과나 다음 단계에 영향을 준 관찰을 기록하세요." />
-              <Button className="soft" onClick={() => { setEditingResultId(null); if (!(text.result || "").trim()) setActiveTextId(null); }}>메모 완료</Button>
+              <Button className="soft" onClick={() => { setEditingResultId(null); setActiveTextId(null); }}>메모 완료</Button>
             </div> : text.result ? <button type="button" className="execution-detail result" onClick={() => { setActiveTextId(text.id); setEditingResultId(text.id); }}><strong>RESULT</strong>{text.result}</button> : null)}
             {noteMode && activeTextId === text.id && editingDetailId !== text.id && editingResultId !== text.id && <div className="text-record-actions">
-              {!text.detail && <Button className="ghost" onClick={() => setEditingDetailId(text.id)}>+ 실제 수행 메모</Button>}
-              {!text.result && <Button className="ghost" onClick={() => setEditingResultId(text.id)}>+ 결과 기록</Button>}
+              {!text.detail && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingDetailId(text.id); }}>+ 실제 수행 메모</Button>}
+              {!text.result && <Button className="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setEditingTextId(null); setEditingResultId(text.id); }}>+ 결과 기록</Button>}
             </div>}
           </div>)}</div>}
           {!readOnly && <Button className="ghost" onClick={addText}>+ 단계 사이 텍스트</Button>}
@@ -698,6 +715,12 @@
         </Card>;
       }
 
+      function PrintTextLine({ text }) {
+        if (!text?.content) return null;
+        if (!text.calloutType) return <div className="print-step-text">{text.content}</div>;
+        return <div className={`print-callout ${text.calloutType === "CRITICAL" ? "critical" : ""}`}>{textCalloutLabel(text.calloutType)} · {text.content}</div>;
+      }
+
       function PrintPanel({ panel }) {
         if (panel.type === "reagent") {
           const rows = (panel.rows || []).filter(r => r.material || r.volume);
@@ -725,13 +748,12 @@
                 <div className="print-step-head"><span className="print-step-num">{sg.order}</span><span className="print-step-title">{sg.title || "제목 없는 단계"}</span>{sg.timing && <span className="print-timing">{sg.timing}</span>}</div>
                 <div className="print-step-body">
                   {sg.panelRows.map(pr => <React.Fragment key={pr.id}>
-                    {(pr.texts || []).filter(t => t.position !== "after").map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
+                    {(pr.texts || []).filter(t => t.position !== "after").map(t => <PrintTextLine key={t.id} text={t} />)}
                     {pr.panels.length > 0 && <div className="print-panel-row">{pr.panels.map(p => <PrintPanel key={p.id} panel={p} />)}</div>}
-                    {(pr.texts || []).filter(t => t.position === "after").map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
+                    {(pr.texts || []).filter(t => t.position === "after").map(t => <PrintTextLine key={t.id} text={t} />)}
                   </React.Fragment>)}
                   {sg.text && <div className="print-step-text">{sg.text}</div>}
-                  {sg.callout && <div className={`print-callout ${sg.calloutType === "CRITICAL" ? "critical" : ""}`}>{sg.calloutType || "NOTE"} · {sg.callout}</div>}
-                  {(sg.afterStepTexts || []).map(t => t.content && <div key={t.id} className="print-step-text">{t.content}</div>)}
+                  {(sg.afterStepTexts || []).map(t => <PrintTextLine key={t.id} text={t} />)}
                 </div>
               </article>)}
             </div>
@@ -1646,7 +1668,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><div className="brand-mark">🧪</div><div><strong>실험 노트</strong><small>Experimental Note GUI</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.0.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
