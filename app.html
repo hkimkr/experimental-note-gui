@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#18553f" />
-    <title>실험 노트 GUI · ver2.1</title>
+    <title>실험 노트 GUI · ver2.2</title>
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
@@ -34,8 +34,8 @@
       .inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}
       .inventory-level{font-size:11px;font-weight:800;text-align:center;margin-top:4px}
       .step-group{border-color:#c9d8d0;border-radius:18px;margin-bottom:0;box-shadow:0 7px 22px rgba(31,70,52,.07)}.step-head{padding:13px 14px;background:linear-gradient(135deg,#eef5f1,#f8fbf9);border-bottom-color:#cfdcd5;border-left:4px solid var(--brand)}.step-num{width:30px;height:30px;background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(31,107,79,.2)}.panel-line-editor{padding:12px 14px}.between-step-editor{margin:-1px 18px 0;padding:9px 12px;border-left:1px dashed #aebfb5;border-right:1px dashed #aebfb5;background:#f7faf8}.between-step-editor .protocol-text-lines{margin:0 0 6px}.between-step-editor>.btn{min-height:30px;padding:4px 9px;font-size:12px}.step-callout{margin:0 14px 12px;padding:9px 11px;border-radius:10px;border-left:4px solid #d8921b;background:#fff8df;color:#6f4700;font-size:12px;font-weight:750;white-space:pre-wrap}.step-callout strong{display:block;margin-bottom:2px;font-size:10px;letter-spacing:.08em}.step-callout.critical{border-color:#d64444;background:#fff1f1;color:#b42323}.step-callout.critical strong{color:#c52d2d}.step-callout.pause{border-color:#517fbd;background:#f1f6fd;color:#315f9b}.step-callout.troubleshooting{border-color:#7656ad;background:#f7f3fc;color:#65479a}
-      .proto-panel-head{padding:8px 9px 8px 12px}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{margin:6px 0 0;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;white-space:pre-wrap}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
-      .before-starting-card{border-color:#c7d7cf;background:linear-gradient(135deg,#fff,#f5faf7)}.preparation-list{display:flex;flex-direction:column;gap:10px}.preparation-item{border:1px solid #d6e1db;border-radius:13px;background:#fff;padding:11px}.preparation-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.preparation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preparation-grid .full{grid-column:1/-1}.preparation-static{border:1px solid #dce6e0;border-radius:12px;padding:10px;background:#fff}.preparation-static h4{margin:0 0 7px;font-size:13px}.preparation-static p{margin:5px 0;white-space:pre-wrap;font-size:12px}.preparation-static strong{color:var(--brand);font-size:10px;letter-spacing:.05em}
+      .proto-panel-head{padding:8px 9px 8px 12px}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{width:100%;margin:0;border:1px solid #dfe7e2;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;font-weight:750;text-align:left;white-space:pre-wrap}.panel-note-static:hover{border-color:#9fc6b4;background:var(--brand2)}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
+      .before-starting-card{border-color:#c7d7cf;background:linear-gradient(135deg,#fff,#f5faf7)}.preparation-list{display:flex;flex-direction:column;gap:10px}.preparation-item{border:1px solid #a9c6b7;border-radius:13px;background:#fff;padding:11px;box-shadow:0 5px 16px rgba(31,107,79,.06)}.preparation-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.preparation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preparation-grid .full{grid-column:1/-1}.preparation-actions{display:flex;justify-content:flex-end;margin-top:9px}.preparation-block{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:6px;align-items:start}.preparation-summary{width:100%;border:1px solid #d6e3dc;border-left:4px solid var(--brand);border-radius:12px;padding:11px 12px;background:#fff;text-align:left;box-shadow:0 4px 14px rgba(31,107,79,.05)}.preparation-summary:hover{background:#f1f8f4;border-color:#9fc6b4}.preparation-summary h4,.preparation-static h4{margin:0 0 7px;font-size:13px}.preparation-summary p,.preparation-static p{margin:5px 0;white-space:pre-wrap;font-size:12px}.preparation-summary strong,.preparation-static strong{color:var(--brand);font-size:10px;letter-spacing:.05em}.preparation-static{border:1px solid #dce6e0;border-radius:12px;padding:10px;background:#fff}
       .between-step-editor.note-mode{border-color:#9fbdaE;background:#f3f8f5}.between-step-editor .field{font-weight:780}.share-summary{padding:10px 12px;border:1px solid #d6e3dc;border-radius:12px;background:#f6faf8}.share-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.share-mode-option{display:flex;gap:8px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}.share-mode-option:has(input:checked){border-color:#7fb19a;background:#eef7f2}.share-mode-option strong{display:block;font-size:13px}.share-mode-option span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.share-error{color:var(--danger);font-size:12px;font-weight:750}
       .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
       .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
@@ -43,7 +43,7 @@
       .color-palette{display:flex;gap:10px;flex-wrap:wrap}.color-palette button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.color-palette button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
       .breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}.breadcrumb button{border:0;background:transparent;color:var(--brand);font-weight:700;padding:0}
       .toast{position:fixed;right:22px;bottom:22px;z-index:100;background:#2c3340;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px}
-      .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-root.exporting{display:block;position:absolute;left:0;top:0;z-index:1000;pointer-events:none;box-shadow:0 20px 60px rgba(0,0,0,.18)}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-before-starting{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5mm;margin:0 0 5mm}.print-before-starting>.print-kicker{grid-column:1/-1}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
+      .print-root{display:none;background:#fff;color:#17231d;padding:8mm;width:277mm;font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}.print-header{border-bottom:1.2mm solid #1f6b4f;padding-bottom:4mm;margin-bottom:4mm}.print-kicker{color:#1f6b4f;font-size:8px;font-weight:900;letter-spacing:.18em}.print-title{margin:1mm 0 2mm;font-size:22px;line-height:1.15}.print-subtitle{display:flex;gap:3mm;flex-wrap:wrap;color:#65736b;font-size:8.5px}.print-subtitle span{padding:1mm 2mm;border-radius:99px;background:#edf5f1}.print-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin-bottom:5mm}.print-summary-block{border:1px solid #dfe8e3;border-radius:2.5mm;padding:2.5mm;background:#f9fbfa;font-size:8.5px;line-height:1.45;white-space:pre-wrap}.print-summary-block strong{display:block;color:#1f6b4f;font-size:7.5px;letter-spacing:.06em;margin-bottom:1mm}.print-before-starting{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.5mm;margin:0 0 5mm}.print-before-starting>.print-kicker{grid-column:1/-1}.print-steps-grid{column-count:2;column-gap:5mm}.print-step{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;page-break-inside:avoid;border:1px solid #dce6e0;border-radius:3mm;background:#fff;margin:0 0 4mm;overflow:hidden}.print-step-head{display:grid;grid-template-columns:8mm minmax(0,1fr) auto;gap:2mm;align-items:center;padding:2.5mm 3mm;background:#eef5f1;border-bottom:1px solid #dce6e0}.print-step-num{width:7mm;height:7mm;border-radius:50%;display:grid;place-items:center;background:#1f6b4f;color:#fff;font-size:9px;font-weight:900}.print-step-title{font-size:11px;font-weight:900;line-height:1.2}.print-timing{color:#57675e;font-size:7.5px;font-weight:800}.print-step-body{padding:2.5mm 3mm}.print-step-text{font-size:8.5px;white-space:pre-wrap;margin:0 0 2mm;line-height:1.5}.print-panel-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(38mm,1fr));gap:2mm;margin-bottom:2mm}.print-static-panel{border:1px solid #dce6e0;border-radius:2mm;overflow:hidden;font-size:7.5px}.print-static-head{padding:1.5mm 2mm;background:#f3f7f5;color:#1f6b4f;font-weight:900}.print-static-body{padding:1.5mm 2mm}.print-static-table{width:100%;border-collapse:collapse}.print-static-table th,.print-static-table td{border-bottom:1px solid #e7ede9;padding:1mm;text-align:left}.print-static-table th{color:#66756d;font-size:7px}.print-static-table tr:last-child td{border-bottom:0}.print-method{white-space:pre-wrap;line-height:1.5}.print-callout{margin-top:2mm;padding:1.5mm 2mm;border-left:1.2mm solid #d8921b;background:#fff8df;color:#6f4700;font-size:7.5px;font-weight:800}.print-total{font-weight:900;color:#1f6b4f}.print-footer{margin-top:3mm;text-align:right;color:#849089;font-size:7px}
       .print-callout.critical{border-left-color:#d64444;background:#fff1f1;color:#b42323}
       @page{size:A4 landscape;margin:8mm}@media print{body{background:#fff}.no-print,.screen-only,.back-library{display:none!important}.print-root{display:block!important;position:static!important;width:auto;padding:0}.print-steps-grid{column-count:2}}
       @media(max-width:900px){.protocol-workspace{grid-template-columns:1fr}.protocol-overview{position:static}.nature-fields{grid-template-columns:1fr}}
@@ -320,12 +320,21 @@
 
       function PanelNotes({ panel, onChange, readOnly }) {
         const notes = panel.notes || [];
+        const [editingNoteId, setEditingNoteId] = useState(null);
         if (readOnly) return notes.some(n => n.content) ? <div className="panel-notes">{notes.map(n => n.content && <div key={n.id} className="panel-note-static">{n.content}</div>)}</div> : null;
-        const addNote = () => onChange({ ...panel, notes: [...notes, { id: uid(), content: "" }] });
+        const addNote = () => {
+          const note = { id: uid(), content: "" };
+          onChange({ ...panel, notes: [...notes, note] });
+          setEditingNoteId(note.id);
+        };
+        const finishNote = (note) => {
+          if (!(note.content || "").trim()) onChange({ ...panel, notes: notes.filter(n => n.id !== note.id) });
+          setEditingNoteId(null);
+        };
         return <div className="panel-notes">
           {notes.map(note => <div key={note.id} className="panel-note-row">
-            <input className="field" value={note.content || ""} onChange={e => onChange({ ...panel, notes: notes.map(n => n.id === note.id ? { ...n, content: e.target.value } : n) })} placeholder="표 아래에 표시할 텍스트" />
-            <button type="button" className="btn ghost danger" onClick={() => onChange({ ...panel, notes: notes.filter(n => n.id !== note.id) })} aria-label="패널 텍스트 삭제">×</button>
+            {editingNoteId === note.id ? <input className="field" autoFocus value={note.content || ""} onChange={e => onChange({ ...panel, notes: notes.map(n => n.id === note.id ? { ...n, content: e.target.value } : n) })} onBlur={() => finishNote(note)} onKeyDown={e => { if (e.key === "Enter" && !isImeComposing(e)) e.currentTarget.blur(); }} placeholder="표 아래에 표시할 텍스트" aria-label="패널 텍스트 입력" /> : <button type="button" className="panel-note-static" onClick={() => setEditingNoteId(note.id)}>{note.content || "빈 텍스트 — 클릭하여 입력"}</button>}
+            <button type="button" className="btn ghost danger" onMouseDown={e => e.preventDefault()} onClick={() => { onChange({ ...panel, notes: notes.filter(n => n.id !== note.id) }); if (editingNoteId === note.id) setEditingNoteId(null); }} aria-label="패널 텍스트 삭제">×</button>
           </div>)}
           <Button className="ghost panel-note-add" onClick={addNote}>+ 텍스트</Button>
         </div>;
@@ -692,10 +701,12 @@
 
       function BeforeStartingEditor({ protocol, patchProtocol, readOnly }) {
         const preparations = protocol.beforeStarting || [];
+        const [editingPreparationId, setEditingPreparationId] = useState(null);
         const patchItem = (id, patch) => patchProtocol(pr => ({ ...pr, beforeStarting: (pr.beforeStarting || []).map(item => item.id === id ? { ...item, ...patch } : item) }));
         const deleteItem = (item) => {
           if (!window.confirm(`“${item.title || "제목 없는 조제"}” 항목을 삭제할까요?`)) return;
           patchProtocol(pr => ({ ...pr, beforeStarting: (pr.beforeStarting || []).filter(x => x.id !== item.id) }));
+          if (editingPreparationId === item.id) setEditingPreparationId(null);
         };
         return <Card title="Before starting · 시약 조제" className="before-starting-card">
           <div className="card-pad stack">
@@ -705,15 +716,25 @@
               {item.composition && <p><strong>COMPOSITION</strong><br />{item.composition}</p>}
               {item.instructions && <p><strong>PREPARATION</strong><br />{item.instructions}</p>}
               {item.storage && <p><strong>STORAGE</strong><br />{item.storage}</p>}
-            </div> : <div key={item.id} className="preparation-item">
+            </div> : editingPreparationId === item.id ? <div key={item.id} className="preparation-item">
               <div className="preparation-head"><input className="field grow" value={item.title || ""} onChange={e => patchItem(item.id, { title: e.target.value })} placeholder="조제명 · 예: 10× Wash buffer" aria-label="시약 조제 이름" /><button type="button" className="panel-close" onClick={() => deleteItem(item)} aria-label="시약 조제 항목 삭제">×</button></div>
               <div className="preparation-grid">
                 <div><label className="label">조성 · 농도 · 부피</label><textarea className="field textarea" value={item.composition || ""} onChange={e => patchItem(item.id, { composition: e.target.value })} placeholder="각 성분과 최종 농도 또는 부피" /></div>
                 <div><label className="label">조제 방법</label><textarea className="field textarea" value={item.instructions || ""} onChange={e => patchItem(item.id, { instructions: e.target.value })} placeholder="혼합 순서, pH 조정, 멸균 방법" /></div>
                 <div className="full"><label className="label">보관 · 사용 기한</label><input className="field" value={item.storage || ""} onChange={e => patchItem(item.id, { storage: e.target.value })} placeholder="예: 4°C, 1개월 · 사용 전 실온 평형" /></div>
               </div>
+              <div className="preparation-actions"><Button className="soft" onClick={() => setEditingPreparationId(null)}>조제 완료</Button></div>
+            </div> : <div key={item.id} className="preparation-block">
+              <button type="button" className="preparation-summary" onClick={() => setEditingPreparationId(item.id)}>
+                <h4>{item.title || "제목 없는 조제"}</h4>
+                {item.composition && <p><strong>COMPOSITION</strong><br />{item.composition}</p>}
+                {item.instructions && <p><strong>PREPARATION</strong><br />{item.instructions}</p>}
+                {item.storage && <p><strong>STORAGE</strong><br />{item.storage}</p>}
+                {!item.composition && !item.instructions && !item.storage && <span className="tiny muted">클릭하여 조제 내용을 입력하세요.</span>}
+              </button>
+              <button type="button" className="panel-close" onClick={() => deleteItem(item)} aria-label="시약 조제 항목 삭제">×</button>
             </div>)}</div> : <div className="empty">등록된 사전 시약 조제가 없습니다.</div>}
-            {!readOnly && <Button className="soft" onClick={() => patchProtocol(pr => ({ ...pr, beforeStarting: [...(pr.beforeStarting || []), emptyPreparation()] }))}>+ 시약 조제 추가</Button>}
+            {!readOnly && <Button className="soft" onClick={() => { const item = emptyPreparation(); patchProtocol(pr => ({ ...pr, beforeStarting: [...(pr.beforeStarting || []), item] })); setEditingPreparationId(item.id); }}>+ 시약 조제 추가</Button>}
           </div>
         </Card>;
       }
@@ -830,27 +851,11 @@
           toast("새 버전을 저장했습니다");
         };
 
-        const exportPdf = async () => {
+        const exportPdf = () => {
           const el = document.getElementById("print-layout");
           if (!el) { toast("PDF 레이아웃을 찾을 수 없습니다"); return; }
-          if (!window.html2pdf) { toast("PDF 모듈을 찾을 수 없어 인쇄 창을 엽니다"); setTimeout(() => window.print(), 120); return; }
-          try {
-            toast("PDF 생성 중…");
-            el.classList.add("exporting");
-            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-            await window.html2pdf().set({
-              margin: 8, filename: `${(protocol.name || "protocol").replace(/[\\/:*?"<>|]/g, "-")}.pdf`,
-              image: { type: "jpeg", quality: 0.96 },
-              html2canvas: { scale: 1.7, useCORS: true, backgroundColor: "#ffffff", windowWidth: el.scrollWidth, windowHeight: el.scrollHeight, scrollX: 0, scrollY: 0 },
-              jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-              pagebreak: { mode: ["css", "legacy"] },
-            }).from(el).save();
-            el.classList.remove("exporting");
-            toast("PDF 저장 완료");
-          } catch (e) {
-            el?.classList?.remove("exporting");
-            toast("PDF 생성 실패: " + (e.message || e));
-          }
+          toast("PDF 저장 미리보기를 엽니다…");
+          requestAnimationFrame(() => window.print());
         };
 
         const updateStep = (sgId, val) => patchVersion(v => ({
@@ -1672,7 +1677,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.1.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2.1</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=2.2.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver2.2</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
