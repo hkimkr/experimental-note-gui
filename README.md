@@ -1,4 +1,3 @@
-/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 # 실험 노트 GUI · ver3
 
 프로젝트별로 **프로토콜 · 실험 노트 · 메모 · 재고**를 관리하는 웹 앱입니다.  
