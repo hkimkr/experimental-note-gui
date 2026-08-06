@@ -1,3 +1,4 @@
+/opt/homebrew/Library/Homebrew/cmd/shellenv.sh: line 18: /bin/ps: Operation not permitted
 (() => {
   "use strict";
 
@@ -5,6 +6,7 @@
   const LOCAL_UPDATED_KEY = "hamin-exp-note-v1-local-updated-at";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
+  const TAB_CHANNEL_NAME = "exp-note-sync-tabs-v1";
   const DB_NAME = "exp-note-sync-v1";
   const DB_VERSION = 1;
   const RECORDS_STORE = "records";
@@ -36,7 +38,7 @@
   const signUpButton = document.getElementById("cloud-signup");
   const signOutButton = document.getElementById("cloud-signout");
 
-  const clientId = (() => {
+  const deviceId = (() => {
     const saved = localStorage.getItem(CLIENT_ID_KEY);
     if (saved) return saved;
     const created =
@@ -45,8 +47,18 @@
     localStorage.setItem(CLIENT_ID_KEY, created);
     return created;
   })();
+  const tabId =
+    globalThis.crypto?.randomUUID?.() ||
+    `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  // A device id shared by every tab made one tab ignore another tab's
+  // realtime updates as its own. Keep the device identity for diagnostics,
+  // but make every browser tab a distinct sync writer.
+  const clientId = `${deviceId}:tab:${tabId}`;
   const intentClientId = `${INTENT_CLIENT_PREFIX}${clientId}`;
   const deleteIntentClientId = `${DELETE_INTENT_CLIENT_PREFIX}${clientId}`;
+  const tabChannel = typeof BroadcastChannel === "function"
+    ? new BroadcastChannel(TAB_CHANNEL_NAME)
+    : null;
 
   let currentSession = null;
   let channel = null;
@@ -1044,6 +1056,16 @@
       client_id: record.client_id,
     }));
 
+  const announceTabRecords = (userId, records) => {
+    if (!tabChannel || !userId || !records?.length) return;
+    tabChannel.postMessage({
+      type: "exp-note-tab-records",
+      sender: clientId,
+      userId,
+      records: records.map(clone),
+    });
+  };
+
   async function uploadOutbox() {
     if (
       uploadRunning ||
@@ -1122,6 +1144,7 @@
       putStoredRecords(RECORDS_STORE, userId, records),
       putStoredRecords(OUTBOX_STORE, userId, records),
     ]);
+    announceTabRecords(userId, records);
     setStatus(
       navigator.onLine === false
         ? "오프라인 · 이 기기에 안전하게 저장됨"
@@ -1285,6 +1308,36 @@
       scheduleUpload(0);
     }
   }
+
+  tabChannel?.addEventListener("message", async (event) => {
+    const message = event.data;
+    if (
+      message?.type !== "exp-note-tab-records" ||
+      message.sender === clientId ||
+      !initializedUserId ||
+      message.userId !== initializedUserId ||
+      !Array.isArray(message.records) ||
+      !message.records.length
+    ) {
+      return;
+    }
+    await localCaptureChain.catch(() => undefined);
+    if (appEditing) {
+      message.records.forEach((record) =>
+        deferRemoteRecord(
+          record,
+          "다른 창의 변경사항을 입력 완료 후 병합합니다"
+        )
+      );
+      setStatus("입력 완료 후 다른 창 변경사항 병합");
+      return;
+    }
+    await mergeIncomingRecords(
+      initializedUserId,
+      message.records,
+      "다른 창의 변경사항을 병합했습니다"
+    );
+  });
 
   function readLegacyPending() {
     try {
@@ -1653,14 +1706,6 @@
     if (pendingAppStore) postStoreToApp(pendingAppStore);
   });
 
-  window.setInterval(() => {
-    if (!initializedUserId) return;
-    const raw = localStorage.getItem(STORAGE_KEY) || "";
-    const fingerprint = fingerprintRaw(raw);
-    if (!raw || fingerprint === lastObservedFingerprint) return;
-    queueLocalCapture(raw);
-  }, 500);
-
   window.addEventListener("offline", () => {
     setStatus("오프라인 · 이 기기에 안전하게 저장됨");
   });
@@ -1749,6 +1794,8 @@
       },
       state() {
         return {
+          clientId,
+          tabId,
           appEditing,
           uploadAfterEditing,
           reconnectAfterEditing,
@@ -1874,6 +1921,7 @@
       local_intent: true,
     };
     document.documentElement.dataset.syncDiagnostics = JSON.stringify({
+      tabWriter: { clientId, tabId },
       richCloudVsBlankLegacyPhone:
         window.__expNoteSyncDiagnostics.simulate({
           remoteStore: richTestStore,
