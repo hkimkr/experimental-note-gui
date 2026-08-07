@@ -849,7 +849,7 @@
             {groups.map((group, index) => {
               const status = getStepRun?.(group.id)?.status || "pending";
               const changed = changedStepIds?.has(group.id);
-              const showChangedFlag = changed && status !== "running" && status !== "done";
+              const showChangedFlag = Boolean(changed);
               return <div
               key={group.id}
               data-note-step-id={group.id}
