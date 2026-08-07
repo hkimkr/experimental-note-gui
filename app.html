@@ -275,11 +275,32 @@
           x: m.x ?? 24 + (i % 4) * 228, y: m.y ?? 24 + Math.floor(i / 4) * 190,
         })),
       });
+      const sortProjectsByOrder = (projects, projectOrder) => {
+        const ordered = [...projects];
+        if (Array.isArray(projectOrder) && projectOrder.length) {
+          const rank = new Map(projectOrder.map((id, index) => [String(id), index]));
+          ordered.sort((left, right) => {
+            const leftRank = rank.has(String(left.id)) ? rank.get(String(left.id)) : Number.POSITIVE_INFINITY;
+            const rightRank = rank.has(String(right.id)) ? rank.get(String(right.id)) : Number.POSITIVE_INFINITY;
+            if (leftRank !== rightRank) return leftRank - rightRank;
+            return (left.order ?? 0) - (right.order ?? 0) || String(left.id).localeCompare(String(right.id));
+          });
+          return ordered;
+        }
+        if (ordered.some(project => Number.isFinite(project.order))) {
+          ordered.sort((left, right) => (left.order ?? 0) - (right.order ?? 0) || String(left.id).localeCompare(String(right.id)));
+        }
+        return ordered;
+      };
+      const withProjectOrder = (projects) => projects.map((project, index) => ({ ...project, order: index }));
       const normalizeStore = (raw) => {
         const base = emptyStore();
-        const projects = (Array.isArray(raw?.projects) && raw.projects.length ? raw.projects : base.projects).map(normalizeProject);
+        const projects = sortProjectsByOrder(
+          (Array.isArray(raw?.projects) && raw.projects.length ? raw.projects : base.projects).map(normalizeProject),
+          raw?.projectOrder
+        );
         const activeProjectId = projects.some(p => p.id === raw?.activeProjectId) ? raw.activeProjectId : projects[0]?.id;
-        return { ...base, ...raw, version: 1, projects, activeProjectId, settings: raw?.settings || {} };
+        return { ...base, ...raw, version: 1, projects, projectOrder: projects.map(p => p.id), activeProjectId, settings: raw?.settings || {} };
       };
       const loadStore = () => {
         try {
@@ -1831,7 +1852,8 @@
             const projects = [...s.projects], [item] = projects.splice(from, 1);
             const targetIndex = projects.findIndex(p => p.id === toId);
             projects.splice(targetIndex + (from < to ? 1 : 0), 0, item);
-            return { ...s, projects };
+            const ordered = withProjectOrder(projects);
+            return { ...s, projects: ordered, projectOrder: ordered.map(p => p.id) };
           });
         };
         const moveBy = (id, direction) => setStore(s => {
@@ -1840,7 +1862,8 @@
           if (from < 0 || to < 0 || to >= s.projects.length) return s;
           const projects = [...s.projects];
           [projects[from], projects[to]] = [projects[to], projects[from]];
-          return { ...s, projects };
+          const ordered = withProjectOrder(projects);
+          return { ...s, projects: ordered, projectOrder: ordered.map(p => p.id) };
         });
         const clearDrag = () => { dragRef.current = null; setDragId(null); setDropId(null); };
         const clearHold = () => {

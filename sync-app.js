@@ -476,9 +476,15 @@
     };
 
     const { projects = [], ...root } = store;
+    const projectList = Array.isArray(projects) ? projects : [];
 
-    add("root", "main", root);
-    (Array.isArray(projects) ? projects : []).forEach((project, index) => {
+    add("root", "main", {
+      ...root,
+      projectOrder: projectList.map((project, index) =>
+        stableItemId(project, "root", index, "project")
+      ),
+    });
+    projectList.forEach((project, index) => {
       const id = stableItemId(project, "root", index, "project");
       const {
         experiments = [],
@@ -488,7 +494,7 @@
         memoScratch = { content: "", updatedAt: null },
         ...projectBase
       } = project || {};
-      add("project", id, { ...projectBase, id });
+      add("project", id, { ...projectBase, id, order: index });
 
       (Array.isArray(experiments) ? experiments : []).forEach(
         (experiment, experimentIndex) => {
@@ -672,6 +678,14 @@
         return itemSort(left, right);
       });
 
+    const projectOrder = Array.isArray(root.projectOrder)
+      ? root.projectOrder.map(String)
+      : [];
+    const projectRank = (id) => {
+      const index = projectOrder.indexOf(String(id));
+      return index >= 0 ? index : Number.POSITIVE_INFINITY;
+    };
+
     store.projects = [...projects.values()]
       .map((project) => ({
         ...project,
@@ -697,7 +711,12 @@
         inventory: sortChildren(project.id, "inventory", project.inventory || []),
         memoSnapshots: sortChildren(project.id, "memoSnapshots", project.memoSnapshots || []),
       }))
-      .sort(itemSort);
+      .sort((left, right) => {
+        const bySavedOrder = projectRank(left.id) - projectRank(right.id);
+        if (bySavedOrder !== 0) return bySavedOrder;
+        return itemSort(left, right);
+      });
+    store.projectOrder = store.projects.map((project) => project.id);
     return store;
   }
 
