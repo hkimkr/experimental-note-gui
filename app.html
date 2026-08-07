@@ -36,7 +36,7 @@
       .inventory-item-wrap{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}.inventory-item-wrap .inventory-row{border:0;border-radius:0;border-bottom:1px dashed var(--line)}.inventory-item-wrap .inventory-check-row{border-top:0;border-radius:0}.inventory-row{display:grid;grid-template-columns:minmax(120px,1fr) 80px minmax(180px,240px) minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.inventory-check-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:14px;background:#f7faf8}.inventory-last-checked{font-size:11px;font-weight:700;color:var(--muted)}.inventory-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;border-radius:99px;background:linear-gradient(to right,#e85d5d,#f5a623,#f0c674,#8bc78b,#4caf50);outline:none;touch-action:pan-y}.inventory-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand);box-shadow:0 2px 8px rgba(0,0,0,.15)}.inventory-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--brand)}.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.inventory-block{border:1px solid #dce6e0;border-radius:16px;background:#fff;padding:15px;text-align:left;box-shadow:0 3px 12px rgba(31,42,38,.04);cursor:pointer}.inventory-block:hover{border-color:#9fc6b4;transform:translateY(-1px)}.inventory-block-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.inventory-block h3{margin:0;font-size:16px}.inventory-unit{color:var(--muted);font-size:12px}.inventory-status{display:inline-flex;margin-top:12px;padding:5px 9px;border-radius:99px;background:#f1f5f2;font-size:11px;font-weight:900}.inventory-block p{margin:10px 0 0;color:#566159;white-space:pre-wrap;font-size:13px}.inventory-edit-hint{margin-top:10px;color:var(--muted);font-size:10px}
       .inventory-level{font-size:11px;font-weight:800;text-align:center;margin-top:4px}
       .step-group{border-color:#c9d8d0;border-radius:18px;margin-bottom:0;box-shadow:0 7px 22px rgba(31,70,52,.07)}.step-head{padding:13px 14px;background:linear-gradient(135deg,#eef5f1,#f8fbf9);border-bottom-color:#cfdcd5;border-left:4px solid var(--brand)}.step-num{width:30px;height:30px;background:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(31,107,79,.2)}.panel-line-editor{padding:12px 14px}.between-step-editor{margin:-1px 18px 0;padding:9px 12px;border-left:1px dashed #aebfb5;border-right:1px dashed #aebfb5;background:#f7faf8}.between-step-editor .protocol-text-lines{margin:0 0 6px}.between-step-editor>.btn{min-height:30px;padding:4px 9px;font-size:12px}.step-callout{margin:0 14px 12px;padding:9px 11px;border-radius:10px;border-left:4px solid #d8921b;background:#fff8df;color:#6f4700;font-size:12px;font-weight:750;white-space:pre-wrap}.step-callout strong{display:block;margin-bottom:2px;font-size:10px;letter-spacing:.08em}.step-callout.critical{border-color:#d64444;background:#fff1f1;color:#b42323}.step-callout.critical strong{color:#c52d2d}.step-callout.pause{border-color:#517fbd;background:#f1f6fd;color:#315f9b}.step-callout.troubleshooting{border-color:#7656ad;background:#f7f3fc;color:#65479a}
-      .proto-panel-head{padding:8px 9px 8px 12px}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{width:100%;margin:0;border:1px solid #dfe7e2;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;font-weight:750;text-align:left;white-space:pre-wrap}.panel-note-static:hover{border-color:#9fc6b4;background:var(--brand2)}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
+      .proto-panel-head{padding:8px 9px 8px 12px;align-items:flex-start}.proto-panel-head.editing{align-items:flex-start}.panel-title-block{flex:1;min-width:0;border:0;background:transparent;padding:4px 6px;border-radius:9px;text-align:left;cursor:pointer}.panel-title-block:hover{background:var(--brand2)}.panel-title-block.static{cursor:default;padding:0}.panel-title-block.static:hover{background:transparent}.panel-title-block strong{display:block;font-size:13px;line-height:1.35}.panel-description{display:block;margin-top:3px;color:var(--muted);font-size:11px;line-height:1.45;white-space:pre-wrap;font-weight:600}.panel-description.muted{font-style:italic;font-weight:500}.panel-title-editor{display:flex;flex-direction:column;gap:6px;min-width:0}.panel-description-input{min-height:54px;resize:vertical;line-height:1.45;font-size:12px}.panel-title-editor-actions{display:flex;justify-content:flex-end}.protocol-block-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.protocol-block-grid.compact{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}.experiment-card-head{align-items:flex-start;gap:14px}.experiment-title-block{flex:1;min-width:0;border:0;background:transparent;padding:4px 8px;margin:-4px -8px;border-radius:10px;text-align:left;cursor:pointer}.experiment-title-block:hover{background:var(--brand2)}.experiment-title-block strong{display:block;font-size:15px}.experiment-memo-preview{display:block;margin-top:3px;color:var(--muted);font-size:11px;line-height:1.45;white-space:pre-wrap;font-weight:600}.experiment-memo-preview.muted{font-style:italic;font-weight:500}.experiment-title-editor{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}.experiment-memo-input{min-height:54px;resize:vertical;line-height:1.45;font-size:12px}.experiment-title-editor-actions{display:flex;justify-content:flex-end}.protocol-block{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;min-height:132px;border:1px solid #d3e2da;border-radius:16px;background:linear-gradient(180deg,#fff,#f7fbf8);padding:14px 15px;text-align:left;box-shadow:0 4px 14px rgba(31,42,38,.04);transition:border-color .15s,transform .15s,box-shadow .15s}.protocol-block:hover{border-color:#8fb9a4;transform:translateY(-2px);box-shadow:0 10px 24px rgba(31,107,79,.12)}.protocol-block-kicker{color:var(--brand);font-size:10px;font-weight:900;letter-spacing:.08em}.protocol-block strong{font-size:16px;line-height:1.3}.protocol-block-meta{color:var(--muted);font-size:11px;font-weight:700}.protocol-block p{margin:4px 0 0;color:#566159;font-size:12px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}.protocol-block p.muted{font-style:italic;color:var(--muted)}.panel-title-input{min-width:0;width:100%;border:0;background:transparent;padding:2px 4px;font-size:13px;font-weight:850}.panel-title-input:focus{background:#fff;border-radius:7px}.panel-close{display:grid;width:26px;height:26px;flex:none;place-items:center;border:0;border-radius:8px;background:transparent;color:#89938d;font-size:18px;line-height:1}.panel-close:hover{background:#fff0f0;color:var(--danger)}.panel-notes{display:flex;flex-direction:column;gap:5px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.panel-note-row{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:5px;align-items:center}.panel-note-row .field{min-height:32px;padding:5px 8px;font-size:12px}.panel-note-static{width:100%;margin:0;border:1px solid #dfe7e2;padding:6px 8px;border-radius:8px;background:#f6f8f7;font-size:12px;font-weight:750;text-align:left;white-space:pre-wrap}.panel-note-static:hover{border-color:#9fc6b4;background:var(--brand2)}.panel-note-add{align-self:flex-start;min-height:30px!important;padding:4px 8px!important;font-size:12px!important}.reagent-table .needs-amount{background:#fff8f8}.reagent-table .needs-amount .amount-col input{box-shadow:inset 0 -2px 0 #d85a5a}.amount-required{margin-top:6px;color:#b73535;font-size:10px;font-weight:800}
       .before-starting-card{border-color:#c7d7cf;background:linear-gradient(135deg,#fff,#f5faf7)}.preparation-list{display:flex;flex-direction:column;gap:10px}.preparation-item{border:1px solid #a9c6b7;border-radius:13px;background:#fff;padding:11px;box-shadow:0 5px 16px rgba(31,107,79,.06)}.preparation-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}.preparation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.preparation-grid .full{grid-column:1/-1}.preparation-actions{display:flex;justify-content:flex-end;margin-top:9px}.preparation-block{display:grid;grid-template-columns:minmax(0,1fr) 28px;gap:6px;align-items:start}.preparation-summary{width:100%;border:1px solid #d6e3dc;border-left:4px solid var(--brand);border-radius:12px;padding:11px 12px;background:#fff;text-align:left;box-shadow:0 4px 14px rgba(31,107,79,.05)}.preparation-summary:hover{background:#f1f8f4;border-color:#9fc6b4}.preparation-summary h4,.preparation-static h4{margin:0 0 7px;font-size:13px}.preparation-summary p,.preparation-static p{margin:5px 0;white-space:pre-wrap;font-size:12px}.preparation-summary strong,.preparation-static strong{color:var(--brand);font-size:10px;letter-spacing:.05em}.preparation-static{border:1px solid #dce6e0;border-radius:12px;padding:10px;background:#fff}
       .between-step-editor.note-mode{border-color:#9fbdaE;background:#f3f8f5}.between-step-editor .field{font-weight:780}.share-summary{padding:10px 12px;border:1px solid #d6e3dc;border-radius:12px;background:#f6faf8}.share-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.share-mode-option{display:flex;gap:8px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff}.share-mode-option:has(input:checked){border-color:#7fb19a;background:#eef7f2}.share-mode-option strong{display:block;font-size:13px}.share-mode-option span{display:block;margin-top:2px;color:var(--muted);font-size:11px}.share-error{color:var(--danger);font-size:12px;font-weight:750}
       .protocol-import-list{display:flex;flex-direction:column;gap:9px}.protocol-import-card{border:1px solid #cdded5;border-radius:14px;background:#f8fbf9;padding:11px}.protocol-import-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.protocol-import-head strong{font-size:12px;color:var(--brand)}.protocol-import-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.protocol-import-steps{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px dashed #cad9d1}.protocol-import-steps label{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700}.step-source-chip{display:inline-flex;align-items:center;max-width:170px;padding:3px 7px;border-radius:99px;background:#e6f1eb;color:#376a53;font-size:10px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.step-order-actions{display:inline-flex;gap:3px}.step-order-actions .btn{min-height:30px;padding:3px 8px}.protocol-import-empty{padding:12px;border:1px dashed #cbd8d1;border-radius:11px;color:var(--muted);font-size:12px;text-align:center}
@@ -149,9 +149,9 @@
       const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", note: "" });
       const defaultPanelTitle = (type) => type === "reagent" ? "시약" : type === "condition" ? "반응 조건" : "실험 방법";
       const emptyPanel = (type) => {
-        if (type === "reagent") return { id: uid(), type, title: defaultPanelTitle(type), unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()], notes: [] };
-        if (type === "condition") return { id: uid(), type, title: defaultPanelTitle(type), rows: [emptyConditionRow()], notes: [] };
-        return { id: uid(), type: "method", title: defaultPanelTitle("method"), content: "", warnings: "" };
+        if (type === "reagent") return { id: uid(), type, title: defaultPanelTitle(type), description: "", unit: "uL", rows: [emptyReagentRow(), emptyReagentRow()], notes: [] };
+        if (type === "condition") return { id: uid(), type, title: defaultPanelTitle(type), description: "", rows: [emptyConditionRow()], notes: [] };
+        return { id: uid(), type: "method", title: defaultPanelTitle("method"), description: "", content: "", warnings: "" };
       };
       const emptyPanelRow = () => ({ id: uid(), panels: [], texts: [] });
       const emptyTextLine = (position = "before") => ({ id: uid(), content: "", detail: "", result: "", calloutType: "", position });
@@ -191,9 +191,9 @@
       const normalizePanel = (p) => {
         if (!p || typeof p !== "object") return emptyPanel("method");
         const notes = (p.notes || []).map(n => typeof n === "string" ? { id: uid(), content: n } : { id: n.id || uid(), content: n.content || "" });
-        if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", title: p.title || defaultPanelTitle("reagent"), unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })), notes };
-        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, note: r.note || r.rpm || "", id: r.id || uid() })), notes };
-        return { id: p.id || uid(), type: "method", title: p.title || defaultPanelTitle("method"), content: p.content || "", warnings: p.warnings || "" };
+        if (p.type === "reagent") return { ...p, id: p.id || uid(), type: "reagent", title: p.title || defaultPanelTitle("reagent"), description: p.description || "", unit: p.unit || "uL", rows: (p.rows || []).map(r => ({ ...emptyReagentRow(), ...r, id: r.id || uid() })), notes };
+        if (p.type === "condition") return { ...p, id: p.id || uid(), type: "condition", title: p.title || defaultPanelTitle("condition"), description: p.description || "", rows: (p.rows || []).map(r => ({ ...emptyConditionRow(), ...r, note: r.note || r.rpm || "", id: r.id || uid() })), notes };
+        return { id: p.id || uid(), type: "method", title: p.title || defaultPanelTitle("method"), description: p.description || "", content: p.content || "", warnings: p.warnings || "" };
       };
       const normalizeTextLine = (t, position) => typeof t === "string" ? { id: uid(), content: t, detail: "", result: "", calloutType: "", ...(position ? { position } : {}) } : { id: t.id || uid(), content: t.content || "", detail: t.detail || "", result: t.result || "", calloutType: t.calloutType || "", ...(position ? { position: t.position === "after" ? "after" : position } : {}) };
       const normalizeStepGroup = (sg, i) => ({
@@ -372,10 +372,60 @@
       }
 
       function PanelHeader({ panel, onChange, readOnly, diffBase, onDelete }) {
-        return <div className="proto-panel-head">
-          {readOnly ? <h4>{diffBase ? diffText(diffBase.title || defaultPanelTitle(panel.type), panel.title || defaultPanelTitle(panel.type)) : (panel.title || defaultPanelTitle(panel.type))}</h4> : <input className="panel-title-input" value={panel.title || ""} onChange={e => onChange({ ...panel, title: e.target.value })} placeholder={defaultPanelTitle(panel.type)} aria-label={`${defaultPanelTitle(panel.type)} 패널 이름`} />}
-          {!readOnly && onDelete && <button type="button" className="panel-close" onClick={onDelete} aria-label={`${panel.title || defaultPanelTitle(panel.type)} 패널 삭제`} title="패널 삭제">×</button>}
-        </div>;
+        const [editing, setEditing] = useState(false);
+        const defaultTitle = defaultPanelTitle(panel.type);
+        const displayTitle = (panel.title || "").trim() || defaultTitle;
+        const description = panel.description || "";
+        const finishEdit = () => setEditing(false);
+
+        if (readOnly) {
+          return (
+            <div className="proto-panel-head">
+              <div className="panel-title-block static">
+                <h4>{diffBase ? diffText(diffBase.title || defaultTitle, panel.title || defaultTitle) : displayTitle}</h4>
+                {description && <p className="panel-description">{description}</p>}
+              </div>
+            </div>
+          );
+        }
+
+        if (editing) {
+          return (
+            <div className="proto-panel-head editing">
+              <div className="panel-title-editor grow">
+                <input
+                  className="panel-title-input field"
+                  autoFocus
+                  value={panel.title || ""}
+                  onChange={e => onChange({ ...panel, title: e.target.value })}
+                  placeholder={defaultTitle}
+                  aria-label={`${defaultTitle} 패널 이름`}
+                />
+                <textarea
+                  className="panel-description-input field"
+                  value={panel.description || ""}
+                  onChange={e => onChange({ ...panel, description: e.target.value })}
+                  placeholder="상세 설명 (선택)"
+                  aria-label={`${displayTitle} 패널 상세 설명`}
+                />
+                <div className="panel-title-editor-actions">
+                  <Button className="soft" onMouseDown={e => e.preventDefault()} onClick={finishEdit}>완료</Button>
+                </div>
+              </div>
+              {onDelete && <button type="button" className="panel-close" onClick={onDelete} aria-label={`${displayTitle} 패널 삭제`} title="패널 삭제">×</button>}
+            </div>
+          );
+        }
+
+        return (
+          <div className="proto-panel-head">
+            <button type="button" className="panel-title-block" onClick={() => setEditing(true)}>
+              <strong>{displayTitle}</strong>
+              {description ? <span className="panel-description">{description}</span> : <span className="panel-description muted">클릭하여 이름·설명 수정</span>}
+            </button>
+            {onDelete && <button type="button" className="panel-close" onClick={onDelete} aria-label={`${displayTitle} 패널 삭제`} title="패널 삭제">×</button>}
+          </div>
+        );
       }
 
       function PanelNotes({ panel, onChange, readOnly }) {
@@ -1177,6 +1227,41 @@
         );
       }
 
+      function ExperimentTitleBlock({ experiment, onChange }) {
+        const [editing, setEditing] = useState(false);
+        const name = experiment.name || "";
+        const memo = experiment.memo || "";
+        if (editing) {
+          return (
+            <div className="experiment-title-editor">
+              <input className="field" autoFocus value={name} onChange={e => onChange({ ...experiment, name: e.target.value })} placeholder="실험 이름" aria-label="실험 이름" />
+              <textarea className="field experiment-memo-input" value={memo} onChange={e => onChange({ ...experiment, memo: e.target.value })} placeholder="실험 메모 (선택)" aria-label="실험 메모" />
+              <div className="experiment-title-editor-actions"><Button className="soft" onMouseDown={e => e.preventDefault()} onClick={() => setEditing(false)}>완료</Button></div>
+            </div>
+          );
+        }
+        return (
+          <button type="button" className="experiment-title-block" onClick={() => setEditing(true)}>
+            <strong>{name || "제목 없는 실험"}</strong>
+            {memo ? <span className="experiment-memo-preview">{memo}</span> : <span className="experiment-memo-preview muted">클릭하여 이름·메모 수정</span>}
+          </button>
+        );
+      }
+
+      function ProtocolPreviewBlock({ protocol, onOpen }) {
+        const version = getProtocolWorkingVersion(protocol);
+        const stepCount = version?.stepGroups?.length || 0;
+        const latestLabel = protocol.versions.find(v => v.id === protocol.activeVersionId)?.label || version?.label || "v1";
+        return (
+          <button type="button" className="protocol-block" onClick={onOpen}>
+            <span className="protocol-block-kicker">PROTOCOL</span>
+            <strong>{protocol.name || "제목 없는 프로토콜"}</strong>
+            <span className="protocol-block-meta">버전 {protocol.versions.length}개 · {stepCount}단계 · {latestLabel}</span>
+            {protocol.summary ? <p>{protocol.summary}</p> : <p className="muted">요약 없음</p>}
+          </button>
+        );
+      }
+
       function ProtocolView({ project, setStore, toast }) {
         const [selExp, setSelExp] = useState(null);
         const [selProto, setSelProto] = useState(null);
@@ -1209,18 +1294,26 @@
           return (
             <div className="stack">
               <div className="breadcrumb"><button type="button" onClick={() => setSelExp(null)}>← 실험 목록</button><span>/</span><strong>{exp?.name}</strong></div>
-              <div className="hero"><div className="grow"><div className="eyebrow">EXPERIMENT</div><input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={exp?.name || ""} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === selExp ? { ...x, name: ev.target.value } : x) }))} aria-label="실험 이름" /></div>
+              <div className="hero">
+                <div className="grow"><div className="eyebrow">EXPERIMENT</div><input className="field page-title" style={{ border: 0, background: "transparent", padding: 0, fontSize: 24, fontWeight: 800 }} value={exp?.name || ""} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === selExp ? { ...x, name: ev.target.value } : x) }))} aria-label="실험 이름" /></div>
                 <div className="row"><Button className="ghost danger" onClick={() => deleteExperiment(exp)}>실험 삭제</Button><Button className="primary" onClick={() => {
                   const p = emptyProtocol("새 프로토콜");
                   patchProject(pr => ({ ...pr, experiments: pr.experiments.map(e => e.id === selExp ? { ...e, protocols: [...e.protocols, p] } : e) }));
                   setSelProto(p.id);
                 }}>+ 프로토콜 추가</Button></div>
               </div>
-              {exp?.protocols.length ? exp.protocols.map(p => (
-                <Card key={p.id} title={p.name} action={<Button className="soft" onClick={() => setSelProto(p.id)}>열기</Button>}>
-                  <div className="card-pad tiny muted">버전 {p.versions.length}개 · 최신 {p.versions.find(v => v.id === p.activeVersionId)?.label}</div>
-                </Card>
-              )) : <div className="empty">프로토콜을 추가해주세요.</div>}
+              {exp?.protocols.length ? (
+                <div className="protocol-block-grid">
+                  {exp.protocols.map(p => (
+                    <ProtocolPreviewBlock key={p.id} protocol={p} onOpen={() => setSelProto(p.id)} />
+                  ))}
+                </div>
+              ) : <div className="empty">프로토콜을 추가해주세요.</div>}
+              <Card title="실험 메모">
+                <div className="card-pad">
+                  <textarea className="field textarea" value={exp?.memo || ""} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === selExp ? { ...x, memo: ev.target.value } : x) }))} placeholder="이 실험에 대한 메모" />
+                </div>
+              </Card>
             </div>
           );
         }
@@ -1236,12 +1329,24 @@
               }}>+ 실험 추가</Button>
             </div>
             {project.experiments.length ? project.experiments.map(e => (
-              <Card key={e.id} title={e.name} action={<div className="row"><Button className="ghost danger" onClick={() => deleteExperiment(e)}>삭제</Button><Button className="soft" onClick={() => setSelExp(e.id)}>열기 ({e.protocols.length})</Button></div>}>
-                <div className="card-pad stack">
-                  <div><label className="label">실험 이름</label><input className="field" value={e.name} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, name: ev.target.value } : x) }))} /></div>
-                  <div><label className="label">실험 메모</label><input className="field" value={e.memo} onChange={ev => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? { ...x, memo: ev.target.value } : x) }))} placeholder="실험 메모" /></div>
+              <section key={e.id} className="card experiment-card">
+                <div className="card-head experiment-card-head">
+                  <ExperimentTitleBlock experiment={e} onChange={next => patchProject(p => ({ ...p, experiments: p.experiments.map(x => x.id === e.id ? next : x) }))} />
+                  <div className="row">
+                    <Button className="ghost danger" onClick={() => deleteExperiment(e)}>삭제</Button>
+                    <Button className="soft" onClick={() => setSelExp(e.id)}>열기</Button>
+                  </div>
                 </div>
-              </Card>
+                <div className="card-pad">
+                  {e.protocols.length ? (
+                    <div className="protocol-block-grid compact">
+                      {e.protocols.map(p => (
+                        <ProtocolPreviewBlock key={p.id} protocol={p} onOpen={() => { setSelExp(e.id); setSelProto(p.id); }} />
+                      ))}
+                    </div>
+                  ) : <div className="empty">프로토콜이 없습니다. 열기에서 추가하세요.</div>}
+                </div>
+              </section>
             )) : <div className="empty">실험을 추가해주세요.</div>}
           </div>
         );
