@@ -14,7 +14,7 @@
       *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(91,124,250,.25);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}
       .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:40px;height:40px;border:1px solid #dbe5df;border-radius:12px;background:#f9faf7;display:block;overflow:hidden;box-shadow:0 3px 10px rgba(24,85,63,.1)}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
       .shell{max-width:1480px;margin:auto;padding:22px}.main{min-width:0}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 12px rgba(37,55,46,.035)}.card-pad{padding:18px}.card-head{padding:15px 18px;border-bottom:1px solid #edf0ed;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-head h2,.card-head h3{margin:0;font-size:15px}.eyebrow{color:var(--brand);font-weight:800;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.page-title{margin:3px 0 0;font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.25}.page-sub{color:var(--muted);font-size:13px;margin-top:5px}.muted{color:var(--muted)}.tiny{font-size:11px}.small{font-size:13px}.stack{display:flex;flex-direction:column;gap:12px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:0}.btn{min-height:38px;border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:700}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--brand2);border-color:transparent;color:var(--brand)}.btn.ghost{background:transparent;border-color:transparent}.btn.danger{color:var(--danger)}.field{width:100%;border:1px solid #d7ded9;background:#fff;border-radius:11px;padding:9px 11px;min-height:40px}.label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#566159}.textarea{min-height:92px;resize:vertical}.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}
-      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book-wrap.drop-target .book{outline:3px solid rgba(255,255,255,.9);outline-offset:4px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:pan-y}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97);touch-action:none}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-order-controls{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:3px;z-index:2}.book-order-button,.book-handle{width:28px;height:28px;border:0;background:rgba(255,255,255,.17);color:#fff;border-radius:8px;padding:0;display:grid;place-items:center;font-size:15px;font-weight:900}.book-order-button:hover,.book-handle:hover{background:rgba(255,255,255,.3)}.book-order-button:disabled{opacity:.3;cursor:not-allowed}.book-handle{cursor:grab;touch-action:none}.book-handle:active{cursor:grabbing}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}
+      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book-wrap.drop-target .book{outline:3px solid rgba(255,255,255,.9);outline-offset:4px}.book{position:relative;min-height:270px;padding:28px 22px 22px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:pan-y}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97);touch-action:none}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-stats{font-size:12px;opacity:.82;border-top:1px solid rgba(255,255,255,.35);padding-top:12px}.book-name{position:absolute;left:22px;right:16px;top:72px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;backdrop-filter:blur(4px)}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-order-controls{position:absolute;right:10px;top:10px;display:flex;align-items:center;gap:3px;z-index:2}.book-order-button,.book-handle{width:28px;height:28px;border:0;background:rgba(255,255,255,.17);color:#fff;border-radius:8px;padding:0;display:grid;place-items:center;font-size:15px;font-weight:900}.book-order-button:hover,.book-handle:hover{background:rgba(255,255,255,.3)}.book-order-button:disabled{opacity:.3;cursor:not-allowed}.book-handle{cursor:grab;touch-action:none}.book-handle:active{cursor:grabbing}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}.book-share-badge{position:absolute;left:10px;top:10px;z-index:2;background:rgba(0,0,0,.32);color:#fff;font-size:10px;font-weight:900;letter-spacing:.03em;padding:4px 9px;border-radius:99px;backdrop-filter:blur(3px)}.book-share-button{align-self:flex-start;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:800;padding:5px 11px;border-radius:99px}.book-share-button:hover{background:rgba(255,255,255,.28)}.incoming-invites{margin-bottom:20px}.incoming-invite-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 16px;border:1px solid #b9d7c7;border-radius:14px;background:linear-gradient(135deg,#f4fbf7,#fff);box-shadow:0 6px 18px rgba(31,107,79,.06);font-size:13px}.viewer-banner{padding:11px 16px;border-radius:12px;background:#fff7e6;border:1px solid #f0d38a;color:#8a5a00;font-size:13px;font-weight:700;margin-bottom:14px}
       .project-hub{max-width:1100px;margin:0 auto;padding:10px 0 48px}.hub-hero{padding:34px;background:linear-gradient(135deg,#fff,#eef5f0);border-radius:26px;border:1px solid var(--line);margin-bottom:22px}.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.hub-tile{min-height:190px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:var(--shadow);transition:transform .16s,border-color .16s}.hub-tile:hover{transform:translateY(-3px);border-color:#a8c8b9}.hub-icon{width:48px;height:48px;border-radius:15px;background:var(--brand2);display:grid;place-items:center;font-size:22px;margin-bottom:22px}.hub-tile strong{font-size:20px;display:block}.hub-tile span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.back-library{border:0;background:transparent;color:var(--brand);font-weight:800;padding:0;margin-bottom:14px}
       .hero{padding:22px;background:linear-gradient(135deg,#fff 0%,#f3f6ff 100%);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
       .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
@@ -47,7 +47,7 @@
       .run-status button.running.active{border-color:var(--note-running);background:var(--note-running);box-shadow:0 3px 10px rgba(37,99,235,.22)}
       .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
       .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
-      .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}
+      .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}.share-invite-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.member-list{display:flex;flex-direction:column;gap:8px}.member-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#f8faf8}.member-row strong{display:block;font-size:13px}.member-row span{display:block;margin-top:2px}.form-error{color:#c0392b;font-size:12px;font-weight:700;background:#fdecea;border:1px solid #f5c6c0;border-radius:10px;padding:8px 10px}
       .color-palette{display:flex;gap:10px;flex-wrap:wrap}.color-palette button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.color-palette button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
       .breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}.breadcrumb button{border:0;background:transparent;color:var(--brand);font-weight:700;padding:0}
       .toast{position:fixed;right:22px;bottom:22px;z-index:100;background:#2c3340;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px}
@@ -144,6 +144,45 @@
         if (event.data.ok) pending.resolve(event.data);
         else pending.reject(new Error(event.data.message || "프로토콜을 공유하지 못했습니다."));
       });
+
+      const projectActionRequests = new Map();
+      const PROJECT_ACTION_RESULT_TYPES = {
+        "exp-note-invite-project-member": "exp-note-invite-project-member-result",
+        "exp-note-list-project-members": "exp-note-project-members-result",
+        "exp-note-respond-project-invite": "exp-note-respond-project-invite-result",
+        "exp-note-remove-project-member": "exp-note-remove-project-member-result",
+      };
+      const requestProjectAction = (type, payload) => new Promise((resolve, reject) => {
+        if (window.parent === window) {
+          reject(new Error("클라우드 로그인 화면에서 이용해주세요."));
+          return;
+        }
+        const requestId = uid();
+        const timer = window.setTimeout(() => {
+          projectActionRequests.delete(requestId);
+          reject(new Error("요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요."));
+        }, 20000);
+        projectActionRequests.set(requestId, { resolve, reject, timer });
+        window.parent.postMessage({ type, requestId, ...payload }, window.location.origin);
+      });
+      window.addEventListener("message", event => {
+        if (event.origin !== window.location.origin || event.source !== window.parent) return;
+        if (!Object.values(PROJECT_ACTION_RESULT_TYPES).includes(event.data?.type)) return;
+        const pending = projectActionRequests.get(event.data.requestId);
+        if (!pending) return;
+        window.clearTimeout(pending.timer);
+        projectActionRequests.delete(event.data.requestId);
+        if (event.data.ok) pending.resolve(event.data);
+        else pending.reject(new Error(event.data.message || "요청을 처리하지 못했습니다."));
+      });
+      const inviteProjectMember = (projectId, projectName, email, role) =>
+        requestProjectAction("exp-note-invite-project-member", { projectId, projectName, email, role });
+      const listProjectMembers = (projectId) =>
+        requestProjectAction("exp-note-list-project-members", { projectId });
+      const respondProjectInvite = (projectId, accept) =>
+        requestProjectAction("exp-note-respond-project-invite", { projectId, accept });
+      const removeProjectMember = (projectId, userId) =>
+        requestProjectAction("exp-note-remove-project-member", { projectId, userId });
 
       const emptyReagentRow = () => ({ id: uid(), material: "", volume: "", highlight: false });
       const emptyConditionRow = () => ({ id: uid(), temp: "", duration: "", note: "" });
@@ -1944,9 +1983,107 @@
         );
       }
 
-      function ProjectLibrary({ store, setStore, onOpen }) {
+      const ROLE_LABEL = { owner: "소유자", editor: "편집자", viewer: "뷰어" };
+
+      function ShareProjectModal({ project, myRole, onClose, toast }) {
+        const [members, setMembers] = useState(null);
+        const [error, setError] = useState("");
+        const [email, setEmail] = useState("");
+        const [role, setRole] = useState("editor");
+        const [busy, setBusy] = useState(false);
+        const isOwner = !myRole || myRole === "owner";
+
+        const load = () => {
+          listProjectMembers(project.id)
+            .then(res => setMembers(res.members || []))
+            .catch(e => { setMembers([]); setError(e.message); });
+        };
+        useEffect(() => { load(); }, [project.id]);
+
+        const invite = () => {
+          if (!email.trim() || busy) return;
+          setBusy(true); setError("");
+          inviteProjectMember(project.id, project.name, email.trim(), role)
+            .then(() => { setEmail(""); toast(`${email.trim()} 님에게 초대를 보냈습니다`); load(); })
+            .catch(e => setError(e.message))
+            .finally(() => setBusy(false));
+        };
+
+        const remove = (userId) => {
+          if (busy || !window.confirm("이 사용자를 프로젝트에서 제거할까요?")) return;
+          setBusy(true);
+          removeProjectMember(project.id, userId)
+            .then(() => { toast("멤버를 제거했습니다"); load(); })
+            .catch(e => setError(e.message))
+            .finally(() => setBusy(false));
+        };
+
+        return (
+          <div className="modal-backdrop" onClick={onClose}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-head"><h3>“{project.name}” 공유</h3><Button className="ghost" onClick={onClose}>닫기</Button></div>
+              <div className="modal-body stack">
+                {isOwner ? (
+                  <div className="share-invite-row">
+                    <input className="field grow" type="email" placeholder="초대할 사용자 이메일 (가입된 계정)" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === "Enter") invite(); }} />
+                    <select className="field" value={role} onChange={e => setRole(e.target.value)} aria-label="초대 권한">
+                      <option value="editor">편집자</option>
+                      <option value="viewer">뷰어</option>
+                    </select>
+                    <Button className="primary" disabled={busy || !email.trim()} onClick={invite}>초대</Button>
+                  </div>
+                ) : (
+                  <div className="tiny muted">소유자만 새 멤버를 초대할 수 있습니다. 내 권한: {ROLE_LABEL[myRole] || myRole}</div>
+                )}
+                {error && <div className="form-error">{error}</div>}
+                <div className="stack">
+                  <label className="label">멤버</label>
+                  {members === null ? (
+                    <div className="empty">불러오는 중…</div>
+                  ) : members.length === 0 ? (
+                    <div className="empty">아직 공유된 멤버가 없습니다.</div>
+                  ) : (
+                    <div className="member-list">
+                      {members.map(m => (
+                        <div key={m.userId} className="member-row">
+                          <div>
+                            <strong>{m.email}</strong>
+                            <span className="tiny muted">{ROLE_LABEL[m.role] || m.role}{m.status === "invited" ? " · 초대 대기중" : ""}</span>
+                          </div>
+                          {isOwner && m.role !== "owner" && <Button className="ghost danger" disabled={busy} onClick={() => remove(m.userId)}>제거</Button>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function IncomingProjectInvites({ invites, onRespond }) {
+        if (!invites.length) return null;
+        return (
+          <div className="incoming-invites stack">
+            {invites.map(invite => (
+              <div key={invite.projectId} className="incoming-invite-row">
+                <div><strong>{invite.ownerEmail}</strong> 님이 “{invite.projectName || "제목 없는 프로젝트"}” 프로젝트에 {ROLE_LABEL[invite.role] || invite.role}(으)로 초대했습니다.</div>
+                <div className="row">
+                  <Button className="primary" onClick={() => onRespond(invite.projectId, true)}>수락</Button>
+                  <Button className="ghost" onClick={() => onRespond(invite.projectId, false)}>거절</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      function ProjectLibrary({ store, setStore, onOpen, sharedRoles, incomingInvites, onRespondInvite, toast }) {
         const [dragId, setDragId] = useState(null);
         const [dropId, setDropId] = useState(null);
+        const [shareTargetId, setShareTargetId] = useState(null);
+        const roleByProject = useMemo(() => new Map((sharedRoles || []).map(r => [r.projectId, r.role])), [sharedRoles]);
         const dragRef = useRef(null);
         const holdRef = useRef({ timer: null, active: false, moved: false, draggedId: null, lastTargetId: null, startX: 0, startY: 0 });
         const reorder = (fromId, toId) => {
@@ -2016,21 +2153,32 @@
             <div className="library-head"><div><div className="eyebrow">PROJECT LIBRARY</div><h1 className="page-title">나의 실험 프로젝트</h1><div className="page-sub">책을 열어 프로젝트를 시작하세요. 드래그하거나 모바일에서 길게 눌러 순서를 바꿀 수 있습니다.</div></div>
               <Button className="primary" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}>+ 프로젝트 추가</Button>
             </div>
+            <IncomingProjectInvites invites={incomingInvites || []} onRespond={onRespondInvite} />
             <div className="bookshelf">
               {store.projects.map((p, index) => <div className={`book-wrap ${dropId === p.id ? "drop-target" : ""}`} key={p.id} data-project-id={p.id} onDragEnter={() => { if (dragRef.current && dragRef.current !== p.id) setDropId(p.id); }} onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }} onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDropId(null); }} onDrop={e => { e.preventDefault(); const fromId = e.dataTransfer.getData("text/plain") || dragRef.current; reorder(fromId, p.id); clearDrag(); }}>
                 <div className={`book ${dragId === p.id ? "dragging" : ""}`} style={{ background: `linear-gradient(145deg, ${p.color}, color-mix(in srgb, ${p.color} 70%, #17231d))` }} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") onOpen(p.id); }} onClick={e => { if (holdRef.current.moved) { holdRef.current.moved = false; return; } if (!e.target.closest("input,button")) onOpen(p.id); }} onPointerDown={e => startTouch(e, p.id)} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold}>
                   <div><div className="book-kicker">LAB PROJECT · {String(index + 1).padStart(2,"0")}</div><input className="book-name" value={p.name} onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} onChange={e => updateProject(setStore, p.id, pr => ({ ...pr, name: e.target.value }))} aria-label={`${p.name} 프로젝트 이름`} /></div>
                   <div className="book-stats">실험 {p.experiments.length} · 노트 {p.notes.length} · 재고 {p.inventory.length}</div>
+                  {roleByProject.has(p.id) && <div className="book-share-badge">{roleByProject.get(p.id) === "owner" ? "공유 중" : roleByProject.get(p.id) === "editor" ? "공동 편집" : "보기 전용"}</div>}
                   <div className="book-order-controls">
                     <button type="button" className="book-order-button" disabled={index === 0} onClick={e => { e.stopPropagation(); moveBy(p.id, -1); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 앞으로 이동`}>‹</button>
                     <button type="button" className="book-handle" draggable onDragStart={e => startDesktopDrag(e, p.id)} onDragEnd={clearDrag} onClick={e => e.stopPropagation()} onPointerDown={e => { e.stopPropagation(); startTouch(e, p.id); }} onPointerMove={moveTouch} onPointerUp={clearHold} onPointerCancel={clearHold} aria-label={`${p.name} 순서 드래그`}>⠿</button>
                     <button type="button" className="book-order-button" disabled={index === store.projects.length - 1} onClick={e => { e.stopPropagation(); moveBy(p.id, 1); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 뒤로 이동`}>›</button>
                   </div>
+                  {roleByProject.get(p.id) !== "viewer" && <button type="button" className="book-share-button" onClick={e => { e.stopPropagation(); setShareTargetId(p.id); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 공유 관리`}>공유</button>}
                 </div>
               </div>)}
               <button className="add-book" onClick={() => { const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]); setStore(s => ({ ...s, projects: [...s.projects, p] })); }}><div><span>＋</span>새 프로젝트 책 만들기</div></button>
             </div>
             <div className="shelf-line" />
+            {shareTargetId && store.projects.some(p => p.id === shareTargetId) && (
+              <ShareProjectModal
+                project={store.projects.find(p => p.id === shareTargetId)}
+                myRole={roleByProject.get(shareTargetId)}
+                onClose={() => setShareTargetId(null)}
+                toast={toast}
+              />
+            )}
           </main>
         );
       }
@@ -2076,6 +2224,8 @@
         const [screen, setScreen] = useState("library");
         const [saveState, setSaveState] = useState("저장됨");
         const [toastMsg, setToastMsg] = useState("");
+        const [sharedRoles, setSharedRoles] = useState([]);
+        const [incomingInvites, setIncomingInvites] = useState([]);
         const skipRef = useRef(false);
         const storeRef = useRef(store);
         storeRef.current = store;
@@ -2119,6 +2269,14 @@
                 toast(`${freshTransfers.length}개의 공유 프로토콜을 받았습니다`);
               }
               window.setTimeout(() => window.parent.postMessage({ type: "exp-note-protocols-received", transferIds }, window.location.origin), 700);
+            }
+            if (event.data?.type === "exp-note-shared-roles" && Array.isArray(event.data.roles)) {
+              setSharedRoles(event.data.roles);
+              return;
+            }
+            if (event.data?.type === "exp-note-incoming-project-invites" && Array.isArray(event.data.invites)) {
+              setIncomingInvites(event.data.invites);
+              return;
             }
           };
           window.addEventListener("message", receive);
@@ -2166,11 +2324,22 @@
           return () => clearTimeout(id);
         }, [store]);
 
+        const onRespondInvite = (projectId, accept) => {
+          respondProjectInvite(projectId, accept)
+            .then(() => {
+              setIncomingInvites(list => list.filter(i => i.projectId !== projectId));
+              toast(accept ? "초대를 수락했습니다" : "초대를 거절했습니다");
+            })
+            .catch(e => toast(e.message || "처리하지 못했습니다"));
+        };
+        const myRole = sharedRoles.find(r => r.projectId === project.id)?.role;
+        const isViewer = myRole === "viewer";
+
         return (
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver3.5</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.0</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
@@ -2182,13 +2351,16 @@
                 </div>
               </div>
             </header>
-            {screen === "library" && <ProjectLibrary store={store} setStore={setStore} onOpen={id => { setStore(s => ({ ...s, activeProjectId: id })); setScreen("hub"); }} />}
+            {screen === "library" && <ProjectLibrary store={store} setStore={setStore} onOpen={id => { setStore(s => ({ ...s, activeProjectId: id })); setScreen("hub"); }} sharedRoles={sharedRoles} incomingInvites={incomingInvites} onRespondInvite={onRespondInvite} toast={toast} />}
             {screen === "hub" && <div className="shell"><ProjectHub project={project} onBack={() => setScreen("library")} onSelect={v => { setView(v); setScreen("tool"); }} /></div>}
             {screen === "tool" && <div className="shell"><main className="main"><button className="back-library" onClick={() => setScreen("hub")}>← {project.name}</button>
-              <section hidden={view !== "protocol"}><ProtocolView project={project} setStore={setStore} toast={toast} /></section>
-              <section hidden={view !== "notes"}><NotesView project={project} setStore={setStore} toast={toast} /></section>
-              <section hidden={view !== "memo"}><MemoView project={project} setStore={setStore} toast={toast} /></section>
-              <section hidden={view !== "inventory"}><InventoryView project={project} setStore={setStore} /></section>
+              {isViewer && <div className="viewer-banner">이 프로젝트는 보기 전용으로 공유되었습니다. 변경사항은 저장되지 않습니다.</div>}
+              <div style={isViewer ? { pointerEvents: "none", opacity: 0.7 } : undefined}>
+                <section hidden={view !== "protocol"}><ProtocolView project={project} setStore={setStore} toast={toast} /></section>
+                <section hidden={view !== "notes"}><NotesView project={project} setStore={setStore} toast={toast} /></section>
+                <section hidden={view !== "memo"}><MemoView project={project} setStore={setStore} toast={toast} /></section>
+                <section hidden={view !== "inventory"}><InventoryView project={project} setStore={setStore} /></section>
+              </div>
             </main></div>}
             {toastMsg && <div className="toast no-print">{toastMsg}</div>}
           </div>

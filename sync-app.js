@@ -1,4 +1,4 @@
-// Experimental Note GUI v3.5.1 — clean deployment marker.
+// Experimental Note GUI v4.0.0 — project sharing / co-editing.
 (() => {
   "use strict";
 
@@ -8,9 +8,11 @@
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
   const TAB_CHANNEL_NAME = "exp-note-sync-tabs-v1";
   const DB_NAME = "exp-note-sync-v1";
-  const DB_VERSION = 1;
+  const DB_VERSION = 2;
   const RECORDS_STORE = "records";
   const OUTBOX_STORE = "outbox";
+  const SHARED_RECORDS_STORE = "shared_records";
+  const SHARED_OUTBOX_STORE = "shared_outbox";
   const INTENT_CLIENT_PREFIX = "intent-v3:";
   const DELETE_INTENT_CLIENT_PREFIX = "delete-v3:";
   const SUPABASE_URL = "https://wajhlnpyxcnhoybwtdqe.supabase.co";
@@ -83,6 +85,11 @@
   let incomingProtocolTimer = null;
   let incomingProtocolLoading = false;
   let resumeSyncTimer = null;
+  let sharedMemberships = new Map();
+  let sharedChannel = null;
+  let sharedUploadRunning = false;
+  let incomingInviteTimer = null;
+  let sharedRefreshTimer = null;
 
   const canonicalize = (value) => {
     if (Array.isArray(value)) return value.map(canonicalize);
@@ -464,7 +471,7 @@
   ) {
     const result = new Map();
     if (!store || typeof store !== "object") return result;
-    const add = (type, id, payload) => {
+    const add = (type, id, payload, projectId = null) => {
       const record = makeRecord(
         type,
         id,
@@ -472,6 +479,7 @@
         updatedAt,
         sourceClientId
       );
+      if (projectId) record.__projectId = projectId;
       result.set(recordKey(record), record);
     };
 
@@ -486,6 +494,7 @@
     });
     projectList.forEach((project, index) => {
       const id = stableItemId(project, "root", index, "project");
+      const sharedProjectId = sharedMemberships.has(id) ? id : null;
       const {
         experiments = [],
         notes = [],
@@ -494,7 +503,7 @@
         memoScratch = { content: "", updatedAt: null },
         ...projectBase
       } = project || {};
-      add("project", id, { ...projectBase, id, order: index });
+      add("project", id, { ...projectBase, id, order: index }, sharedProjectId);
 
       (Array.isArray(experiments) ? experiments : []).forEach(
         (experiment, experimentIndex) => {
@@ -509,7 +518,7 @@
             parent_id: id,
             item_order: experimentIndex,
             item: { ...experimentBase, id: experimentId },
-          });
+          }, sharedProjectId);
           (Array.isArray(protocols) ? protocols : []).forEach(
             (protocol, protocolIndex) => {
               const protocolId = stableItemId(
@@ -526,7 +535,8 @@
                   experiment_id: experimentId,
                   item_order: protocolIndex,
                   item: { ...(protocol || {}), id: protocolId },
-                }
+                },
+                sharedProjectId
               );
             }
           );
@@ -544,13 +554,13 @@
             parent_id: id,
             item_order: itemIndex,
             item: { ...(item || {}), id: itemId },
-          });
+          }, sharedProjectId);
         });
       });
       add("project_scratch", id, {
         parent_id: id,
         value: memoScratch || { content: "", updatedAt: null },
-      });
+      }, sharedProjectId);
     });
     return result;
   }
@@ -838,6 +848,12 @@
         if (!db.objectStoreNames.contains(OUTBOX_STORE)) {
           db.createObjectStore(OUTBOX_STORE, { keyPath: "local_key" });
         }
+        if (!db.objectStoreNames.contains(SHARED_RECORDS_STORE)) {
+          db.createObjectStore(SHARED_RECORDS_STORE, { keyPath: "local_key" });
+        }
+        if (!db.objectStoreNames.contains(SHARED_OUTBOX_STORE)) {
+          db.createObjectStore(SHARED_OUTBOX_STORE, { keyPath: "local_key" });
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -934,6 +950,106 @@
     db.close();
   }
 
+  // --- Shared (multi-user, project-scoped) record storage ---------------
+  // Mirrors the personal record helpers above, but keyed by project id
+  // instead of user id, since shared records are jointly owned by every
+  // member of a project rather than a single account.
+  const sharedLocalKey = (userId, record) =>
+    `${userId}|shared|${record.__projectId}|${recordKey(record)}`;
+
+  async function getStoredSharedRecords(storeName, userId) {
+    const db = await openSyncDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readonly");
+      const request = transaction.objectStore(storeName).getAll();
+      request.onsuccess = () => {
+        const records = new Map();
+        (request.result || [])
+          .filter((entry) => entry.user_id === userId)
+          .forEach((entry) => {
+            const { local_key: _localKey, user_id: _userId, ...record } =
+              entry;
+            records.set(recordKey(record), record);
+          });
+        resolve(records);
+      };
+      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => db.close();
+    });
+  }
+
+  async function putStoredSharedRecords(storeName, userId, records) {
+    if (!records?.length) return;
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
+      records.forEach((record) => {
+        objectStore.put({
+          ...clone(record),
+          user_id: userId,
+          local_key: sharedLocalKey(userId, record),
+        });
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  async function replaceStoredSharedRecords(storeName, userId, records) {
+    const db = await openSyncDb();
+    const existingEntries = await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readonly");
+      const request = transaction.objectStore(storeName).getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readwrite");
+      const objectStore = transaction.objectStore(storeName);
+      existingEntries
+        .filter((entry) => entry.user_id === userId)
+        .forEach((entry) => objectStore.delete(entry.local_key));
+      (records || []).forEach((record) => {
+        objectStore.put({
+          ...clone(record),
+          user_id: userId,
+          local_key: sharedLocalKey(userId, record),
+        });
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  async function deleteSharedOutboxRecords(userId, uploadedRecords) {
+    if (!uploadedRecords?.length) return;
+    const latestOutbox = await getStoredSharedRecords(
+      SHARED_OUTBOX_STORE,
+      userId
+    );
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(SHARED_OUTBOX_STORE, "readwrite");
+      const objectStore = transaction.objectStore(SHARED_OUTBOX_STORE);
+      uploadedRecords.forEach((record) => {
+        const latest = latestOutbox.get(recordKey(record));
+        if (
+          latest &&
+          latest.updated_at === record.updated_at &&
+          latest.client_id === record.client_id
+        ) {
+          objectStore.delete(sharedLocalKey(userId, record));
+        }
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
   const setBusy = (busy) => {
     signInButton.disabled = busy;
     signUpButton.disabled = busy;
@@ -998,6 +1114,270 @@
     const records = new Map();
     (data || []).forEach((record) => records.set(recordKey(record), record));
     return records;
+  }
+
+  // --- Project sharing (multi-user co-editing) ---------------------------
+
+  async function fetchSharedMemberships() {
+    if (!currentSession?.user) return sharedMemberships;
+    const { data, error } = await client.rpc("list_exp_note_shared_projects");
+    if (error || !Array.isArray(data)) return sharedMemberships;
+    const next = new Map();
+    data.forEach((row) => {
+      if (!row?.project_id) return;
+      next.set(String(row.project_id), {
+        role: row.role,
+        projectName: row.project_name || "",
+      });
+    });
+    sharedMemberships = next;
+    return sharedMemberships;
+  }
+
+  async function fetchSharedRemoteRecords(projectIds) {
+    if (!projectIds?.length) return new Map();
+    const { data, error } = await client
+      .from("exp_note_shared_records")
+      .select(
+        "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id"
+      )
+      .in("project_id", projectIds);
+    if (error) throw error;
+    const records = new Map();
+    (data || []).forEach((row) => {
+      const record = {
+        entity_type: row.entity_type,
+        entity_id: row.entity_id,
+        payload: row.payload,
+        updated_at: row.updated_at,
+        deleted_at: row.deleted_at,
+        client_id: row.client_id,
+        __projectId: String(row.project_id),
+      };
+      records.set(recordKey(record), record);
+    });
+    return records;
+  }
+
+  function postSharedRolesToApp() {
+    frame?.contentWindow?.postMessage(
+      {
+        type: "exp-note-shared-roles",
+        roles: [...sharedMemberships.entries()].map(([projectId, info]) => ({
+          projectId,
+          role: info.role,
+          projectName: info.projectName,
+        })),
+      },
+      window.location.origin
+    );
+  }
+
+  async function migrateProjectToShared(projectId) {
+    const userId = currentSession?.user?.id;
+    if (!userId) return;
+    const prefix = `${projectId}:`;
+    const now = Date.now();
+    let sequence = 0;
+    const sharedPush = [];
+    const personalTombstones = [];
+    currentRecords.forEach((record) => {
+      if (record.__projectId || record.entity_type === "root") return;
+      const belongs =
+        record.entity_id === projectId || record.entity_id.startsWith(prefix);
+      if (!belongs) return;
+      sequence += 1;
+      const timestamp = new Date(now + sequence).toISOString();
+      sharedPush.push({
+        ...clone(record),
+        updated_at: timestamp,
+        client_id: intentClientId,
+        local_intent: true,
+        __projectId: projectId,
+      });
+      personalTombstones.push({
+        entity_type: record.entity_type,
+        entity_id: record.entity_id,
+        payload: null,
+        updated_at: timestamp,
+        deleted_at: timestamp,
+        client_id: deleteIntentClientId,
+        local_intent: true,
+      });
+    });
+    if (!sharedPush.length) return;
+    sharedPush.forEach((record) => currentRecords.set(recordKey(record), record));
+    await Promise.all([
+      putStoredSharedRecords(SHARED_RECORDS_STORE, userId, sharedPush),
+      putStoredSharedRecords(SHARED_OUTBOX_STORE, userId, sharedPush),
+      putStoredRecords(OUTBOX_STORE, userId, personalTombstones),
+    ]);
+    scheduleUpload();
+  }
+
+  async function refreshSharedProjects() {
+    if (!currentSession?.user || navigator.onLine === false) return;
+    const userId = currentSession.user.id;
+    const previousIds = new Set(sharedMemberships.keys());
+    const next = await fetchSharedMemberships();
+    const nextIds = new Set(next.keys());
+    const added = [...nextIds].filter((id) => !previousIds.has(id));
+    const removed = [...previousIds].filter((id) => !nextIds.has(id));
+    if (added.length) {
+      try {
+        const records = await fetchSharedRemoteRecords(added);
+        if (records.size) {
+          await mergeIncomingRecords(
+            userId,
+            [...records.values()],
+            "공유 프로젝트를 불러왔습니다"
+          );
+        }
+        await Promise.all(added.map((projectId) => migrateProjectToShared(projectId)));
+      } catch {
+        // The shared-sharing SQL may not be applied yet; retry next cycle.
+      }
+    }
+    if (added.length || removed.length) {
+      await subscribeSharedRealtime([...nextIds], syncGeneration);
+    }
+    postSharedRolesToApp();
+  }
+
+  const scheduleSharedProjectsRefresh = () => {
+    if (sharedRefreshTimer) window.clearInterval(sharedRefreshTimer);
+    sharedRefreshTimer = window.setInterval(refreshSharedProjects, 15000);
+  };
+
+  async function fetchIncomingProjectInvites() {
+    if (!currentSession?.user || navigator.onLine === false) return;
+    const { data, error } = await client.rpc(
+      "list_exp_note_incoming_project_invites"
+    );
+    if (error || !Array.isArray(data)) return;
+    frame?.contentWindow?.postMessage(
+      {
+        type: "exp-note-incoming-project-invites",
+        invites: data.map((item) => ({
+          projectId: item.project_id,
+          projectName: item.project_name,
+          ownerEmail: item.owner_email,
+          role: item.role,
+          createdAt: item.created_at,
+        })),
+      },
+      window.location.origin
+    );
+  }
+
+  const scheduleIncomingInviteCheck = () => {
+    if (incomingInviteTimer) window.clearInterval(incomingInviteTimer);
+    incomingInviteTimer = window.setInterval(fetchIncomingProjectInvites, 15000);
+  };
+
+  const postToApp = (type, requestId, result) => {
+    frame?.contentWindow?.postMessage(
+      { type, requestId, ...result },
+      window.location.origin
+    );
+  };
+
+  async function inviteProjectMember(message) {
+    if (!message?.requestId) return;
+    if (!currentSession?.user) {
+      postToApp("exp-note-invite-project-member-result", message.requestId, {
+        ok: false,
+        message: "먼저 클라우드에 로그인해주세요.",
+      });
+      return;
+    }
+    const { error } = await client.rpc("invite_exp_note_project_member", {
+      p_project_id: message.projectId,
+      p_project_name: message.projectName || "",
+      p_recipient_email: message.email,
+      p_role: message.role || "editor",
+    });
+    if (error) {
+      const databaseMissing = /invite_exp_note_project_member|schema cache|function/i.test(
+        error.message || ""
+      );
+      postToApp("exp-note-invite-project-member-result", message.requestId, {
+        ok: false,
+        message: databaseMissing
+          ? "Supabase 프로젝트 공유 SQL 설정이 필요합니다."
+          : error.message || "초대하지 못했습니다.",
+      });
+      return;
+    }
+    postToApp("exp-note-invite-project-member-result", message.requestId, {
+      ok: true,
+    });
+    refreshSharedProjects();
+  }
+
+  async function listProjectMembers(message) {
+    if (!message?.requestId) return;
+    if (!currentSession?.user) {
+      postToApp("exp-note-project-members-result", message.requestId, {
+        ok: false,
+        message: "먼저 클라우드에 로그인해주세요.",
+      });
+      return;
+    }
+    const { data, error } = await client.rpc("list_exp_note_project_members", {
+      p_project_id: message.projectId,
+    });
+    if (error) {
+      postToApp("exp-note-project-members-result", message.requestId, {
+        ok: false,
+        message: error.message || "멤버 목록을 불러오지 못했습니다.",
+      });
+      return;
+    }
+    postToApp("exp-note-project-members-result", message.requestId, {
+      ok: true,
+      members: (data || []).map((member) => ({
+        userId: member.user_id,
+        email: member.email,
+        role: member.role,
+        status: member.status,
+        createdAt: member.created_at,
+      })),
+    });
+  }
+
+  async function respondProjectInvite(message) {
+    if (!message?.requestId) return;
+    if (!currentSession?.user) return;
+    const { error } = await client.rpc("respond_exp_note_project_invite", {
+      p_project_id: message.projectId,
+      p_accept: Boolean(message.accept),
+    });
+    postToApp(
+      "exp-note-respond-project-invite-result",
+      message.requestId,
+      error
+        ? { ok: false, message: error.message || "처리하지 못했습니다." }
+        : { ok: true }
+    );
+    if (!error) await refreshSharedProjects();
+  }
+
+  async function removeProjectMember(message) {
+    if (!message?.requestId) return;
+    if (!currentSession?.user) return;
+    const { error } = await client.rpc("remove_exp_note_project_member", {
+      p_project_id: message.projectId,
+      p_user_id: message.userId,
+    });
+    postToApp(
+      "exp-note-remove-project-member-result",
+      message.requestId,
+      error
+        ? { ok: false, message: error.message || "제거하지 못했습니다." }
+        : { ok: true }
+    );
+    if (!error) await refreshSharedProjects();
   }
 
   const postShareResult = (requestId, result) => {
@@ -1139,6 +1519,61 @@
     return true;
   }
 
+  async function uploadSharedOutbox() {
+    if (
+      sharedUploadRunning ||
+      !currentSession?.user ||
+      navigator.onLine === false
+    ) {
+      return false;
+    }
+    if (appEditing) {
+      uploadAfterEditing = true;
+      return false;
+    }
+    const userId = currentSession.user.id;
+    const outbox = await getStoredSharedRecords(SHARED_OUTBOX_STORE, userId);
+    const records = [...outbox.values()];
+    if (!records.length) return true;
+
+    const byProject = new Map();
+    records.forEach((record) => {
+      const projectId = record.__projectId;
+      if (!projectId) return;
+      if (!byProject.has(projectId)) byProject.set(projectId, []);
+      byProject.get(projectId).push(record);
+    });
+
+    sharedUploadRunning = true;
+    let ok = true;
+    const uploaded = [];
+    for (const [projectId, list] of byProject) {
+      let result;
+      try {
+        result = await client.rpc("upsert_exp_note_shared_records", {
+          p_project_id: projectId,
+          p_records: rpcPayload(list),
+        });
+      } catch (error) {
+        result = { error };
+      }
+      if (result.error) {
+        ok = false;
+      } else {
+        uploaded.push(...list);
+      }
+    }
+    sharedUploadRunning = false;
+    if (uploaded.length) await deleteSharedOutboxRecords(userId, uploaded);
+    if (!ok) scheduleReconnect();
+    return ok;
+  }
+
+  async function uploadAll() {
+    const results = await Promise.all([uploadOutbox(), uploadSharedOutbox()]);
+    return results.every(Boolean);
+  }
+
   const scheduleUpload = (delay = 350) => {
     if (uploadTimer) window.clearTimeout(uploadTimer);
     if (appEditing) {
@@ -1149,7 +1584,7 @@
     }
     uploadTimer = window.setTimeout(() => {
       uploadTimer = null;
-      uploadOutbox();
+      uploadAll();
     }, delay);
   };
 
@@ -1159,9 +1594,21 @@
     records.forEach((record) =>
       currentRecords.set(recordKey(record), record)
     );
+    const personal = records.filter((record) => !record.__projectId);
+    const shared = records.filter((record) => record.__projectId);
     await Promise.all([
-      putStoredRecords(RECORDS_STORE, userId, records),
-      putStoredRecords(OUTBOX_STORE, userId, records),
+      personal.length
+        ? Promise.all([
+            putStoredRecords(RECORDS_STORE, userId, personal),
+            putStoredRecords(OUTBOX_STORE, userId, personal),
+          ])
+        : Promise.resolve(),
+      shared.length
+        ? Promise.all([
+            putStoredSharedRecords(SHARED_RECORDS_STORE, userId, shared),
+            putStoredSharedRecords(SHARED_OUTBOX_STORE, userId, shared),
+          ])
+        : Promise.resolve(),
     ]);
     announceTabRecords(userId, records);
     setStatus(
@@ -1227,7 +1674,12 @@
       }
     });
 
-    if (changed.length) await queueRecords(changed);
+    const writable = changed.filter((record) => {
+      if (!record.__projectId) return true;
+      const membership = sharedMemberships.get(record.__projectId);
+      return !membership || membership.role !== "viewer";
+    });
+    if (writable.length) await queueRecords(writable);
   }
 
   const queueLocalCapture = (raw) => {
@@ -1279,6 +1731,9 @@
         const key = recordKey(expanded);
         const existing = currentRecords.get(key);
         const merged = contentAwareRecord(existing, expanded);
+        merged.__projectId =
+          merged.__projectId || expanded.__projectId || existing?.__projectId || null;
+        if (!merged.__projectId) delete merged.__projectId;
         currentRecords.set(key, merged);
         updates.push(merged);
         if (!sameRecordContent(merged, expanded)) {
@@ -1294,9 +1749,16 @@
         }
       });
     });
-    if (updates.length) {
-      await putStoredRecords(RECORDS_STORE, userId, updates);
-    }
+    const personalUpdates = updates.filter((record) => !record.__projectId);
+    const sharedUpdates = updates.filter((record) => record.__projectId);
+    await Promise.all([
+      personalUpdates.length
+        ? putStoredRecords(RECORDS_STORE, userId, personalUpdates)
+        : Promise.resolve(),
+      sharedUpdates.length
+        ? putStoredSharedRecords(SHARED_RECORDS_STORE, userId, sharedUpdates)
+        : Promise.resolve(),
+    ]);
     if (repairs.length) {
       setStatus("내용이 있는 항목 우선 병합 · 클라우드 복구 중");
       await queueRecords(repairs);
@@ -1431,6 +1893,59 @@
     channel = null;
   }
 
+  async function disconnectSharedRealtime() {
+    if (!sharedChannel) return;
+    await client.removeChannel(sharedChannel);
+    sharedChannel = null;
+  }
+
+  async function subscribeSharedRealtime(projectIds, generation) {
+    await disconnectSharedRealtime();
+    if (generation !== syncGeneration || !projectIds?.length) return;
+    const userId = currentSession?.user?.id;
+    if (!userId) return;
+    sharedChannel = client
+      .channel(`exp-note-shared-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "exp_note_shared_records",
+          filter: `project_id=in.(${projectIds.join(",")})`,
+        },
+        async (payload) => {
+          if (generation !== syncGeneration || !payload.new?.entity_type)
+            return;
+          const incoming = {
+            entity_type: payload.new.entity_type,
+            entity_id: payload.new.entity_id,
+            payload: payload.new.payload,
+            updated_at: payload.new.updated_at,
+            deleted_at: payload.new.deleted_at,
+            client_id: payload.new.client_id,
+            __projectId: String(payload.new.project_id),
+          };
+          if (isOwnRecord(incoming)) return;
+          await localCaptureChain.catch(() => undefined);
+          if (appEditing) {
+            deferRemoteRecord(
+              incoming,
+              "입력 중 받은 공유 프로젝트 변경사항을 병합했습니다"
+            );
+            setStatus("입력 완료 후 공유 프로젝트 변경사항 병합");
+            return;
+          }
+          await mergeIncomingRecords(
+            userId,
+            [incoming],
+            "공유 프로젝트의 변경사항을 받았습니다"
+          );
+        }
+      )
+      .subscribe();
+  }
+
   const scheduleReconnect = () => {
     if (reconnectTimer || !currentSession?.user) return;
     reconnectTimer = window.setTimeout(() => {
@@ -1468,10 +1983,14 @@
     setStatus("클라우드 확인 중…");
     let cached = new Map();
     let outbox = new Map();
+    let sharedCached = new Map();
+    let sharedOutbox = new Map();
     try {
-      [cached, outbox] = await Promise.all([
+      [cached, outbox, sharedCached, sharedOutbox] = await Promise.all([
         getStoredRecords(RECORDS_STORE, userId),
         getStoredRecords(OUTBOX_STORE, userId),
+        getStoredSharedRecords(SHARED_RECORDS_STORE, userId),
+        getStoredSharedRecords(SHARED_OUTBOX_STORE, userId),
       ]);
     } catch {
       setStatus("이 기기의 저장소를 확인할 수 없습니다");
@@ -1491,6 +2010,18 @@
             "Supabase에 항목별 동기화 테이블을 먼저 설정해주세요.";
           return;
         }
+      }
+    }
+    let sharedRemote = new Map();
+    if (remoteFetched) {
+      try {
+        await fetchSharedMemberships();
+        sharedRemote = await fetchSharedRemoteRecords([
+          ...sharedMemberships.keys(),
+        ]);
+      } catch {
+        // Project-sharing SQL may not be applied yet; personal sync still works.
+        sharedRemote = new Map();
       }
     }
     if (generation !== syncGeneration) return;
@@ -1527,9 +2058,9 @@
     }
 
     const initialState = resolveInitialRecordState({
-      remote,
-      cached,
-      outbox,
+      remote: mergeRecordMaps(remote, sharedRemote),
+      cached: mergeRecordMaps(cached, sharedCached),
+      outbox: mergeRecordMaps(outbox, sharedOutbox),
       localRecords,
       pendingRecords,
       remoteFetched,
@@ -1541,26 +2072,35 @@
     } else if (initialState.reason === "content-aware-merge") {
       setStatus("내용이 있는 항목 우선 병합 중…");
     }
+    const outboxPersonal = [...initialState.outbox.values()].filter(
+      (record) => !record.__projectId
+    );
+    const outboxShared = [...initialState.outbox.values()].filter(
+      (record) => record.__projectId
+    );
     if (remoteFetched) {
-      await replaceStoredRecords(
-        OUTBOX_STORE,
-        userId,
-        [...initialState.outbox.values()]
-      );
+      await Promise.all([
+        replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
+        replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
+      ]);
       localStorage.removeItem(LEGACY_PENDING_KEY);
     } else if (initialState.reason === "offline-recovery") {
-      await replaceStoredRecords(
-        OUTBOX_STORE,
-        userId,
-        [...initialState.outbox.values()]
-      );
+      await Promise.all([
+        replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
+        replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
+      ]);
     }
 
-    await replaceStoredRecords(
-      RECORDS_STORE,
-      userId,
-      [...currentRecords.values()]
+    const recordsPersonal = [...currentRecords.values()].filter(
+      (record) => !record.__projectId
     );
+    const recordsShared = [...currentRecords.values()].filter(
+      (record) => record.__projectId
+    );
+    await Promise.all([
+      replaceStoredRecords(RECORDS_STORE, userId, recordsPersonal),
+      replaceStoredSharedRecords(SHARED_RECORDS_STORE, userId, recordsShared),
+    ]);
     initializedUserId = userId;
     // On first boot, discard the iframe's default snapshot. During a reconnect,
     // however, keep edits that arrived while the remote fetch was in flight.
@@ -1573,11 +2113,16 @@
     if (navigator.onLine === false) {
       setStatus("오프라인 · 이 기기에 안전하게 저장됨");
     } else {
-      await uploadOutbox();
+      await uploadAll();
       if (generation !== syncGeneration) return;
       await subscribeRealtime(userId, generation);
+      await subscribeSharedRealtime([...sharedMemberships.keys()], generation);
+      postSharedRolesToApp();
       await fetchIncomingProtocols();
       scheduleIncomingProtocolCheck();
+      await fetchIncomingProjectInvites();
+      scheduleIncomingInviteCheck();
+      scheduleSharedProjectsRefresh();
     }
   }
 
@@ -1606,7 +2151,13 @@
       pendingLocalRaw = "";
       if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
       incomingProtocolTimer = null;
+      if (incomingInviteTimer) window.clearInterval(incomingInviteTimer);
+      incomingInviteTimer = null;
+      if (sharedRefreshTimer) window.clearInterval(sharedRefreshTimer);
+      sharedRefreshTimer = null;
+      sharedMemberships = new Map();
       await disconnectRealtime();
+      await disconnectSharedRealtime();
       return;
     }
     if (sameInitializedUser) return;
@@ -1683,6 +2234,8 @@
     if (event.data?.type === "exp-note-ready") {
       if (pendingAppStore) postStoreToApp(pendingAppStore);
       fetchIncomingProtocols();
+      fetchIncomingProjectInvites();
+      postSharedRolesToApp();
       return;
     }
     if (event.data?.type === "exp-note-share-protocol") {
@@ -1691,6 +2244,22 @@
     }
     if (event.data?.type === "exp-note-protocols-received") {
       await markIncomingProtocolsReceived(event.data.transferIds);
+      return;
+    }
+    if (event.data?.type === "exp-note-invite-project-member") {
+      await inviteProjectMember(event.data);
+      return;
+    }
+    if (event.data?.type === "exp-note-list-project-members") {
+      await listProjectMembers(event.data);
+      return;
+    }
+    if (event.data?.type === "exp-note-respond-project-invite") {
+      await respondProjectInvite(event.data);
+      return;
+    }
+    if (event.data?.type === "exp-note-remove-project-member") {
+      await removeProjectMember(event.data);
       return;
     }
     if (
