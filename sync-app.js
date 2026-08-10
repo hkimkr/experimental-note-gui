@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.0.0 — project sharing / co-editing.
+// Experimental Note GUI v4.1.0 — enhanced memo board (tags, colors, pinch zoom).
 (() => {
   "use strict";
 

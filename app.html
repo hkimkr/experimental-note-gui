@@ -45,8 +45,8 @@
       .note-viewing .note-live-edit{border-color:transparent;background:#f7faf8;box-shadow:none}.note-viewing .note-live-edit:hover{border-color:#afc8bb;background:#fff}.note-viewing .note-live-edit:focus{border-color:#72a98f;background:#fff;box-shadow:0 0 0 3px rgba(31,107,79,.1)}.note-viewing .note-conclusion-section{background:#fff}.note-viewing .step-group{border-color:#bdd3c7;box-shadow:0 7px 24px rgba(31,107,79,.08)}.note-viewing .step-head{background:#eaf4ee}.note-viewing .run-card.view{background:#fffaf0;border-bottom-color:#ead9ad}.note-viewing .run-card.view .run-fields{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.note-viewing .run-card.view textarea{min-height:44px}.note-viewing .execution-detail{cursor:pointer}.note-viewing .auto-deviation{border:1px solid #f0c36c;font-size:12px}.note-viewing .panel-label-bar:empty{display:none}
       .note-viewing .note-hypothesis,.note-viewing .note-setup,.note-viewing .note-conclusion,.note-viewing .step-free-memo{border-color:#dce4e0;border-left-color:#aab7b0;background:#fbfcfb}.note-viewing .note-hypothesis .label,.note-viewing .note-setup .label,.note-viewing .step-free-memo .label{color:#566159}.note-viewing .run-card.view{background:#fafbfa;border-bottom-color:#dfe6e2}.step-group.note-running{border:2px solid var(--note-running);box-shadow:0 10px 28px rgba(37,99,235,.16)}.step-group.note-running>.step-head{background:var(--note-running-soft);border-left-color:var(--note-running)}.step-group.note-running>.step-head .step-num{background:var(--note-running)}.status-chip.running,.view-status-select.running{border-color:var(--note-running);background:var(--note-running);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.25)}.note-change-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #e9a23c;border-radius:99px;background:var(--note-change);color:#fff;font-size:10px;font-weight:900;letter-spacing:.02em}.run-field.planned.has-content{border:2px solid var(--note-change);background:var(--note-change-soft);box-shadow:0 5px 14px rgba(217,119,6,.1)}.run-field.planned.has-content label{color:#9a4f00}.run-field.actual.has-content{border:2px solid var(--note-actual);background:var(--note-actual-soft);box-shadow:0 7px 18px rgba(8,127,114,.14)}.run-field.actual.has-content label{color:#05675d;font-size:12px}.execution-detail{border-color:#4eaa9f;border-left-color:var(--note-actual);background:var(--note-actual-soft);color:#174c47;box-shadow:0 5px 14px rgba(8,127,114,.1)}.execution-detail strong{color:#05675d;font-size:11px}.execution-detail.result{border-color:#b8c7bf;border-left-color:#71847a;background:#f4f7f5;color:#35483f;box-shadow:none}.execution-detail.result strong{color:#51635a}.deviation-highlight{background:var(--note-change-soft);outline:2px solid #e9a23c}.result-highlight{background:#f4f7f5;outline:1px solid #bac7c0}.deviation-highlight.result-highlight{background:var(--note-change-soft);outline-color:#e9a23c}.auto-deviation{border:1px solid #e9a23c!important;background:var(--note-change-soft);color:#934b08}.variation-count{padding:4px 9px;border-radius:99px;background:var(--note-change);color:#fff}.note-overview-item.running{border:2px solid var(--note-running);background:var(--note-running-soft)}.note-overview-item.done{border-color:var(--brand);background:var(--brand2)}.note-overview-item.changed:not(.running):not(.done){border-color:#e9a23c;background:var(--note-change-soft)}.note-overview-flags{display:flex;gap:4px;margin-top:5px}.note-overview-flag{display:inline-flex;padding:2px 6px;border-radius:99px;background:#eef2ef;color:#64736b;font-size:8px;font-weight:900}.note-overview-flag.running{background:var(--note-running);color:#fff}.note-overview-flag.done{background:var(--brand);color:#fff}.note-overview-flag.changed{background:var(--note-change);color:#fff}
       .run-status button.running.active{border-color:var(--note-running);background:var(--note-running);box-shadow:0 3px 10px rgba(37,99,235,.22)}
-      .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
-      .memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:140px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}.memo-drag-handle{display:flex;align-items:center;justify-content:center;min-height:28px;margin:-6px -8px 0;color:rgba(44,51,64,.55);font-size:11px;font-weight:800;cursor:grab;touch-action:none;user-select:none}.memo-drag-handle:active{cursor:grabbing}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%}.memo-card-body{font-size:12px;white-space:pre-wrap;flex:1;line-height:1.5;border:0;background:transparent;resize:none;min-height:80px}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}
+      .scratch-textarea{min-height:180px;line-height:1.6}.scratch-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);flex-wrap:wrap;gap:6px}
+      .memo-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}.memo-color-filters{display:flex;align-items:center;gap:6px}.memo-filter-chip{width:20px;height:20px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.memo-filter-chip.all{background:#fff;border:1px solid var(--line);color:transparent}.memo-filter-chip.on{box-shadow:0 0 0 2px #fff,0 0 0 3px currentColor}.memo-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}.memo-board{position:relative;overflow:auto;border:1px dashed var(--line);border-radius:16px;background:#fafbfc;max-height:620px;touch-action:none}.memo-canvas{position:relative;width:1400px;height:900px}.memo-card{position:absolute;width:210px;min-height:160px;border-radius:4px 4px 12px 12px;box-shadow:0 10px 24px rgba(44,51,64,.16);padding:12px;display:flex;flex-direction:column;gap:6px;cursor:grab;user-select:none}.memo-card.auto-size{height:auto}.memo-card.manual-size{overflow:hidden}.memo-card:active{cursor:grabbing}.memo-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}.memo-card-drag-handle{border:0;background:rgba(255,255,255,.34);color:rgba(44,51,64,.5);width:25px;height:27px;border-radius:8px;padding:0;display:grid;place-items:center;flex:0 0 auto;cursor:grab;font-size:14px;line-height:1;touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.memo-card-drag-handle:active{cursor:grabbing}.memo-card-drag-handle:hover,.memo-card-drag-handle:focus-visible{background:rgba(255,255,255,.58);color:rgba(44,51,64,.85);outline:none}.memo-card.touch-dragging .memo-card-drag-handle{background:rgba(255,255,255,.82);color:rgba(44,51,64,.9)}.memo-card-title{border:0;background:transparent;font-weight:800;font-size:13px;width:100%;padding:2px 0;color:inherit}.memo-card-title:focus{outline:1px dashed rgba(0,0,0,.3);border-radius:4px}.memo-card .btn.ghost.danger{min-height:22px;padding:0 6px;font-size:12px;color:inherit;opacity:.7}.memo-card .btn.ghost.danger:hover{opacity:1}.memo-card-date{font-size:10px;opacity:.65}.memo-card-meta{display:flex;align-items:center;justify-content:space-between;gap:6px}.memo-tag-add-btn{border:0;background:rgba(0,0,0,.08);color:inherit;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;cursor:pointer;white-space:nowrap}.memo-tag-add-btn:hover{background:rgba(0,0,0,.15)}.memo-card-body{font-size:12px;white-space:pre-wrap;overflow:auto;flex:1;line-height:1.55;max-height:160px}.memo-card.auto-size .memo-card-body{flex:0 0 auto;max-height:none;overflow:hidden}.memo-card.manual-size .memo-card-body{min-height:0;max-height:none;overflow:auto;flex:1 1 auto}.memo-card-palette{display:flex;align-items:center;gap:5px;margin-top:2px;flex-wrap:wrap}.memo-card-palette button{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15);padding:0;cursor:pointer}.memo-card-palette button.selected{box-shadow:0 0 0 2px rgba(255,255,255,.8)}.memo-resize-handle{position:absolute;right:3px;bottom:3px;width:22px;height:22px;border:0;background:transparent;color:rgba(44,51,64,.55);cursor:nwse-resize;touch-action:none;padding:0;border-radius:6px;display:grid;place-items:center}.memo-resize-handle:after{content:"⌟";font-size:17px;font-weight:900;line-height:1;transform:translate(1px,1px)}.memo-resize-handle:hover,.memo-resize-handle:focus-visible{background:rgba(255,255,255,.45);color:rgba(44,51,64,.9);outline:none}.memo-list{display:flex;flex-direction:column;gap:10px}.memo-list-item{display:flex;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#fff}.memo-list-title{border:0;background:transparent;font-weight:800;font-size:13px;padding:2px;flex:1;min-width:0}.memo-list-title:focus{outline:1px dashed #cad4cd;border-radius:4px}.memo-list-date{font-size:11px;color:var(--muted);white-space:nowrap}.memo-list-body{font-size:12px;color:#5b6470;margin-top:4px;white-space:pre-wrap;width:100%;border:0;background:transparent;resize:none;line-height:1.55;padding:0}.memo-list-body:focus{outline:1px dashed #cad4cd;border-radius:4px}.tag-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:rgba(0,0,0,.08);font-size:10px;font-weight:700;white-space:nowrap;border:0;cursor:pointer}.tag-chip.on{background:var(--brand);color:#fff}.tag-chip button{border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0;cursor:pointer;opacity:.7}.tag-chip button:hover{opacity:1}.tag-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.tag-add-row{display:flex;gap:5px;margin-top:6px}.tag-add-row input{flex:1;min-width:0;min-height:28px;padding:4px 8px;font-size:11px}.tag-add-row button{min-height:28px;padding:3px 9px;font-size:11px}.memo-card .tag-row{margin-top:2px}.memo-card .tag-chip{background:rgba(255,255,255,.4);color:inherit}.memo-card .tag-chip button{color:inherit}.memo-card.touch-dragging{z-index:60;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 10px 26px rgba(30,50,40,.3)}.memo-zoom-toolbar{display:flex;align-items:center;gap:6px;margin-bottom:10px;justify-content:flex-end;flex-wrap:wrap}.memo-tag-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px}.tb-zoom-value{min-width:42px;text-align:center;font-size:12px;font-weight:800;color:var(--muted)}
       .modal-backdrop{position:fixed;inset:0;background:rgba(44,51,64,.35);z-index:200;display:grid;place-items:center;padding:16px}.modal{width:min(480px,100%);background:#fff;border-radius:20px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px;border-bottom:1px solid var(--line)}.modal-head h3{margin:0;font-size:17px}.modal-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 20px 18px}.share-invite-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.member-list{display:flex;flex-direction:column;gap:8px}.member-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:#f8faf8}.member-row strong{display:block;font-size:13px}.member-row span{display:block;margin-top:2px}.form-error{color:#c0392b;font-size:12px;font-weight:700;background:#fdecea;border:1px solid #f5c6c0;border-radius:10px;padding:8px 10px}
       .color-palette{display:flex;gap:10px;flex-wrap:wrap}.color-palette button{width:28px;height:28px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer}.color-palette button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px currentColor}
       .breadcrumb{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:12px}.breadcrumb button{border:0;background:transparent;color:var(--brand);font-weight:700;padding:0}
@@ -101,7 +101,16 @@
       const INVENTORY_COLORS = ["#e85d5d", "#f5a623", "#f0c674", "#8bc78b", "#4caf50"];
       const MEMO_CANVAS_W = 1400;
       const MEMO_CANVAS_H = 900;
+      const MEMO_CARD_W = 210;
+      const MEMO_CARD_H = 160;
+      const MEMO_CARD_MIN_W = 180;
+      const MEMO_CARD_MIN_H = 150;
       const DEFAULT_PROJECT_ID = "project-default";
+
+      const nextMemoPosition = (count) => ({
+        x: 24 + (count % 4) * (MEMO_CARD_W + 18),
+        y: 24 + Math.floor(count / 4) * (MEMO_CARD_H + 30),
+      });
 
       const uid = () => `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -307,11 +316,22 @@
           };
         }),
         memoScratch: { content: p.memoScratch?.content || "", updatedAt: p.memoScratch?.updatedAt || null },
-        memoSnapshots: (p.memoSnapshots || []).map((m, i) => ({
-          id: m.id || uid(), title: m.title || "제목 없는 메모", body: m.body || "",
-          color: m.color || COLORS[3], savedAt: m.savedAt || Date.now(),
-          x: m.x ?? 24 + (i % 4) * 228, y: m.y ?? 24 + Math.floor(i / 4) * 190,
-        })),
+        memoSnapshots: (p.memoSnapshots || []).map((m, i) => {
+          const pos = nextMemoPosition(i);
+          const hasManualSize = Number.isFinite(m.width) && Number.isFinite(m.height);
+          return {
+            id: m.id || uid(),
+            title: m.title || "제목 없는 메모",
+            body: m.body || "",
+            color: m.color || COLORS[3],
+            tags: Array.isArray(m.tags) ? m.tags.filter(Boolean) : [],
+            savedAt: m.savedAt || Date.now(),
+            x: m.x ?? pos.x,
+            y: m.y ?? pos.y,
+            width: hasManualSize ? clamp(m.width, MEMO_CARD_MIN_W, MEMO_CANVAS_W) : null,
+            height: hasManualSize ? clamp(m.height, MEMO_CARD_MIN_H, MEMO_CANVAS_H) : null,
+          };
+        }),
       });
       const sortProjectsByOrder = (projects, projectOrder) => {
         const ordered = [...projects];
@@ -380,16 +400,30 @@
       function Button({ children, className = "", ...props }) {
         return <button className={`btn ${className}`} {...props}>{children}</button>;
       }
-      function AutoGrowTextarea({ value, onChange, ...props }) {
+      function AutoGrowTextarea({ autoGrow = true, value, onChange, ...props }) {
         const ref = useRef(null);
-        const resize = () => {
-          const element = ref.current;
+        const fitContent = (element) => {
           if (!element) return;
-          element.style.height = "auto";
-          element.style.height = `${element.scrollHeight}px`;
+          element.style.height = "0px";
+          const borderHeight = element.offsetHeight - element.clientHeight;
+          element.style.height = `${element.scrollHeight + borderHeight}px`;
         };
-        useEffect(resize, [value]);
-        return <textarea ref={ref} value={value} onChange={event => { onChange?.(event); requestAnimationFrame(resize); }} {...props} />;
+        useEffect(() => {
+          if (autoGrow) fitContent(ref.current);
+          else if (ref.current) ref.current.style.height = "";
+        }, [autoGrow, value]);
+        return (
+          <textarea
+            {...props}
+            ref={ref}
+            rows={1}
+            value={value}
+            onChange={event => {
+              onChange?.(event);
+              if (autoGrow) requestAnimationFrame(() => fitContent(event.currentTarget));
+            }}
+          />
+        );
       }
       function Card({ title, action, children, className = "" }) {
         return (
@@ -1791,9 +1825,10 @@
         const saveSnapshot = ({ title, color, clearAfter }) => {
           updateProject(setStore, project.id, p => {
             const list = p.memoSnapshots || [];
+            const pos = nextMemoPosition(list.length);
             return {
               ...p,
-              memoSnapshots: [...list, { id: uid(), title, body: value, color, savedAt: Date.now(), x: 24 + (list.length % 4) * 228, y: 24 + Math.floor(list.length / 4) * 190 }],
+              memoSnapshots: [...list, { id: uid(), title, body: value, color, tags: [], savedAt: Date.now(), x: pos.x, y: pos.y, width: null, height: null }],
               memoScratch: clearAfter ? { content: "", updatedAt: Date.now() } : p.memoScratch,
             };
           });
@@ -1804,44 +1839,323 @@
         return (
           <Card title="메모장" action={<Button className="primary" onClick={() => value.trim() ? setShowSnap(true) : toast("저장할 내용이 없습니다")}>📌 스냅샷</Button>}>
             <div className="card-pad stack">
-              <textarea className="field textarea scratch-textarea" value={value} onChange={onChange} placeholder="자유롭게 메모하세요." />
-              <div className="scratch-meta"><span>{value.length}자</span><span>{scratch.updatedAt ? fmtDateTime(scratch.updatedAt) : ""}</span></div>
+              <textarea className="field textarea scratch-textarea" value={value} onChange={onChange} placeholder="떠오르는 생각을 자유롭게 적어보세요. 프로젝트가 바뀌어도 계속 유지됩니다." />
+              <div className="scratch-meta"><span>{value.length}자 · {value.split("\n").length}줄</span><span>{scratch.updatedAt ? `마지막 저장 ${fmtDateTime(scratch.updatedAt)}` : "아직 저장 전"}</span></div>
             </div>
             {showSnap && <SnapshotModal defaultTitle={value.split("\n")[0]?.slice(0, 24)} onClose={() => setShowSnap(false)} onSave={saveSnapshot} />}
           </Card>
         );
       }
 
+      function TagChips({ tags, onRemove }) {
+        if (!tags.length) return null;
+        return (
+          <div className="tag-row">
+            {tags.map(t => (
+              <span className="tag-chip" key={t}>
+                #{t}
+                {onRemove && <button type="button" onClick={() => onRemove(t)} aria-label={`태그 ${t} 삭제`}>×</button>}
+              </span>
+            ))}
+          </div>
+        );
+      }
+
+      function MemoListTagAdd({ memo, onAdd }) {
+        const [open, setOpen] = useState(false);
+        const [value, setValue] = useState("");
+        const composingRef = useRef(false);
+        const submit = () => {
+          if (composingRef.current) return;
+          const t = value.trim();
+          if (!t || (memo.tags || []).includes(t)) { setValue(""); return; }
+          onAdd(t);
+          setValue("");
+        };
+        if (!open) return <button type="button" className="memo-tag-add-btn" onClick={() => setOpen(true)}>🏷 태그추가</button>;
+        return (
+          <div className="tag-add-row" style={{ maxWidth: 220 }}>
+            <input className="field" value={value} onChange={e => setValue(e.target.value)} onCompositionStart={() => (composingRef.current = true)} onCompositionEnd={() => (composingRef.current = false)} onKeyDown={e => { if (e.key === "Enter" && !composingRef.current && !isImeComposing(e)) { e.preventDefault(); submit(); } }} placeholder="태그 입력 후 Enter" autoFocus />
+            <Button onClick={submit}>추가</Button>
+          </div>
+        );
+      }
+
+      function MemoCard({ memo, onChange, onRemove, onBringFront, zIndex, scale }) {
+        const cardRef = useRef(null);
+        const dragRef = useRef(null);
+        const touchRef = useRef(null);
+        const longPressTimerRef = useRef(null);
+        const resizeCleanupRef = useRef(null);
+        const [touchDragging, setTouchDragging] = useState(false);
+        const [resizeSize, setResizeSize] = useState(null);
+        const [showTagAdd, setShowTagAdd] = useState(false);
+        const [tagValue, setTagValue] = useState("");
+        const composingRef = useRef(false);
+        const tags = memo.tags || [];
+        const hasSavedSize = Number.isFinite(memo.width) && Number.isFinite(memo.height);
+        const hasManualSize = hasSavedSize || Boolean(resizeSize);
+        const cardWidth = resizeSize?.width ?? (hasSavedSize ? memo.width : MEMO_CARD_W);
+        const cardHeight = resizeSize?.height ?? (hasSavedSize ? memo.height : undefined);
+
+        const onMouseDown = (e) => {
+          if (e.target.closest(".memo-card-title") || e.target.closest(".memo-card-skip")) return;
+          onBringFront();
+          dragRef.current = {
+            startX: e.clientX, startY: e.clientY, origX: memo.x, origY: memo.y,
+            width: cardRef.current?.offsetWidth || cardWidth,
+            height: cardRef.current?.offsetHeight || cardHeight || MEMO_CARD_H,
+          };
+          const onMove = (ev) => {
+            const d = dragRef.current;
+            if (!d) return;
+            const dx = (ev.clientX - d.startX) / scale;
+            const dy = (ev.clientY - d.startY) / scale;
+            onChange({
+              x: clamp(d.origX + dx, 0, Math.max(0, MEMO_CANVAS_W - d.width)),
+              y: clamp(d.origY + dy, 0, Math.max(0, MEMO_CANVAS_H - d.height)),
+            });
+          };
+          const onUp = () => {
+            dragRef.current = null;
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+          };
+          window.addEventListener("mousemove", onMove);
+          window.addEventListener("mouseup", onUp);
+        };
+
+        const clearLongPress = () => {
+          if (longPressTimerRef.current) { window.clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
+        };
+
+        const onTouchStart = (e) => {
+          if (e.target.closest(".memo-card-title") || e.target.closest(".memo-card-skip")) return;
+          if (e.touches.length !== 1) return;
+          e.stopPropagation();
+          const touch = e.touches[0];
+          touchRef.current = {
+            id: touch.identifier, startX: touch.clientX, startY: touch.clientY,
+            origX: memo.x, origY: memo.y,
+            width: cardRef.current?.offsetWidth || cardWidth,
+            height: cardRef.current?.offsetHeight || cardHeight || MEMO_CARD_H,
+            active: false,
+          };
+          clearLongPress();
+          longPressTimerRef.current = window.setTimeout(() => {
+            longPressTimerRef.current = null;
+            if (!touchRef.current) return;
+            touchRef.current.active = true;
+            onBringFront();
+            setTouchDragging(true);
+            navigator.vibrate?.(20);
+          }, 400);
+        };
+
+        useEffect(() => {
+          const findTouch = (touches, id) => Array.from(touches).find(t => t.identifier === id);
+          const onTouchMove = (e) => {
+            const g = touchRef.current;
+            if (!g) return;
+            const touch = findTouch(e.touches, g.id);
+            if (!touch) return;
+            const dx = touch.clientX - g.startX;
+            const dy = touch.clientY - g.startY;
+            if (!g.active) {
+              if (Math.hypot(dx, dy) > 10) { clearLongPress(); touchRef.current = null; }
+              return;
+            }
+            if (e.cancelable) e.preventDefault();
+            onChange({
+              x: clamp(g.origX + dx / scale, 0, Math.max(0, MEMO_CANVAS_W - g.width)),
+              y: clamp(g.origY + dy / scale, 0, Math.max(0, MEMO_CANVAS_H - g.height)),
+            });
+          };
+          const onTouchEnd = (e) => {
+            const g = touchRef.current;
+            if (!g) return;
+            if (!findTouch(e.touches, g.id)) { clearLongPress(); touchRef.current = null; setTouchDragging(false); }
+          };
+          document.addEventListener("touchmove", onTouchMove, { passive: false });
+          document.addEventListener("touchend", onTouchEnd);
+          document.addEventListener("touchcancel", onTouchEnd);
+          return () => {
+            document.removeEventListener("touchmove", onTouchMove);
+            document.removeEventListener("touchend", onTouchEnd);
+            document.removeEventListener("touchcancel", onTouchEnd);
+            clearLongPress();
+          };
+        }, [scale]);
+
+        useEffect(() => () => resizeCleanupRef.current?.(), []);
+
+        const onResizePointerDown = (e) => {
+          if (e.button !== undefined && e.button !== 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onBringFront();
+          resizeCleanupRef.current?.();
+          const startWidth = cardRef.current?.offsetWidth || cardWidth;
+          const startHeight = cardRef.current?.offsetHeight || cardHeight || MEMO_CARD_H;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let latest = { width: startWidth, height: startHeight };
+          let moved = false;
+          const maxWidth = Math.max(MEMO_CARD_MIN_W, MEMO_CANVAS_W - memo.x);
+          const maxHeight = Math.max(MEMO_CARD_MIN_H, MEMO_CANVAS_H - memo.y);
+          const onMove = (event) => {
+            const deltaX = (event.clientX - startX) / scale;
+            const deltaY = (event.clientY - startY) / scale;
+            if (!moved && Math.hypot(deltaX, deltaY) < 2) return;
+            moved = true;
+            latest = {
+              width: Math.round(clamp(startWidth + deltaX, MEMO_CARD_MIN_W, maxWidth)),
+              height: Math.round(clamp(startHeight + deltaY, MEMO_CARD_MIN_H, maxHeight)),
+            };
+            setResizeSize(latest);
+          };
+          const cleanup = () => {
+            document.removeEventListener("pointermove", onMove);
+            document.removeEventListener("pointerup", onEnd);
+            document.removeEventListener("pointercancel", onCancel);
+            resizeCleanupRef.current = null;
+          };
+          const onEnd = () => { cleanup(); setResizeSize(null); if (moved) onChange(latest); };
+          const onCancel = () => { cleanup(); setResizeSize(null); };
+          resizeCleanupRef.current = cleanup;
+          document.addEventListener("pointermove", onMove);
+          document.addEventListener("pointerup", onEnd);
+          document.addEventListener("pointercancel", onCancel);
+        };
+
+        const addTag = () => {
+          if (composingRef.current) return;
+          const t = tagValue.trim();
+          if (!t || tags.includes(t)) { setTagValue(""); return; }
+          onChange({ tags: [...tags, t] });
+          setTagValue("");
+        };
+        const removeTag = (t) => onChange({ tags: tags.filter(x => x !== t) });
+
+        return (
+          <div
+            ref={cardRef}
+            className={`memo-card ${hasManualSize ? "manual-size" : "auto-size"} ${touchDragging ? "touch-dragging" : ""}`}
+            style={{ left: memo.x, top: memo.y, width: cardWidth, ...(cardHeight ? { height: cardHeight } : {}), background: memo.color, zIndex }}
+            onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
+          >
+            <div className="memo-card-head">
+              <button type="button" className="memo-card-drag-handle" aria-label="메모 이동" title="길게 눌러 메모 이동" onContextMenu={e => e.preventDefault()}>⠿</button>
+              <input className="memo-card-title" value={memo.title} onChange={e => onChange({ title: e.target.value })} />
+              <button type="button" className="btn ghost danger memo-card-skip" onClick={onRemove} aria-label="메모 삭제">×</button>
+            </div>
+            <div className="memo-card-meta memo-card-skip">
+              <span className="memo-card-date">{fmtDateTime(memo.savedAt)}</span>
+              <button type="button" className="memo-tag-add-btn" onClick={() => setShowTagAdd(v => !v)} aria-label="태그 추가">🏷 태그추가</button>
+            </div>
+            <div className="memo-card-skip"><TagChips tags={tags} onRemove={removeTag} /></div>
+            {showTagAdd && (
+              <div className="tag-add-row memo-card-skip">
+                <input className="field" value={tagValue} onChange={e => setTagValue(e.target.value)} onCompositionStart={() => (composingRef.current = true)} onCompositionEnd={() => (composingRef.current = false)} onKeyDown={e => { if (e.key === "Enter" && !composingRef.current && !isImeComposing(e)) { e.preventDefault(); addTag(); } }} placeholder="태그 입력 후 Enter" autoFocus />
+                <Button onClick={addTag}>추가</Button>
+              </div>
+            )}
+            <AutoGrowTextarea autoGrow={!hasManualSize} className="memo-card-body memo-card-body-input memo-card-skip" value={memo.body} onChange={e => onChange({ body: e.target.value })} placeholder="메모 내용을 수정하세요" aria-label={`${memo.title} 내용 수정`} />
+            <div className="memo-card-palette memo-card-skip">
+              {COLORS.map(c => (
+                <button key={c} type="button" className={c === memo.color ? "selected" : ""} style={{ background: c }} onClick={() => onChange({ color: c })} aria-label={`색상 ${c}`} />
+              ))}
+            </div>
+            <button type="button" className="memo-resize-handle memo-card-skip" onPointerDown={onResizePointerDown} aria-label="메모 크기 조절" title="드래그하여 메모 크기 조절" />
+          </div>
+        );
+      }
+
       function MemoView({ project, setStore, toast }) {
         const [mode, setMode] = useState("board");
         const [query, setQuery] = useState("");
+        const [colorFilter, setColorFilter] = useState(null);
+        const [tagFilter, setTagFilter] = useState(null);
+        const [boardScale, setBoardScale] = useState(1);
+        const boardRef = useRef(null);
+        const boardGestureRef = useRef(null);
         const memos = project.memoSnapshots || [];
+        const allTags = Array.from(new Set(memos.flatMap(m => m.tags || []))).sort();
         const q = query.trim().toLowerCase();
-        const filtered = memos.filter(m => !q || `${m.title} ${m.body}`.toLowerCase().includes(q));
+        const filtered = memos.filter(m =>
+          (!colorFilter || m.color === colorFilter) &&
+          (!tagFilter || (m.tags || []).includes(tagFilter)) &&
+          (!q || `${m.title} ${m.body} ${(m.tags || []).join(" ")}`.toLowerCase().includes(q))
+        );
         const patchMemo = (id, patch) => updateProject(setStore, project.id, p => ({
-          ...p, memoSnapshots: p.memoSnapshots.map(m => m.id === id ? { ...m, ...patch } : m),
+          ...p, memoSnapshots: (p.memoSnapshots || []).map(m => m.id === id ? { ...m, ...patch } : m),
         }));
-        const startMemoDrag = (event, memo) => {
-          event.preventDefault();
-          const pointerId = event.pointerId;
-          const start = { x: event.clientX, y: event.clientY, ox: memo.x, oy: memo.y };
-          const move = ev => {
-            if (ev.pointerId !== pointerId) return;
-            patchMemo(memo.id, { x: clamp(start.ox + ev.clientX - start.x, 0, MEMO_CANVAS_W - 200), y: clamp(start.oy + ev.clientY - start.y, 0, MEMO_CANVAS_H - 160) });
-          };
-          const up = ev => {
-            if (ev.pointerId !== pointerId) return;
-            window.removeEventListener("pointermove", move);
-            window.removeEventListener("pointerup", up);
-            window.removeEventListener("pointercancel", up);
-          };
-          window.addEventListener("pointermove", move);
-          window.addEventListener("pointerup", up);
-          window.addEventListener("pointercancel", up);
+        const removeMemo = (id) => {
+          if (!confirm("이 메모를 삭제할까요?")) return;
+          updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: (p.memoSnapshots || []).filter(m => m.id !== id) }));
+          toast("메모를 삭제했습니다");
         };
+        const bringFront = (id) => updateProject(setStore, project.id, p => {
+          const list = p.memoSnapshots || [];
+          const idx = list.findIndex(m => m.id === id);
+          if (idx < 0 || idx === list.length - 1) return p;
+          const next = [...list];
+          const [item] = next.splice(idx, 1);
+          next.push(item);
+          return { ...p, memoSnapshots: next };
+        });
+        const onBoardTouchStart = (e) => {
+          if (e.touches.length === 2) {
+            const [a, b] = e.touches;
+            boardGestureRef.current = { type: "pinch", dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), scale: boardScale };
+          } else if (e.touches.length === 1 && !e.target.closest(".memo-card")) {
+            const touch = e.touches[0];
+            const el = boardRef.current;
+            boardGestureRef.current = { type: "pan", startX: touch.clientX, startY: touch.clientY, scrollLeft: el?.scrollLeft || 0, scrollTop: el?.scrollTop || 0 };
+          }
+        };
+        const onBoardTouchMove = (e) => {
+          const g = boardGestureRef.current;
+          if (!g) return;
+          if (g.type === "pinch" && e.touches.length === 2) {
+            if (e.cancelable) e.preventDefault();
+            const [a, b] = e.touches;
+            const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+            setBoardScale(clamp(g.scale * (dist / g.dist), 0.4, 2.5));
+          } else if (g.type === "pan" && e.touches.length === 1) {
+            const el = boardRef.current;
+            if (!el) return;
+            if (e.cancelable) e.preventDefault();
+            const touch = e.touches[0];
+            el.scrollLeft = g.scrollLeft - (touch.clientX - g.startX);
+            el.scrollTop = g.scrollTop - (touch.clientY - g.startY);
+          }
+        };
+        const onBoardTouchEnd = (e) => {
+          if (e.touches.length === 0) boardGestureRef.current = null;
+          else if (e.touches.length === 1 && boardGestureRef.current?.type === "pinch") boardGestureRef.current = null;
+        };
+        useEffect(() => {
+          const el = boardRef.current;
+          if (!el) return;
+          const onWheel = (e) => {
+            if (!e.ctrlKey) return;
+            e.preventDefault();
+            setBoardScale(s => clamp(s - e.deltaY * 0.01, 0.4, 2.5));
+          };
+          el.addEventListener("wheel", onWheel, { passive: false });
+          return () => el.removeEventListener("wheel", onWheel);
+        }, [mode]);
         return (
           <div className="stack">
-            <div className="hero"><div><div className="eyebrow">MEMO</div><h1 className="page-title">실험 메모</h1></div></div>
+            <div className="hero">
+              <div>
+                <div className="eyebrow">MEMO</div>
+                <h1 className="page-title">실험 메모</h1>
+                <div className="page-sub">메모장에 자유롭게 적고, 남기고 싶은 순간은 포스트잇으로 저장하세요.</div>
+              </div>
+            </div>
             <ScratchPad project={project} setStore={setStore} toast={toast} />
             <Card title={`저장된 메모 ${memos.length}개`} action={
               <div className="view-toggle">
@@ -1850,28 +2164,68 @@
               </div>
             }>
               <div className="card-pad">
-                <input className="field" value={query} onChange={e => setQuery(e.target.value)} placeholder="검색" style={{ marginBottom: 12 }} />
-                {filtered.length === 0 ? <div className="memo-empty empty">저장된 메모가 없습니다.</div> : mode === "board" ? (
-                  <div className="memo-board"><div className="memo-canvas">
-                    {filtered.map(m => (
-                      <div key={m.id} className="memo-card" style={{ left: m.x, top: m.y, background: m.color }}>
-                        <div className="memo-drag-handle" onPointerDown={e => startMemoDrag(e, m)} aria-label="메모 이동">⋮⋮ 이동</div>
-                        <input className="memo-card-title" value={m.title} onChange={e => patchMemo(m.id, { title: e.target.value })} />
-                        <textarea className="memo-card-body" value={m.body} onChange={e => patchMemo(m.id, { body: e.target.value })} />
-                        <Button className="ghost danger" onClick={() => { if (confirm("삭제?")) updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: p.memoSnapshots.filter(x => x.id !== m.id) })); }}>삭제</Button>
+                <div className="memo-toolbar">
+                  <input className="field grow" style={{ flex: 1, minWidth: 160 }} value={query} onChange={e => setQuery(e.target.value)} placeholder="제목·내용·태그 검색" />
+                  <div className="memo-color-filters">
+                    <button type="button" className={`memo-filter-chip all ${!colorFilter ? "on" : ""}`} onClick={() => setColorFilter(null)} aria-label="전체 색상" title="전체" />
+                    {COLORS.map(c => (
+                      <button key={c} type="button" className={`memo-filter-chip ${colorFilter === c ? "on" : ""}`} style={{ background: c, color: c }} onClick={() => setColorFilter(colorFilter === c ? null : c)} aria-label={`색상 ${c}`} />
+                    ))}
+                  </div>
+                </div>
+                {allTags.length > 0 && (
+                  <div className="memo-tag-filters">
+                    <span className="tiny muted">태그</span>
+                    <button type="button" className={`tag-chip ${!tagFilter ? "on" : ""}`} onClick={() => setTagFilter(null)}>전체</button>
+                    {allTags.map(t => (
+                      <button key={t} type="button" className={`tag-chip ${tagFilter === t ? "on" : ""}`} onClick={() => setTagFilter(tagFilter === t ? null : t)}>#{t}</button>
+                    ))}
+                  </div>
+                )}
+                {filtered.length === 0 ? (
+                  <div className="memo-empty">{memos.length === 0 ? "아직 저장된 메모가 없습니다. 메모장에서 스냅샷을 남겨보세요." : "조건에 맞는 메모가 없습니다."}</div>
+                ) : mode === "board" ? (
+                  <>
+                    <div className="memo-zoom-toolbar">
+                      <Button className="ghost" onClick={() => setBoardScale(v => clamp(v - 0.15, 0.4, 2.5))}>−</Button>
+                      <span className="tb-zoom-value">{Math.round(boardScale * 100)}%</span>
+                      <Button className="ghost" onClick={() => setBoardScale(v => clamp(v + 0.15, 0.4, 2.5))}>+</Button>
+                      <Button className="soft" onClick={() => setBoardScale(1)}>맞춤</Button>
+                      <span className="tiny muted">모바일: 두 손가락 확대·축소 · ⠿ 길게 눌러 이동 · 우하단 드래그로 크기 조절</span>
+                    </div>
+                    <div className="memo-board" ref={boardRef} onTouchStart={onBoardTouchStart} onTouchMove={onBoardTouchMove} onTouchEnd={onBoardTouchEnd}>
+                      <div style={{ width: MEMO_CANVAS_W * boardScale, height: MEMO_CANVAS_H * boardScale }}>
+                        <div className="memo-canvas" style={{ transform: `scale(${boardScale})`, transformOrigin: "0 0" }}>
+                          {filtered.map((m, i) => (
+                            <MemoCard key={m.id} memo={m} zIndex={i + 1} scale={boardScale} onChange={patch => patchMemo(m.id, patch)} onRemove={() => removeMemo(m.id)} onBringFront={() => bringFront(m.id)} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="memo-list">
+                    {[...filtered].sort((a, b) => b.savedAt - a.savedAt).map(m => (
+                      <div className="memo-list-item" key={m.id}>
+                        <span style={{ background: m.color, width: 12, height: 12, borderRadius: "50%", flex: "0 0 auto", marginTop: 4 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div className="row between" style={{ gap: 8 }}>
+                            <input className="memo-list-title" value={m.title} onChange={e => patchMemo(m.id, { title: e.target.value })} />
+                            <span className="memo-list-date">{fmtDateTime(m.savedAt)}</span>
+                          </div>
+                          <AutoGrowTextarea className="memo-list-body" value={m.body} onChange={e => patchMemo(m.id, { body: e.target.value })} placeholder="메모 내용을 수정하세요" aria-label={`${m.title} 내용 수정`} />
+                          <TagChips tags={m.tags || []} onRemove={t => patchMemo(m.id, { tags: (m.tags || []).filter(x => x !== t) })} />
+                          <MemoListTagAdd memo={m} onAdd={t => patchMemo(m.id, { tags: [...(m.tags || []), t] })} />
+                          <div className="memo-card-palette" style={{ marginTop: 8 }}>
+                            {COLORS.map(c => (
+                              <button key={c} type="button" className={c === m.color ? "selected" : ""} style={{ background: c }} onClick={() => patchMemo(m.id, { color: c })} aria-label={`색상 ${c}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <button className="btn ghost danger" onClick={() => removeMemo(m.id)}>×</button>
                       </div>
                     ))}
-                  </div></div>
-                ) : (
-                  <div className="memo-list">{filtered.map(m => (
-                    <div key={m.id} className="memo-list-item" style={{ borderLeft: `4px solid ${m.color}` }}>
-                      <div className="grow">
-                        <input className="memo-card-title" value={m.title} onChange={e => patchMemo(m.id, { title: e.target.value })} />
-                        <textarea className="field textarea" style={{ minHeight: 60, marginTop: 6 }} value={m.body} onChange={e => patchMemo(m.id, { body: e.target.value })} />
-                      </div>
-                      <Button className="ghost danger" onClick={() => updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: p.memoSnapshots.filter(x => x.id !== m.id) }))}>×</Button>
-                    </div>
-                  ))}</div>
+                  </div>
                 )}
               </div>
             </Card>
@@ -2349,7 +2703,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.0</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
