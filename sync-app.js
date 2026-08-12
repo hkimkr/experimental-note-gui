@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.1.0 — enhanced memo board (tags, colors, pinch zoom).
+// Experimental Note GUI v4.1.3 — prevent stale local snapshots from overwriting cloud on reconnect.
 (() => {
   "use strict";
 
@@ -808,15 +808,11 @@
       };
     }
 
-    const merged = mergeRecordMaps(
-      remote,
-      cached,
-      localRecords,
-      legacyOutbox,
-      pendingRecords,
-      trustedOutbox
-    );
-    if (!recordsContentScore(merged) && storeContentScore(localStore) === 0) {
+    // Online: cloud is authoritative. Never let a refreshed localStorage /
+    // IndexedDB snapshot (which often gets a newer LOCAL_UPDATED_KEY without
+    // new edits) overwrite newer cloud content. Only intentional outbox
+    // edits and empty-cloud recovery may push local data upward.
+    if (!recordsContentScore(remote) && storeContentScore(localStore) === 0) {
       return {
         records: mergeRecordMaps(remote),
         outbox: new Map(),
@@ -824,16 +820,23 @@
       };
     }
 
+    if (!recordsContentScore(remote) && storeContentScore(localStore) > 0) {
+      const recovered = intentRecordsFromStore(localStore);
+      const merged = mergeRecordMaps(remote, recovered, trustedOutbox);
+      const repairs = repairRecordsAgainstRemote(merged, remote);
+      return {
+        records: mergeRecordMaps(merged, repairs),
+        outbox: mergeRecordMaps(trustedOutbox, repairs),
+        reason: "meaningful-local-recovery",
+      };
+    }
+
+    const merged = mergeRecordMaps(remote, trustedOutbox);
     const repairs = repairRecordsAgainstRemote(merged, remote);
-    const nextOutbox = mergeRecordMaps(trustedOutbox, repairs);
     return {
       records: mergeRecordMaps(merged, repairs),
-      outbox: nextOutbox,
-      reason: repairs.size
-        ? recordsContentScore(remote) > 0
-          ? "content-aware-merge"
-          : "meaningful-local-recovery"
-        : "cloud-authoritative",
+      outbox: mergeRecordMaps(trustedOutbox, repairs),
+      reason: repairs.size ? "content-aware-merge" : "cloud-authoritative",
     };
   }
 
@@ -1970,6 +1973,12 @@
     const reconnectingSameUser = Boolean(
       reconnectingUserId && initializedUserId === reconnectingUserId
     );
+    // Snapshot before we clear sync state. While remote fetch runs, the iframe
+    // may keep posting the same (possibly stale) store into pendingLocalRaw;
+    // we only re-apply it if the fingerprint actually changed during the fetch.
+    const connectStartFingerprint =
+      lastObservedFingerprint ||
+      fingerprintRaw(localStorage.getItem(STORAGE_KEY) || "");
     const generation = ++syncGeneration;
     initializedUserId = "";
     if (reconnectTimer) {
@@ -2103,10 +2112,15 @@
     ]);
     initializedUserId = userId;
     // On first boot, discard the iframe's default snapshot. During a reconnect,
-    // however, keep edits that arrived while the remote fetch was in flight.
+    // keep only edits that truly arrived while the remote fetch was in flight.
+    // Re-applying an unchanged stale browser snapshot would stamp it with a
+    // fresh timestamp and overwrite newer cloud content on upload.
     const reconnectRaw = reconnectingSameUser ? pendingLocalRaw : "";
     pendingLocalRaw = "";
-    if (reconnectRaw) {
+    if (
+      reconnectRaw &&
+      fingerprintRaw(reconnectRaw) !== connectStartFingerprint
+    ) {
       await queueLocalCapture(reconnectRaw).catch(() => undefined);
     }
     applyRecordsToApp(currentRecords);

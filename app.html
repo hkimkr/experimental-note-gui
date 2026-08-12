@@ -14,7 +14,7 @@
       *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}button,input,textarea,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(91,124,250,.25);outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}
       .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.header-inner{max-width:1480px;margin:auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px;min-width:max-content}.brand-mark{width:40px;height:40px;border:1px solid #dbe5df;border-radius:12px;background:#f9faf7;display:block;overflow:hidden;box-shadow:0 3px 10px rgba(24,85,63,.1)}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover}.brand strong{display:block}.brand small{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:4px;padding:4px;background:#f0f2f5;border-radius:13px}.nav button{border:0;background:transparent;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}.nav button.active{background:#fff;color:var(--brand);box-shadow:0 2px 8px rgba(44,51,64,.08)}.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}.save-state{font-size:12px;color:var(--muted);min-width:58px;text-align:right}
       .shell{max-width:1480px;margin:auto;padding:22px}.main{min-width:0}.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:0 2px 12px rgba(37,55,46,.035)}.card-pad{padding:18px}.card-head{padding:15px 18px;border-bottom:1px solid #edf0ed;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.card-head h2,.card-head h3{margin:0;font-size:15px}.eyebrow{color:var(--brand);font-weight:800;font-size:11px;letter-spacing:.09em;text-transform:uppercase}.page-title{margin:3px 0 0;font-family:Georgia,"Noto Serif KR",serif;font-size:28px;line-height:1.25}.page-sub{color:var(--muted);font-size:13px;margin-top:5px}.muted{color:var(--muted)}.tiny{font-size:11px}.small{font-size:13px}.stack{display:flex;flex-direction:column;gap:12px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.grow{flex:1;min-width:0}.btn{min-height:38px;border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:11px;font-size:13px;font-weight:700}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.soft{background:var(--brand2);border-color:transparent;color:var(--brand)}.btn.ghost{background:transparent;border-color:transparent}.btn.danger{color:var(--danger)}.field{width:100%;border:1px solid #d7ded9;background:#fff;border-radius:11px;padding:9px 11px;min-height:40px}.label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#566159}.textarea{min-height:92px;resize:vertical}.empty{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed #ccd5cf;border-radius:13px;background:#fafbf9}
-      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book-wrap.drop-target .book{outline:3px solid rgba(255,255,255,.9);outline-offset:4px}.book{position:relative;min-height:270px;padding:20px 18px 16px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:10px;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:pan-y}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97);touch-action:none}.book-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}.book-head-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78;line-height:1.3}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-body{flex:1;display:flex;align-items:center;min-height:72px;min-width:0}.book-foot{display:flex;flex-direction:column;gap:0;margin-top:auto}.book-foot-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;padding-top:10px;border-top:1px solid rgba(255,255,255,.35)}.book-stats{font-size:12px;opacity:.82;line-height:1.45;flex:1;min-width:0}.book-name{position:static;width:100%;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;line-height:1.35;backdrop-filter:blur(4px);word-break:break-word;overflow-wrap:anywhere}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-order-controls{display:flex;align-items:center;gap:3px;flex-shrink:0}.book-order-button,.book-handle{width:28px;height:28px;border:0;background:rgba(255,255,255,.17);color:#fff;border-radius:8px;padding:0;display:grid;place-items:center;font-size:15px;font-weight:900}.book-order-button:hover,.book-handle:hover{background:rgba(255,255,255,.3)}.book-order-button:disabled{opacity:.3;cursor:not-allowed}.book-handle{cursor:grab;touch-action:none}.book-handle:active{cursor:grabbing}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}.book-share-badge{align-self:flex-start;background:rgba(0,0,0,.32);color:#fff;font-size:10px;font-weight:900;letter-spacing:.03em;padding:4px 9px;border-radius:99px;backdrop-filter:blur(3px);line-height:1.2}.book-share-button{align-self:flex-start;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:800;padding:5px 11px;border-radius:99px}.book-share-button:hover{background:rgba(255,255,255,.28)}.incoming-invites{margin-bottom:20px}.incoming-invite-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 16px;border:1px solid #b9d7c7;border-radius:14px;background:linear-gradient(135deg,#f4fbf7,#fff);box-shadow:0 6px 18px rgba(31,107,79,.06);font-size:13px}.viewer-banner{padding:11px 16px;border-radius:12px;background:#fff7e6;border:1px solid #f0d38a;color:#8a5a00;font-size:13px;font-weight:700;margin-bottom:14px}
+      .library{max-width:1180px;margin:0 auto;padding:28px 22px 64px}.library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:28px}.library-head h1{font-size:38px}.bookshelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:24px;align-items:end}.book-wrap{position:relative;padding-top:12px}.book-wrap.drop-target .book{outline:3px solid rgba(255,255,255,.9);outline-offset:4px}.book{position:relative;min-height:270px;padding:20px 18px 16px;border:0;border-radius:8px 18px 18px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:10px;box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 18px 35px rgba(30,48,39,.18);cursor:pointer;transition:transform .18s,box-shadow .18s;touch-action:pan-y}.book:hover{transform:translateY(-7px);box-shadow:inset 12px 0 0 rgba(0,0,0,.12),inset 15px 0 0 rgba(255,255,255,.1),0 24px 42px rgba(30,48,39,.23)}.book.dragging{opacity:.58;transform:scale(.97);touch-action:none}.book-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}.book-head-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}.book-kicker{font-size:11px;font-weight:900;letter-spacing:.13em;opacity:.78;line-height:1.3}.book-title{font-family:Georgia,"Noto Serif KR",serif;font-size:25px;line-height:1.25;font-weight:800;word-break:keep-all}.book-body{flex:1;display:flex;align-items:center;min-height:72px;min-width:0}.book-foot{display:flex;flex-direction:column;gap:0;margin-top:auto}.book-foot-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;padding-top:10px;border-top:1px solid rgba(255,255,255,.35)}.book-stats{font-size:12px;opacity:.82;line-height:1.45;flex:1;min-width:0}.book-name{position:static;width:100%;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.12);color:#fff;border-radius:9px;padding:8px 10px;font-family:Georgia,"Noto Serif KR",serif;font-size:20px;font-weight:800;line-height:1.35;backdrop-filter:blur(4px);word-break:break-word;overflow-wrap:anywhere}.book-name::placeholder{color:rgba(255,255,255,.65)}.book-order-controls{display:flex;align-items:center;gap:3px;flex-shrink:0}.book-order-button,.book-handle{width:28px;height:28px;border:0;background:rgba(255,255,255,.17);color:#fff;border-radius:8px;padding:0;display:grid;place-items:center;font-size:15px;font-weight:900}.book-order-button:hover,.book-handle:hover{background:rgba(255,255,255,.3)}.book-order-button:disabled{opacity:.3;cursor:not-allowed}.book-handle{cursor:grab;touch-action:none}.book-handle:active{cursor:grabbing}.add-book{min-height:270px;border:2px dashed #b9c8bf;border-radius:18px;background:#f8fbf9;color:var(--brand);display:grid;place-items:center;text-align:center;padding:24px;font-weight:800}.add-book span{display:block;font-size:34px;margin-bottom:8px}.shelf-line{height:14px;background:linear-gradient(#8a6546,#65452e);border-radius:4px;margin-top:20px;box-shadow:0 9px 16px rgba(64,42,25,.2)}.book-share-badge{align-self:flex-start;background:rgba(0,0,0,.32);color:#fff;font-size:10px;font-weight:900;letter-spacing:.03em;padding:4px 9px;border-radius:99px;backdrop-filter:blur(3px);line-height:1.2}.book-share-button,.book-delete-button{align-self:flex-start;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:11px;font-weight:800;padding:5px 11px;border-radius:99px}.book-share-button:hover,.book-delete-button:hover{background:rgba(255,255,255,.28)}.book-delete-button{border-color:rgba(255,180,180,.55);background:rgba(160,40,40,.28)}.book-delete-button:hover{background:rgba(160,40,40,.45)}.book-foot-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}.incoming-invites{margin-bottom:20px}.incoming-invite-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:12px 16px;border:1px solid #b9d7c7;border-radius:14px;background:linear-gradient(135deg,#f4fbf7,#fff);box-shadow:0 6px 18px rgba(31,107,79,.06);font-size:13px}.viewer-banner{padding:11px 16px;border-radius:12px;background:#fff7e6;border:1px solid #f0d38a;color:#8a5a00;font-size:13px;font-weight:700;margin-bottom:14px}
       .project-hub{max-width:1100px;margin:0 auto;padding:10px 0 48px}.hub-hero{padding:34px;background:linear-gradient(135deg,#fff,#eef5f0);border-radius:26px;border:1px solid var(--line);margin-bottom:22px}.hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.hub-tile{min-height:190px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:var(--shadow);transition:transform .16s,border-color .16s}.hub-tile:hover{transform:translateY(-3px);border-color:#a8c8b9}.hub-icon{width:48px;height:48px;border-radius:15px;background:var(--brand2);display:grid;place-items:center;font-size:22px;margin-bottom:22px}.hub-tile strong{font-size:20px;display:block}.hub-tile span{display:block;color:var(--muted);font-size:13px;margin-top:6px}.back-library{border:0;background:transparent;color:var(--brand);font-weight:800;padding:0;margin-bottom:14px}
       .hero{padding:22px;background:linear-gradient(135deg,#fff 0%,#f3f6ff 100%);border:1px solid var(--line);border-radius:20px;display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap}
       .project-list{display:flex;flex-direction:column;gap:10px}.project-block{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}.project-row{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8faf8;cursor:pointer}.project-row:hover,.project-row.active{background:#f2f5ff}.project-row>input:not(.color-select){border:0;background:transparent;width:100%;min-width:0;font-size:13px;font-weight:750}.project-row input.color-select{width:24px;min-width:24px;height:24px;padding:0;border:0;background:transparent}.project-meta{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:#fafbfc}.project-meta textarea{min-height:56px;font-size:12px}
@@ -374,6 +374,37 @@
       const updateProject = (setStore, projectId, fn) => setStore(s => ({
         ...s, projects: s.projects.map(p => p.id === projectId ? fn(p) : p),
       }));
+      const requestDeleteProject = ({ store, setStore, projectId, role, toast }) => {
+        const project = store.projects.find(p => p.id === projectId);
+        if (!project) return;
+        if (role && role !== "owner") {
+          toast?.("공유받은 프로젝트는 여기서 삭제할 수 없습니다. 소유자에게 요청하세요.");
+          return;
+        }
+        if (store.projects.length <= 1) {
+          toast?.("최소 1개의 프로젝트는 남겨두어야 합니다.");
+          return;
+        }
+        const name = project.name || "제목 없는 프로젝트";
+        const counts = [
+          project.experiments?.length ? `실험 ${project.experiments.length}` : null,
+          project.notes?.length ? `노트 ${project.notes.length}` : null,
+          project.memoSnapshots?.length ? `메모 ${project.memoSnapshots.length}` : null,
+          project.inventory?.length ? `재고 ${project.inventory.length}` : null,
+        ].filter(Boolean).join(" · ");
+        if (!window.confirm(`“${name}” 프로젝트를 삭제할까요?${counts ? `\n포함: ${counts}` : ""}\n\n프로토콜·실험 노트·메모·재고가 함께 삭제됩니다.`)) return;
+        if (!window.confirm("정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+        setStore(s => {
+          const projects = withProjectOrder(s.projects.filter(p => p.id !== projectId));
+          return {
+            ...s,
+            projects,
+            projectOrder: projects.map(p => p.id),
+            activeProjectId: s.activeProjectId === projectId ? (projects[0]?.id || s.activeProjectId) : s.activeProjectId,
+          };
+        });
+        toast?.("프로젝트를 삭제했습니다");
+      };
 
       const loadScript = (src) =>
         new Promise((resolve, reject) => {
@@ -2339,6 +2370,7 @@
                   const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]);
                   setStore(s => ({ ...s, projects: [...s.projects, p], activeProjectId: p.id }));
                 }}>+ 프로젝트</Button>
+                <Button className="ghost danger" onClick={() => requestDeleteProject({ store, setStore, projectId: store.activeProjectId, toast: (msg) => window.alert(msg) })}>선택 프로젝트 삭제</Button>
               </div>
             </Card>
           </aside>
@@ -2360,6 +2392,7 @@
               const p = emptyProject("새 프로젝트", COLORS[store.projects.length % COLORS.length]);
               setStore(s => ({ ...s, projects: [...s.projects, p], activeProjectId: p.id }));
             }}>+ 프로젝트</Button>
+            <Button className="ghost danger" onClick={() => requestDeleteProject({ store, setStore, projectId: store.activeProjectId, toast: (msg) => window.alert(msg) })}>선택 프로젝트 삭제</Button>
           </div>
         );
       }
@@ -2488,6 +2521,13 @@
           const ordered = withProjectOrder(projects);
           return { ...s, projects: ordered, projectOrder: ordered.map(p => p.id) };
         });
+        const deleteProject = (id) => requestDeleteProject({
+          store,
+          setStore,
+          projectId: id,
+          role: roleByProject.get(id),
+          toast,
+        });
         const clearDrag = () => { dragRef.current = null; setDragId(null); setDropId(null); };
         const clearHold = () => {
           clearTimeout(holdRef.current.timer);
@@ -2555,7 +2595,10 @@
                   <div className="book-foot">
                     <div className="book-foot-row">
                       <div className="book-stats">실험 {p.experiments.length} · 노트 {p.notes.length} · 재고 {p.inventory.length}</div>
-                      {roleByProject.get(p.id) !== "viewer" && <button type="button" className="book-share-button" onClick={e => { e.stopPropagation(); setShareTargetId(p.id); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 공유 관리`}>공유</button>}
+                      <div className="book-foot-actions">
+                        {roleByProject.get(p.id) !== "viewer" && roleByProject.get(p.id) !== "editor" && <button type="button" className="book-delete-button" onClick={e => { e.stopPropagation(); deleteProject(p.id); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 프로젝트 삭제`}>삭제</button>}
+                        {roleByProject.get(p.id) !== "viewer" && <button type="button" className="book-share-button" onClick={e => { e.stopPropagation(); setShareTargetId(p.id); }} onPointerDown={e => e.stopPropagation()} aria-label={`${p.name} 공유 관리`}>공유</button>}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2731,7 +2774,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1.3</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
