@@ -797,10 +797,7 @@
                 <div className="run-status">
                   {readOnly ? <span className={`status-chip ${run.status}`}>{run.status === "running" ? "진행 중" : run.status === "done" ? "완료" : run.status === "skipped" ? "건너뜀" : "대기"}</span> : [["pending","대기"],["running","진행 중"],["done","완료"],["skipped","건너뜀"]].map(([value,label]) => <button type="button" key={value} className={`${value} ${run.status === value ? "active" : ""}`.trim()} onClick={() => onPatchRun?.({ status: value, completedAt: value === "done" ? Date.now() : null })}>{label}</button>)}
                 </div>
-                <div className="row">
-                  {stepVariationCount > 0 && <span className="variation-count">variation {stepVariationCount}개</span>}
-                  {!readOnly && <Button className="soft" onClick={() => onPatchRun?.({ actual: run.planned.trim() || "프로토콜대로 수행", status: run.status === "pending" ? "running" : run.status })}>계획대로 수행</Button>}
-                </div>
+                {stepVariationCount > 0 && <span className="variation-count">variation {stepVariationCount}개</span>}
               </div>
               <div className="run-fields">
                 <div className={`run-field planned ${run.planned ? "has-content" : ""}`}><label>계획한 variation</label><textarea className="field note-live-edit" value={run.planned || ""} onChange={e => onPatchRun?.({ planned: e.target.value })} placeholder="이 단계에서 바꿀 조건만 적기" /></div>
@@ -2774,7 +2771,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1.3</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1.5</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
