@@ -141,6 +141,25 @@ check("새로 쓴 노트는 새로고침 후에도 살아남는다", () => {
   assert.ok(result.noteIds.includes("note-1"), "기존 노트도 유지되어야 함");
 });
 
+check("기존 노트를 고친 내용은 새로고침 후에도 살아남는다", () => {
+  const edited = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "방금 고친 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    localStore: edited,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "방금 고친 내용");
+  assert.ok(result.outboxCount > 0, "고친 내용이 업로드 대기해야 함");
+});
+
 // --- Rule 2: stale local never overwrites or resurrects --------------------
 
 check("오래된 로컬 스냅샷이 클라우드를 덮어쓰지 않는다", () => {

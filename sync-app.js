@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.2.1 — keep unsynced local edits (new notes) across
+// Experimental Note GUI v4.2.2 — keep unsynced local edits (new notes) across
 // refresh instead of letting a cloud-authoritative reconnect discard them.
 (() => {
   "use strict";
@@ -781,10 +781,10 @@
     return repairs;
   }
 
-  // A refreshed localStorage snapshot is never trustworthy enough to update or
-  // remove a row the cloud already knows about: it may be this tab's stale
-  // copy, or another tab's. It is only used to rescue entities the cloud has
-  // never seen (a note written moments before reload, before upload ran).
+  // localStorage after a refresh is trustworthy only when it differs from the
+  // last store this device applied from the cloud. That difference is this
+  // tab's unsynced work (a new note, or edits to a note that already exists).
+  // Matching fingerprints mean the snapshot is just a copy of cloud state.
   function adoptUnsyncedLocalRecords({
     localRecords,
     remote,
@@ -799,30 +799,40 @@
     if (lastAppliedFingerprint && localFp && localFp === lastAppliedFingerprint) {
       return adopted;
     }
-    // Anything the cloud has a row for — including a tombstone — is decided
-    // elsewhere. Adopting those keys would resurrect items deleted on another
-    // device or in another tab.
-    const decidedKeys = new Set();
-    [remote, cached, outbox].forEach((source) =>
-      source?.forEach((record, key) => {
-        if (record) decidedKeys.add(key);
-      })
-    );
+    const known = (key) =>
+      Boolean(remote?.get(key) || cached?.get(key) || outbox?.get(key));
+    const allowMergeExisting = Boolean(lastAppliedFingerprint && localFp);
 
     let sequence = 0;
     const now = Date.now();
-    localRecords.forEach((local, key) => {
-      if (decidedKeys.has(key)) return;
-      if (local.deleted_at || local.payload == null) return;
-      if (!hasMeaningfulValue(local.payload)) return;
+    const stamp = (record) => {
       sequence += 1;
-      adopted.set(key, {
-        ...clone(local),
+      return {
+        ...clone(record),
         updated_at: new Date(now + sequence).toISOString(),
         client_id: intentClientId,
         local_intent: true,
         deleted_at: null,
-      });
+      };
+    };
+
+    localRecords.forEach((local, key) => {
+      if (local.deleted_at || local.payload == null) return;
+      if (!hasMeaningfulValue(local.payload)) return;
+      const remoteRec = remote?.get(key);
+      const outboxRec = outbox?.get(key);
+      // A tombstone on the cloud or in the outbox stays a deletion. Merging
+      // local content back would resurrect an item deleted elsewhere.
+      if (remoteRec?.deleted_at || outboxRec?.deleted_at) return;
+      if (!known(key)) {
+        adopted.set(key, stamp(local));
+        return;
+      }
+      if (!allowMergeExisting) return;
+      const merged = contentAwareRecord(remoteRec || cached?.get(key), stamp(local));
+      if (!sameRecordContent(merged, remoteRec || cached?.get(key))) {
+        adopted.set(key, merged);
+      }
     });
     return adopted;
   }
@@ -1130,6 +1140,10 @@
   const setStatus = (message) => {
     statusBox.textContent = message;
     if (currentSession) label.textContent = message;
+    frame?.contentWindow?.postMessage(
+      { type: "exp-note-sync-status", message: String(message || "") },
+      window.location.origin
+    );
   };
 
   const appliedStatus = () => {
@@ -1554,11 +1568,6 @@
     ) {
       return false;
     }
-    if (holdForEditing()) {
-      uploadAfterEditing = true;
-      setStatus("입력 완료 후 변경사항 저장");
-      return false;
-    }
     const userId = currentSession.user.id;
     const outbox = await getStoredRecords(OUTBOX_STORE, userId);
     const records = [...outbox.values()];
@@ -1608,10 +1617,6 @@
     ) {
       return false;
     }
-    if (holdForEditing()) {
-      uploadAfterEditing = true;
-      return false;
-    }
     const userId = currentSession.user.id;
     const outbox = await getStoredSharedRecords(SHARED_OUTBOX_STORE, userId);
     const records = [...outbox.values()];
@@ -1655,22 +1660,11 @@
     return results.every(Boolean);
   }
 
-  // Uploading never disturbs what the user sees, so a long editing session
-  // must not keep changes stranded on this device indefinitely. Incoming
-  // merges stay deferred while editing; only the outbound push is released.
-  const EDITING_UPLOAD_HOLD_MS = 20000;
-  const holdForEditing = () =>
-    appEditing &&
-    (!appEditingSince || Date.now() - appEditingSince < EDITING_UPLOAD_HOLD_MS);
-
+  // Incoming merges stay deferred while typing so the caret is not yanked.
+  // Uploading does not change the screen, so it must not wait: a refresh
+  // during a long editing session used to lose every keystroke still queued.
   const scheduleUpload = (delay = 350) => {
     if (uploadTimer) window.clearTimeout(uploadTimer);
-    if (holdForEditing()) {
-      uploadTimer = null;
-      uploadAfterEditing = true;
-      setStatus("입력 완료 후 변경사항 저장");
-      return;
-    }
     uploadTimer = window.setTimeout(() => {
       uploadTimer = null;
       uploadAll();
@@ -2620,7 +2614,18 @@
           noteIds: [...resolved.records.values()]
             .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
             .map((record) => String(record.payload?.item?.id || "")),
+          notePurposes: Object.fromEntries(
+            [...resolved.records.values()]
+              .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
+              .map((record) => [
+                String(record.payload?.item?.id || ""),
+                String(record.payload?.item?.purpose || ""),
+              ])
+          ),
         };
+      },
+      fingerprintStore(store) {
+        return fingerprintValue(store);
       },
       // Which rows a given app snapshot would remove, given what this device
       // currently holds. Used to verify that stale or partial snapshots can
