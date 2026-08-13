@@ -407,6 +407,21 @@
         toast?.("프로젝트를 삭제했습니다");
       };
 
+      const requestDeleteNote = ({ setStore, projectId, note, toast, onDeleted }) => {
+        if (!note) return;
+        const name = note.title || "제목 없는 노트";
+        const purpose = String(note.purpose || "").trim();
+        const detail = purpose ? `\n목적: ${purpose.slice(0, 80)}${purpose.length > 80 ? "…" : ""}` : "";
+        if (!window.confirm(`“${name}” 실험 노트를 삭제할까요?${detail}\n\n실행 기록·결과·조건 라벨이 함께 삭제됩니다.`)) return;
+        if (!window.confirm("정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+        updateProject(setStore, projectId, p => ({
+          ...p,
+          notes: (p.notes || []).filter(n => n.id !== note.id),
+        }));
+        onDeleted?.();
+        toast?.("실험 노트를 삭제했습니다");
+      };
+
       const loadScript = (src) =>
         new Promise((resolve, reject) => {
           if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -1679,6 +1694,13 @@
                   <button type="button" className={noteViewMode === "view" ? "active" : ""} aria-pressed={noteViewMode === "view"} onClick={() => setNoteViewMode("view")}><span className="mode-icon">▤</span>보기</button>
                   <button type="button" className={noteViewMode === "edit" ? "active" : ""} aria-pressed={noteViewMode === "edit"} onClick={() => setNoteViewMode("edit")}><span className="mode-icon">✎</span>편집</button>
                 </div>}
+                {!projectReadOnly && <Button className="ghost danger" onClick={() => requestDeleteNote({
+                  setStore,
+                  projectId: project.id,
+                  note,
+                  toast,
+                  onDeleted: () => window.__noteBack?.(),
+                })}>노트 삭제</Button>}
               </div>
             </div>
             <div className={`note-editor-layout ${executionGroups.length ? "" : "no-overview"}`}>
@@ -1840,7 +1862,18 @@
               }}>+ 노트 추가</Button>}
             </div>
             {project.notes.length ? project.notes.map(n => (
-              <Card key={n.id} title={n.title || "제목 없음"} action={<Button className="soft" onClick={() => setSelNote(n.id)}>열기</Button>}>
+              <Card key={n.id} title={n.title || "제목 없음"} action={
+                <div className="row">
+                  {!readOnly && <Button className="ghost danger" onClick={() => requestDeleteNote({
+                    setStore,
+                    projectId: project.id,
+                    note: n,
+                    toast,
+                    onDeleted: () => { if (selNote === n.id) setSelNote(null); },
+                  })}>삭제</Button>}
+                  <Button className="soft" onClick={() => setSelNote(n.id)}>열기</Button>
+                </div>
+              }>
                 <div className="card-pad small muted">{fmtDate(n.date)} · {n.purpose?.slice(0, 60) || "목적 미입력"}</div>
               </Card>
             )) : <div className="empty">실험 노트를 추가해주세요.</div>}
@@ -2785,7 +2818,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.2.0</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.2.1</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>

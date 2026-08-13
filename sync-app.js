@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.2.0 — keep unsynced local edits (new notes) across
+// Experimental Note GUI v4.2.1 — keep unsynced local edits (new notes) across
 // refresh instead of letting a cloud-authoritative reconnect discard them.
 (() => {
   "use strict";
