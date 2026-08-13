@@ -1,10 +1,12 @@
-// Experimental Note GUI v4.1.3 — prevent stale local snapshots from overwriting cloud on reconnect.
+// Experimental Note GUI v4.1.6 — keep unsynced local edits (new notes) across
+// refresh instead of letting a cloud-authoritative reconnect discard them.
 (() => {
   "use strict";
 
   const STORAGE_KEY = "hamin-exp-note-v1";
   const LOCAL_UPDATED_KEY = "hamin-exp-note-v1-local-updated-at";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
+  const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
   const TAB_CHANNEL_NAME = "exp-note-sync-tabs-v1";
   const DB_NAME = "exp-note-sync-v1";
@@ -73,6 +75,8 @@
   let lastObservedFingerprint = "";
   let pendingAppStore = null;
   let pendingAppFingerprint = "";
+  let prePushFingerprint = "";
+  let deferredAckRaw = "";
   let appEditing = false;
   let uploadAfterEditing = false;
   let reconnectAfterEditing = false;
@@ -771,6 +775,45 @@
     return repairs;
   }
 
+  function adoptUnsyncedLocalRecords({
+    localRecords,
+    remote,
+    localStore,
+    lastAppliedFingerprint = "",
+  }) {
+    const adopted = new Map();
+    if (!localRecords?.size) return adopted;
+    const localFp = localStore ? fingerprintValue(localStore) : "";
+    if (lastAppliedFingerprint && localFp && localFp === lastAppliedFingerprint) {
+      return adopted;
+    }
+    let sequence = 0;
+    const now = Date.now();
+    const stamp = (record, deletedAt = null) => {
+      sequence += 1;
+      return {
+        ...clone(record),
+        updated_at: new Date(now + sequence).toISOString(),
+        client_id: deletedAt ? deleteIntentClientId : intentClientId,
+        local_intent: true,
+        deleted_at: deletedAt,
+      };
+    };
+
+    localRecords.forEach((local, key) => {
+      const remoteRec = remote?.get(key);
+      const remoteActive = Boolean(remoteRec) && !remoteRec.deleted_at && remoteRec.payload != null;
+      // Browser snapshots may look "newer" after a refresh even when they are
+      // stale. Never overwrite an existing cloud row from localStorage; only
+      // keep local entities the cloud does not have yet (e.g. a note written
+      // just before reload, before the outbox upload finished).
+      if (remoteActive) return;
+      if (local.deleted_at || local.payload == null) return;
+      adopted.set(key, stamp(local));
+    });
+    return adopted;
+  }
+
   function resolveInitialRecordState({
     remote,
     cached,
@@ -779,6 +822,7 @@
     pendingRecords,
     remoteFetched,
     localStore,
+    lastAppliedFingerprint = "",
   }) {
     const trustedOutbox = new Map();
     const legacyOutbox = new Map();
@@ -808,10 +852,9 @@
       };
     }
 
-    // Online: cloud is authoritative. Never let a refreshed localStorage /
-    // IndexedDB snapshot (which often gets a newer LOCAL_UPDATED_KEY without
-    // new edits) overwrite newer cloud content. Only intentional outbox
-    // edits and empty-cloud recovery may push local data upward.
+    // Online: cloud is authoritative for rows it already has. A refreshed
+    // localStorage snapshot must not overwrite those rows. Local-only
+    // entities (a note written just before reload) are adopted and uploaded.
     if (!recordsContentScore(remote) && storeContentScore(localStore) === 0) {
       return {
         records: mergeRecordMaps(remote),
@@ -831,12 +874,22 @@
       };
     }
 
-    const merged = mergeRecordMaps(remote, trustedOutbox);
+    const unsyncedLocal = adoptUnsyncedLocalRecords({
+      localRecords: mergeRecordMaps(localRecords, pendingRecords),
+      remote,
+      localStore,
+      lastAppliedFingerprint,
+    });
+    const merged = mergeRecordMaps(remote, trustedOutbox, unsyncedLocal);
     const repairs = repairRecordsAgainstRemote(merged, remote);
+    const nextOutbox = mergeRecordMaps(trustedOutbox, unsyncedLocal, repairs);
+    let reason = "cloud-authoritative";
+    if (unsyncedLocal.size) reason = "unsynced-local-adopt";
+    else if (repairs.size) reason = "content-aware-merge";
     return {
       records: mergeRecordMaps(merged, repairs),
-      outbox: mergeRecordMaps(trustedOutbox, repairs),
-      reason: repairs.size ? "content-aware-merge" : "cloud-authoritative",
+      outbox: nextOutbox,
+      reason,
     };
   }
 
@@ -1099,9 +1152,20 @@
     }
     const store = recordsToStore(records, fallback);
     const raw = JSON.stringify(store);
-    lastObservedFingerprint = fingerprintValue(store);
+    const appliedFp = fingerprintValue(store);
+    // Remember what was observed right before this push, so that if the
+    // iframe echoes its pre-push (stale) state while it hasn't yet applied
+    // what we're about to send, we can recognize and discard that echo
+    // instead of capturing it as a fresh edit (see queueLocalCapture).
+    prePushFingerprint = lastObservedFingerprint;
+    lastObservedFingerprint = appliedFp;
     localStorage.setItem(STORAGE_KEY, raw);
     localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+    localStorage.setItem(LAST_APPLIED_KEY, appliedFp);
+    localStorage.setItem(
+      LEGACY_PENDING_KEY,
+      JSON.stringify({ raw, updatedAt: Date.now() })
+    );
     postStoreToApp(store);
     if (message) setStatus(message);
   }
@@ -1692,6 +1756,15 @@
       pendingLocalRaw = raw;
       return localCaptureChain;
     }
+    if (pendingAppStore) {
+      // We just pushed a cloud-authoritative store to the iframe and are
+      // still waiting for it to confirm ("exp-note-cloud-store-applied").
+      // Until then, any snapshot the iframe posts may still reflect its
+      // pre-push state rather than a genuine new edit, so defer capture
+      // and re-evaluate once the ack arrives (see the ack handler).
+      deferredAckRaw = raw;
+      return localCaptureChain;
+    }
     // While typing, keep only the newest complete snapshot. Processing every
     // intermediate keystroke serially made large notebooks several seconds late.
     latestQueuedLocalRaw = raw;
@@ -2041,6 +2114,20 @@
     } catch {
       localStore = null;
     }
+    if (pendingLocalRaw) {
+      try {
+        const pendingStore = JSON.parse(pendingLocalRaw);
+        if (
+          pendingStore &&
+          (!localStore ||
+            storeContentScore(pendingStore) >= storeContentScore(localStore))
+        ) {
+          localStore = pendingStore;
+        }
+      } catch {
+        // Keep the localStorage snapshot if the in-flight iframe payload is invalid.
+      }
+    }
     const localUpdatedAt =
       Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || Date.now();
     const localRecords = localStore
@@ -2050,6 +2137,7 @@
           "legacy-local"
         )
       : new Map();
+    const lastAppliedFingerprint = localStorage.getItem(LAST_APPLIED_KEY) || "";
     const legacyPending = readLegacyPending();
     let pendingRecords = new Map();
     if (legacyPending?.raw) {
@@ -2074,10 +2162,13 @@
       pendingRecords,
       remoteFetched,
       localStore,
+      lastAppliedFingerprint,
     });
     currentRecords = initialState.records;
     if (initialState.reason === "meaningful-local-recovery") {
       setStatus("이 기기의 작업본으로 빈 클라우드 복구 중…");
+    } else if (initialState.reason === "unsynced-local-adopt") {
+      setStatus("이 기기에만 있던 변경사항을 클라우드에 반영 중…");
     } else if (initialState.reason === "content-aware-merge") {
       setStatus("내용이 있는 항목 우선 병합 중…");
     }
@@ -2092,7 +2183,6 @@
         replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
         replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
       ]);
-      localStorage.removeItem(LEGACY_PENDING_KEY);
     } else if (initialState.reason === "offline-recovery") {
       await Promise.all([
         replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
@@ -2163,6 +2253,10 @@
       uploadAfterEditing = false;
       reconnectAfterEditing = false;
       pendingLocalRaw = "";
+      deferredAckRaw = "";
+      prePushFingerprint = "";
+      pendingAppStore = null;
+      pendingAppFingerprint = "";
       if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
       incomingProtocolTimer = null;
       if (incomingInviteTimer) window.clearInterval(incomingInviteTimer);
@@ -2301,6 +2395,19 @@
       pendingAppStore = null;
       pendingAppFingerprint = "";
       appliedStatus();
+      if (deferredAckRaw) {
+        const raw = deferredAckRaw;
+        deferredAckRaw = "";
+        const rawFingerprint = fingerprintRaw(raw);
+        // Only treat the deferred snapshot as a real edit if it differs from
+        // the state we knew about right before the push. If we had no known
+        // baseline (e.g. the very first sync of this session), be
+        // conservative and drop it rather than risk re-uploading stale
+        // content that raced with our cloud-authoritative push.
+        if (prePushFingerprint && rawFingerprint !== prePushFingerprint) {
+          queueLocalCapture(raw);
+        }
+      }
     }
   });
 
@@ -2341,6 +2448,24 @@
   window.addEventListener("pageshow", syncAfterResume);
   window.addEventListener("focus", syncAfterResume);
 
+  const flushLocalBeforeUnload = () => {
+    const raw = localStorage.getItem(STORAGE_KEY) || pendingLocalRaw || latestQueuedLocalRaw;
+    if (!raw) return;
+    if (!initializedUserId) {
+      pendingLocalRaw = raw;
+      return;
+    }
+    queueLocalCapture(raw);
+    if (currentSession?.user && navigator.onLine !== false) {
+      appEditing = false;
+      scheduleUpload(0);
+    }
+  };
+  window.addEventListener("pagehide", flushLocalBeforeUnload);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushLocalBeforeUnload();
+  });
+
   if (new URLSearchParams(window.location.search).has("sync-test")) {
     window.__expNoteSyncDiagnostics = Object.freeze({
       simulate({
@@ -2350,6 +2475,7 @@
         outboxIntent = false,
         localStore = null,
         remoteFetched = true,
+        lastAppliedFingerprint = "",
       } = {}) {
         const recordsFor = (store, time, source) =>
           store
@@ -2373,12 +2499,16 @@
           pendingRecords: new Map(),
           remoteFetched,
           localStore,
+          lastAppliedFingerprint,
         });
         return {
           reason: resolved.reason,
           contentScore: recordsContentScore(resolved.records),
           outboxCount: resolved.outbox.size,
           intentOnly: [...resolved.outbox.values()].every(isIntentRecord),
+          noteIds: [...resolved.records.values()]
+            .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
+            .map((record) => String(record.payload?.item?.id || "")),
         };
       },
       mergeStores(olderStore, newerStore) {
@@ -2522,6 +2652,13 @@
       client_id: deleteIntentClientId,
       local_intent: true,
     };
+    const localNewNoteStore = clone(mergeBaseStore);
+    localNewNoteStore.projects[0].notes.push({
+      id: "note-new",
+      title: "새로 작성한 노트",
+      purpose: "새로고침 전에 작성",
+      resultSummary: "",
+    });
     document.documentElement.dataset.syncDiagnostics = JSON.stringify({
       tabWriter: { clientId, tabId },
       richCloudVsBlankLegacyPhone:
@@ -2584,6 +2721,20 @@
             .deleted_at
         ),
       },
+      unsyncedLocalNoteKept: window.__expNoteSyncDiagnostics.simulate({
+        remoteStore: mergeBaseStore,
+        localStore: localNewNoteStore,
+        lastAppliedFingerprint: fingerprintValue(mergeBaseStore),
+      }),
+      staleLocalDoesNotDropCloud: window.__expNoteSyncDiagnostics.simulate({
+        remoteStore: mergeBaseStore,
+        localStore: blankTestStore,
+        lastAppliedFingerprint: fingerprintValue(blankTestStore),
+      }),
+      unsyncedAdditionWithoutBaseline: window.__expNoteSyncDiagnostics.simulate({
+        remoteStore: mergeBaseStore,
+        localStore: localNewNoteStore,
+      }),
     });
   }
 

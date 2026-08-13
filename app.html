@@ -2743,18 +2743,31 @@
           try {
             raw = JSON.stringify(store);
             if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
-          } catch { setSaveState("저장 실패"); toast("저장 공간 확인"); return; }
-          setSaveState("저장 중");
-          const id = setTimeout(() => {
+            localStorage.setItem(STORAGE_KEY, raw);
+            localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+            localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
+            setSaveState("저장됨");
+          } catch { setSaveState("저장 실패"); toast("저장 공간 확인"); }
+        }, [store]);
+
+        useEffect(() => {
+          const flush = () => {
             try {
+              const raw = JSON.stringify(storeRef.current);
               localStorage.setItem(STORAGE_KEY, raw);
               localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
               localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
-              setSaveState("저장됨");
-            } catch { setSaveState("저장 실패"); }
-          }, 250);
-          return () => clearTimeout(id);
-        }, [store]);
+              if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
+            } catch {}
+          };
+          const onHidden = () => { if (document.visibilityState === "hidden") flush(); };
+          window.addEventListener("pagehide", flush);
+          document.addEventListener("visibilitychange", onHidden);
+          return () => {
+            window.removeEventListener("pagehide", flush);
+            document.removeEventListener("visibilitychange", onHidden);
+          };
+        }, []);
 
         const onRespondInvite = (projectId, accept) => {
           respondProjectInvite(projectId, accept)
@@ -2771,7 +2784,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1.5</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.1.6</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
