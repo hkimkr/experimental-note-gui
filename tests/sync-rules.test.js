@@ -182,16 +182,36 @@ check("다른 기기에서 지운 노트가 로컬 스냅샷으로 되살아나�
       project({ notes: [note("note-1", "지워진 노트"), note("note-9", "남아있는 노트")] }),
     ],
   };
-  // The cloud row still exists for note-1 (as a tombstone in practice); the
-  // simulate helper models "cloud knows this key" via the remote store.
   const result = api.simulate({
     remoteStore: cloudStore,
     localStore: localWithDeleted,
+    lastAppliedFingerprint: api.fingerprintStore(localWithDeleted),
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
   });
   assert.ok(
-    result.noteIds.includes("note-1"),
-    "클라우드가 아는 키는 클라우드 판단을 따른다"
+    !result.noteIds.includes("note-1") && !result.visibleNoteIds.includes("note-1"),
+    "클라우드 삭제는 로컬 스냅샷으로 되살아나면 안 됨"
   );
+});
+
+check("이 기기에서 지운 노트는 새로고침 후 다시 나타나면 안 된다", () => {
+  const afterDelete = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    localStore: afterDelete,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
+  });
+  assert.ok(!result.visibleNoteIds.includes("note-1"));
+  assert.ok(!result.noteIds.includes("note-1"));
 });
 
 check("빈 로컬 상태가 클라우드 내용을 지우지 않는다", () => {

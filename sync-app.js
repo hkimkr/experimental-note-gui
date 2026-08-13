@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.2.2 — keep unsynced local edits (new notes) across
+// Experimental Note GUI v4.2.3 — keep unsynced local edits (new notes) across
 // refresh instead of letting a cloud-authoritative reconnect discard them.
 (() => {
   "use strict";
@@ -297,6 +297,11 @@
     ) {
       return clone(preferred);
     }
+    // A newer tombstone wins even if the client_id prefix was stripped by the
+    // server. Resurrecting from the older payload is what made a deleted note
+    // reappear after refresh, while the phone (which only patched that one
+    // row) kept the deletion.
+    if (preferred.deleted_at) return clone(preferred);
     if (!preferredActive && olderActive && hasMeaningfulValue(older.payload)) {
       return clone(older);
     }
@@ -604,10 +609,13 @@
       const project = {
         ...payload,
         id: payload.id || record.entity_id,
-        experiments: Array.isArray(payload.experiments) ? payload.experiments : [],
-        notes: Array.isArray(payload.notes) ? payload.notes : [],
-        inventory: Array.isArray(payload.inventory) ? payload.inventory : [],
-        memoSnapshots: Array.isArray(payload.memoSnapshots) ? payload.memoSnapshots : [],
+        // Child rows are the source of truth. Nested arrays on the project
+        // payload are leftovers from older writes; using them on a full
+        // refetch would resurrect items whose tombstone has payload: null.
+        experiments: [],
+        notes: [],
+        inventory: [],
+        memoSnapshots: [],
         memoScratch: payload.memoScratch || { content: "", updatedAt: null },
       };
       ["experiments", "notes", "inventory", "memoSnapshots"].forEach(
@@ -629,7 +637,10 @@
         .sort(compareRecords)
         .forEach((record) => {
           const payload = record.payload || {};
-          const project = projects.get(payload.parent_id);
+          const parentId = String(
+            payload.parent_id || record.entity_id.split(":")[0] || ""
+          );
+          const project = projects.get(parentId);
           if (!project) return;
           const itemId = String(
             payload.item?.id || record.entity_id.split(":").slice(1).join(":")
@@ -640,7 +651,7 @@
           if (!record.deleted_at && payload.item) {
             project[field].push(clone(payload.item));
             childOrder.set(
-              `${payload.parent_id}|${field}|${itemId}`,
+              `${parentId}|${field}|${itemId}`,
               Number.isFinite(payload.item_order)
                 ? payload.item_order
                 : project[field].length - 1
@@ -654,13 +665,16 @@
       .sort(compareRecords)
       .forEach((record) => {
         const payload = record.payload || {};
-        const project = projects.get(payload.parent_id);
+        const parts = String(record.entity_id || "").split(":");
+        const parentId = String(payload.parent_id || parts[0] || "");
+        const experimentId = String(payload.experiment_id || parts[1] || "");
+        const project = projects.get(parentId);
         const experiment = project?.experiments?.find(
-          (item) => String(item?.id || "") === String(payload.experiment_id || "")
+          (item) => String(item?.id || "") === experimentId
         );
         if (!experiment) return;
         const protocolId = String(
-          payload.item?.id || record.entity_id.split(":").slice(2).join(":")
+          payload.item?.id || parts.slice(2).join(":")
         );
         experiment.protocols = (experiment.protocols || []).filter(
           (item) => String(item?.id || "") !== protocolId
@@ -823,7 +837,10 @@
       const outboxRec = outbox?.get(key);
       // A tombstone on the cloud or in the outbox stays a deletion. Merging
       // local content back would resurrect an item deleted elsewhere.
-      if (remoteRec?.deleted_at || outboxRec?.deleted_at) return;
+      const cachedRec = cached?.get(key);
+      if (remoteRec?.deleted_at || outboxRec?.deleted_at || cachedRec?.deleted_at) {
+        return;
+      }
       if (!known(key)) {
         adopted.set(key, stamp(local));
         return;
@@ -1793,7 +1810,15 @@
       sequence += 1;
       changed.push({
         ...existing,
-        payload: null,
+        // Keep parent/id so a later full rebuild can still drop this row even
+        // if the cloud round-trip stores payload as null.
+        payload: existing.payload
+          ? {
+              parent_id: existing.payload.parent_id || recordProjectId(existing, key),
+              item_order: existing.payload.item_order,
+              item: { id: existing.payload.item?.id || key.split("::")[1]?.split(":").slice(1).join(":") },
+            }
+          : { parent_id: recordProjectId(existing, key) },
         updated_at: new Date(now + sequence).toISOString(),
         deleted_at: new Date(now + sequence).toISOString(),
         client_id: deleteIntentClientId,
@@ -2581,12 +2606,23 @@
         localStore = null,
         remoteFetched = true,
         lastAppliedFingerprint = "",
+        remoteTombstoneKeys = [],
       } = {}) {
         const recordsFor = (store, time, source) =>
           store
             ? storeToRecords(store, new Date(time).toISOString(), source)
             : new Map();
         const remote = recordsFor(remoteStore, 1000, "cloud-device");
+        remoteTombstoneKeys.forEach((key) => {
+          const record = remote.get(key);
+          if (!record) return;
+          remote.set(key, {
+            ...record,
+            payload: null,
+            deleted_at: new Date(6000).toISOString(),
+            client_id: "cloud-device",
+          });
+        });
         const cached = recordsFor(cachedStore, 2000, "cached-device");
         const outbox = outboxIntent
           ? intentRecordsFromStore(outboxStore, 4000)
@@ -2606,6 +2642,7 @@
           localStore,
           lastAppliedFingerprint,
         });
+        const visible = recordsToStore(resolved.records, localStore || {});
         return {
           reason: resolved.reason,
           contentScore: recordsContentScore(resolved.records),
@@ -2614,6 +2651,9 @@
           noteIds: [...resolved.records.values()]
             .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
             .map((record) => String(record.payload?.item?.id || "")),
+          visibleNoteIds: (visible.projects || []).flatMap((project) =>
+            (project.notes || []).map((item) => String(item?.id || ""))
+          ),
           notePurposes: Object.fromEntries(
             [...resolved.records.values()]
               .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
