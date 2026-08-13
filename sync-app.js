@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.1.6 — keep unsynced local edits (new notes) across
+// Experimental Note GUI v4.2.0 — keep unsynced local edits (new notes) across
 // refresh instead of letting a cloud-authoritative reconnect discard them.
 (() => {
   "use strict";
@@ -73,19 +73,25 @@
   let syncGeneration = 0;
   let currentRecords = new Map();
   let lastObservedFingerprint = "";
+  let appliedFingerprint = "";
   let pendingAppStore = null;
   let pendingAppFingerprint = "";
-  let prePushFingerprint = "";
   let deferredAckRaw = "";
   let appEditing = false;
+  let appEditingSince = 0;
   let uploadAfterEditing = false;
   let reconnectAfterEditing = false;
   let deferredRemoteRecords = new Map();
   let deferredRemoteMessage = "";
   let localCaptureChain = Promise.resolve();
   let latestQueuedLocalRaw = "";
+  let latestQueuedAdditiveOnly = false;
   let localCaptureRunning = false;
   let pendingLocalRaw = "";
+  let ackGateTimer = null;
+  let captureGateUntilApply = false;
+  let lastSnapshotKeys = null;
+  const approvedProjectDeletions = new Set();
   let incomingProtocolTimer = null;
   let incomingProtocolLoading = false;
   let resumeSyncTimer = null;
@@ -775,9 +781,15 @@
     return repairs;
   }
 
+  // A refreshed localStorage snapshot is never trustworthy enough to update or
+  // remove a row the cloud already knows about: it may be this tab's stale
+  // copy, or another tab's. It is only used to rescue entities the cloud has
+  // never seen (a note written moments before reload, before upload ran).
   function adoptUnsyncedLocalRecords({
     localRecords,
     remote,
+    cached,
+    outbox,
     localStore,
     lastAppliedFingerprint = "",
   }) {
@@ -787,29 +799,30 @@
     if (lastAppliedFingerprint && localFp && localFp === lastAppliedFingerprint) {
       return adopted;
     }
+    // Anything the cloud has a row for — including a tombstone — is decided
+    // elsewhere. Adopting those keys would resurrect items deleted on another
+    // device or in another tab.
+    const decidedKeys = new Set();
+    [remote, cached, outbox].forEach((source) =>
+      source?.forEach((record, key) => {
+        if (record) decidedKeys.add(key);
+      })
+    );
+
     let sequence = 0;
     const now = Date.now();
-    const stamp = (record, deletedAt = null) => {
-      sequence += 1;
-      return {
-        ...clone(record),
-        updated_at: new Date(now + sequence).toISOString(),
-        client_id: deletedAt ? deleteIntentClientId : intentClientId,
-        local_intent: true,
-        deleted_at: deletedAt,
-      };
-    };
-
     localRecords.forEach((local, key) => {
-      const remoteRec = remote?.get(key);
-      const remoteActive = Boolean(remoteRec) && !remoteRec.deleted_at && remoteRec.payload != null;
-      // Browser snapshots may look "newer" after a refresh even when they are
-      // stale. Never overwrite an existing cloud row from localStorage; only
-      // keep local entities the cloud does not have yet (e.g. a note written
-      // just before reload, before the outbox upload finished).
-      if (remoteActive) return;
+      if (decidedKeys.has(key)) return;
       if (local.deleted_at || local.payload == null) return;
-      adopted.set(key, stamp(local));
+      if (!hasMeaningfulValue(local.payload)) return;
+      sequence += 1;
+      adopted.set(key, {
+        ...clone(local),
+        updated_at: new Date(now + sequence).toISOString(),
+        client_id: intentClientId,
+        local_intent: true,
+        deleted_at: null,
+      });
     });
     return adopted;
   }
@@ -877,6 +890,8 @@
     const unsyncedLocal = adoptUnsyncedLocalRecords({
       localRecords: mergeRecordMaps(localRecords, pendingRecords),
       remote,
+      cached,
+      outbox,
       localStore,
       lastAppliedFingerprint,
     });
@@ -1153,19 +1168,18 @@
     const store = recordsToStore(records, fallback);
     const raw = JSON.stringify(store);
     const appliedFp = fingerprintValue(store);
-    // Remember what was observed right before this push, so that if the
-    // iframe echoes its pre-push (stale) state while it hasn't yet applied
-    // what we're about to send, we can recognize and discard that echo
-    // instead of capturing it as a fresh edit (see queueLocalCapture).
-    prePushFingerprint = lastObservedFingerprint;
     lastObservedFingerprint = appliedFp;
+    appliedFingerprint = appliedFp;
+    // The app is about to display exactly these rows, so they become the
+    // baseline that a later snapshot is compared against.
+    lastSnapshotKeys = new Set(
+      [...records.keys()].filter((key) => !records.get(key)?.deleted_at)
+    );
     localStorage.setItem(STORAGE_KEY, raw);
     localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+    // Records what this device last received from the cloud, so a later
+    // reconnect can tell an untouched snapshot from one with new local work.
     localStorage.setItem(LAST_APPLIED_KEY, appliedFp);
-    localStorage.setItem(
-      LEGACY_PENDING_KEY,
-      JSON.stringify({ raw, updatedAt: Date.now() })
-    );
     postStoreToApp(store);
     if (message) setStatus(message);
   }
@@ -1540,7 +1554,7 @@
     ) {
       return false;
     }
-    if (appEditing) {
+    if (holdForEditing()) {
       uploadAfterEditing = true;
       setStatus("입력 완료 후 변경사항 저장");
       return false;
@@ -1594,7 +1608,7 @@
     ) {
       return false;
     }
-    if (appEditing) {
+    if (holdForEditing()) {
       uploadAfterEditing = true;
       return false;
     }
@@ -1641,9 +1655,17 @@
     return results.every(Boolean);
   }
 
+  // Uploading never disturbs what the user sees, so a long editing session
+  // must not keep changes stranded on this device indefinitely. Incoming
+  // merges stay deferred while editing; only the outbound push is released.
+  const EDITING_UPLOAD_HOLD_MS = 20000;
+  const holdForEditing = () =>
+    appEditing &&
+    (!appEditingSince || Date.now() - appEditingSince < EDITING_UPLOAD_HOLD_MS);
+
   const scheduleUpload = (delay = 350) => {
     if (uploadTimer) window.clearTimeout(uploadTimer);
-    if (appEditing) {
+    if (holdForEditing()) {
       uploadTimer = null;
       uploadAfterEditing = true;
       setStatus("입력 완료 후 변경사항 저장");
@@ -1686,7 +1708,40 @@
     scheduleUpload();
   }
 
-  async function captureLocalChanges(raw) {
+  const recordProjectId = (record, key) => {
+    if (record?.entity_type === "root") return null;
+    if (record?.entity_type === "project") return String(record.entity_id);
+    const parent = record?.payload?.parent_id;
+    if (parent) return String(parent);
+    const entityId = String(record?.entity_id || key.split("::")[1] || "");
+    return entityId.split(":")[0] || null;
+  };
+
+  // Rule: an item is deleted only when the snapshot proves it. "Missing from
+  // the snapshot" alone is not proof — a stale, partial, or other-tab snapshot
+  // looks exactly the same and would wipe good data everywhere.
+  function canDeleteFromSnapshot(existing, key, desired, additiveOnly, seenKeys) {
+    if (additiveOnly) return false;
+    // Deletion must be an observed transition: the app showed this row before
+    // and no longer does. A row this tab never displayed (for example one that
+    // just arrived from another tab or device) is not ours to remove.
+    if (!seenKeys || !seenKeys.has(key)) return false;
+    // The root row exists in every valid snapshot, so it is never removable.
+    if (existing.entity_type === "root") return false;
+    const projectId = recordProjectId(existing, key);
+    if (!projectId) return false;
+    if (existing.entity_type === "project") {
+      // Whole projects disappear only when the user confirmed it in the app.
+      return approvedProjectDeletions.has(projectId);
+    }
+    // A child (note, experiment, protocol, memo, inventory) may be deleted
+    // only when its project is still present in the snapshot, so we know the
+    // snapshot actually covers that project and simply no longer lists it.
+    if (desired.has(`project::${projectId}`)) return true;
+    return approvedProjectDeletions.has(projectId);
+  }
+
+  async function captureLocalChanges(raw, additiveOnly = false) {
     if (!initializedUserId || !raw) return;
     let store;
     try {
@@ -1694,6 +1749,7 @@
     } catch {
       return;
     }
+    if (!Array.isArray(store?.projects)) return;
     const desired = storeToRecords(store);
     const changed = [];
     const now = Date.now();
@@ -1701,45 +1757,59 @@
 
     desired.forEach((candidate, key) => {
       const existing = currentRecords.get(key);
-      if (
-        !existing ||
-        existing.deleted_at ||
-        fingerprintValue(existing.payload) !==
-          fingerprintValue(candidate.payload)
-      ) {
-        sequence += 1;
-        const localCandidate = {
-          ...candidate,
-          updated_at: new Date(now + sequence).toISOString(),
-          client_id: intentClientId,
-          deleted_at: null,
-          local_intent: true,
-        };
-        const mergedCandidate = contentAwareRecord(
-          existing,
-          localCandidate
-        );
-        if (!sameRecordContent(existing, mergedCandidate)) {
-          changed.push(mergedCandidate);
-        }
+      const unchanged =
+        existing &&
+        !existing.deleted_at &&
+        fingerprintValue(existing.payload) === fingerprintValue(candidate.payload);
+      if (unchanged) return;
+      // An uncertain snapshot must not bring a deleted item back to life.
+      if (additiveOnly && existing?.deleted_at) return;
+      sequence += 1;
+      const localCandidate = {
+        ...candidate,
+        updated_at: new Date(now + sequence).toISOString(),
+        client_id: intentClientId,
+        deleted_at: null,
+        local_intent: true,
+      };
+      const existingActive =
+        existing && !existing.deleted_at && existing.payload != null;
+      const mergedCandidate = additiveOnly
+        ? {
+            ...localCandidate,
+            // Union merge: keeps this snapshot's new content while retaining
+            // list entries only the cloud copy has.
+            payload: existingActive
+              ? mergeContentValues(existing.payload, localCandidate.payload, false)
+              : localCandidate.payload,
+          }
+        : contentAwareRecord(existing, localCandidate);
+      if (!sameRecordContent(existing, mergedCandidate)) {
+        changed.push(mergedCandidate);
       }
     });
 
-    const blankSnapshot =
-      storeContentScore(store) === 0 && recordsContentScore(currentRecords) > 0;
     currentRecords.forEach((existing, key) => {
-      if (!existing.deleted_at && !desired.has(key) && !blankSnapshot) {
-        sequence += 1;
-        changed.push({
-          ...existing,
-          payload: null,
-          updated_at: new Date(now + sequence).toISOString(),
-          deleted_at: new Date(now + sequence).toISOString(),
-          client_id: deleteIntentClientId,
-          local_intent: true,
-        });
+      if (existing.deleted_at || desired.has(key)) return;
+      if (
+        !canDeleteFromSnapshot(existing, key, desired, additiveOnly, lastSnapshotKeys)
+      ) {
+        return;
       }
+      sequence += 1;
+      changed.push({
+        ...existing,
+        payload: null,
+        updated_at: new Date(now + sequence).toISOString(),
+        deleted_at: new Date(now + sequence).toISOString(),
+        client_id: deleteIntentClientId,
+        local_intent: true,
+      });
     });
+
+    // Remember what the app was showing, so the next snapshot can be read as a
+    // transition rather than as an absolute statement of what should exist.
+    lastSnapshotKeys = new Set(desired.keys());
 
     const writable = changed.filter((record) => {
       if (!record.__projectId) return true;
@@ -1749,33 +1819,50 @@
     if (writable.length) await queueRecords(writable);
   }
 
-  const queueLocalCapture = (raw) => {
+  const queueLocalCapture = (raw, additiveOnly = false) => {
     if (!raw) return localCaptureChain;
-    lastObservedFingerprint = fingerprintRaw(raw);
     if (!initializedUserId) {
+      lastObservedFingerprint = fingerprintRaw(raw);
       pendingLocalRaw = raw;
       return localCaptureChain;
     }
-    if (pendingAppStore) {
-      // We just pushed a cloud-authoritative store to the iframe and are
-      // still waiting for it to confirm ("exp-note-cloud-store-applied").
-      // Until then, any snapshot the iframe posts may still reflect its
-      // pre-push state rather than a genuine new edit, so defer capture
-      // and re-evaluate once the ack arrives (see the ack handler).
+    // A snapshot held at the gate below is not yet accepted as "what we have
+    // seen", so lastObservedFingerprint is only updated once we take it.
+    if (pendingAppStore || captureGateUntilApply) {
+      // We just pushed a cloud-authoritative store to the iframe and are still
+      // waiting for its "applied" confirmation. Snapshots arriving now may be
+      // pre-push echoes, so hold the newest one instead of trusting it. It is
+      // never discarded: the ack handler or the timeout below will process it,
+      // because losing a real edit here is what makes fresh work vanish.
       deferredAckRaw = raw;
+      if (!ackGateTimer) {
+        ackGateTimer = window.setTimeout(() => {
+          ackGateTimer = null;
+          // The iframe never confirmed (it reloaded, or the message was lost).
+          // Reopen the gate so edits keep flowing instead of piling up unsent.
+          pendingAppStore = null;
+          pendingAppFingerprint = "";
+          captureGateUntilApply = false;
+          releaseDeferredAck();
+        }, 1500);
+      }
       return localCaptureChain;
     }
+    lastObservedFingerprint = fingerprintRaw(raw);
     // While typing, keep only the newest complete snapshot. Processing every
     // intermediate keystroke serially made large notebooks several seconds late.
     latestQueuedLocalRaw = raw;
+    latestQueuedAdditiveOnly = latestQueuedAdditiveOnly || additiveOnly;
     if (localCaptureRunning) return localCaptureChain;
     localCaptureRunning = true;
     localCaptureChain = (async () => {
       while (latestQueuedLocalRaw) {
         const newestRaw = latestQueuedLocalRaw;
+        const newestAdditive = latestQueuedAdditiveOnly;
         latestQueuedLocalRaw = "";
+        latestQueuedAdditiveOnly = false;
         try {
-          await captureLocalChanges(newestRaw);
+          await captureLocalChanges(newestRaw, newestAdditive);
         } catch {
           // IndexedDB/network retries are handled by the outbox and reconnect path.
         }
@@ -1785,6 +1872,22 @@
     });
     return localCaptureChain;
   };
+
+  // Process whatever the iframe posted while the cloud store was in flight.
+  // It is captured additively: it may contain genuinely new work, but it must
+  // not be able to remove anything the cloud already holds.
+  function releaseDeferredAck() {
+    if (ackGateTimer) {
+      window.clearTimeout(ackGateTimer);
+      ackGateTimer = null;
+    }
+    const raw = deferredAckRaw;
+    deferredAckRaw = "";
+    if (!raw) return;
+    // Identical to the store we pushed, so it was only an echo of it.
+    if (fingerprintRaw(raw) === appliedFingerprint) return;
+    queueLocalCapture(raw, true);
+  }
 
   const deferRemoteRecord = (record, message = "") => {
     expandedRecords(record).forEach((expanded) => {
@@ -2200,19 +2303,23 @@
       replaceStoredRecords(RECORDS_STORE, userId, recordsPersonal),
       replaceStoredSharedRecords(SHARED_RECORDS_STORE, userId, recordsShared),
     ]);
+    // Hold the capture path closed until the resolved store reaches the app.
+    // Otherwise the snapshot the iframe still shows (a default store on first
+    // boot, or pre-merge content on reconnect) could be captured as an edit.
+    captureGateUntilApply = true;
     initializedUserId = userId;
     // On first boot, discard the iframe's default snapshot. During a reconnect,
-    // keep only edits that truly arrived while the remote fetch was in flight.
-    // Re-applying an unchanged stale browser snapshot would stamp it with a
-    // fresh timestamp and overwrite newer cloud content on upload.
+    // keep edits that truly arrived while the remote fetch was in flight. They
+    // are merged additively because they predate the cloud state just fetched.
     const reconnectRaw = reconnectingSameUser ? pendingLocalRaw : "";
     pendingLocalRaw = "";
     if (
       reconnectRaw &&
       fingerprintRaw(reconnectRaw) !== connectStartFingerprint
     ) {
-      await queueLocalCapture(reconnectRaw).catch(() => undefined);
+      await captureLocalChanges(reconnectRaw, true).catch(() => undefined);
     }
+    captureGateUntilApply = false;
     applyRecordsToApp(currentRecords);
     if (navigator.onLine === false) {
       setStatus("오프라인 · 이 기기에 안전하게 저장됨");
@@ -2254,9 +2361,12 @@
       reconnectAfterEditing = false;
       pendingLocalRaw = "";
       deferredAckRaw = "";
-      prePushFingerprint = "";
       pendingAppStore = null;
       pendingAppFingerprint = "";
+      approvedProjectDeletions.clear();
+      lastSnapshotKeys = null;
+      if (ackGateTimer) window.clearTimeout(ackGateTimer);
+      ackGateTimer = null;
       if (incomingProtocolTimer) window.clearInterval(incomingProtocolTimer);
       incomingProtocolTimer = null;
       if (incomingInviteTimer) window.clearInterval(incomingInviteTimer);
@@ -2371,6 +2481,15 @@
       return;
     }
     if (
+      event.data?.type === "exp-note-delete-project" &&
+      event.data.projectId
+    ) {
+      // The user confirmed a project deletion in the app. Without this signal
+      // a missing project is treated as a stale snapshot, not a removal.
+      approvedProjectDeletions.add(String(event.data.projectId));
+      return;
+    }
+    if (
       event.data?.type === "exp-note-local-store" &&
       typeof event.data.raw === "string"
     ) {
@@ -2378,7 +2497,10 @@
       return;
     }
     if (event.data?.type === "exp-note-editing") {
-      appEditing = Boolean(event.data.editing);
+      const nextEditing = Boolean(event.data.editing);
+      if (nextEditing && !appEditing) appEditingSince = Date.now();
+      if (!nextEditing) appEditingSince = 0;
+      appEditing = nextEditing;
       if (new URLSearchParams(window.location.search).has("sync-test")) {
         document.documentElement.dataset.syncEditing = String(appEditing);
       }
@@ -2395,19 +2517,7 @@
       pendingAppStore = null;
       pendingAppFingerprint = "";
       appliedStatus();
-      if (deferredAckRaw) {
-        const raw = deferredAckRaw;
-        deferredAckRaw = "";
-        const rawFingerprint = fingerprintRaw(raw);
-        // Only treat the deferred snapshot as a real edit if it differs from
-        // the state we knew about right before the push. If we had no known
-        // baseline (e.g. the very first sync of this session), be
-        // conservative and drop it rather than risk re-uploading stale
-        // content that raced with our cloud-authoritative push.
-        if (prePushFingerprint && rawFingerprint !== prePushFingerprint) {
-          queueLocalCapture(raw);
-        }
-      }
+      releaseDeferredAck();
     }
   });
 
@@ -2458,6 +2568,7 @@
     queueLocalCapture(raw);
     if (currentSession?.user && navigator.onLine !== false) {
       appEditing = false;
+      appEditingSince = 0;
       scheduleUpload(0);
     }
   };
@@ -2510,6 +2621,52 @@
             .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
             .map((record) => String(record.payload?.item?.id || "")),
         };
+      },
+      // Which rows a given app snapshot would remove, given what this device
+      // currently holds. Used to verify that stale or partial snapshots can
+      // never delete real content.
+      deletionPlan({
+        currentStore,
+        snapshotStore,
+        approvedProjectIds = [],
+        additiveOnly = false,
+        // Rows the app was showing before this snapshot. Defaults to
+        // everything this device holds; pass a store to model a tab that
+        // never displayed some of them.
+        seenStore = null,
+      }) {
+        const current = storeToRecords(
+          currentStore,
+          new Date(1000).toISOString(),
+          "cloud-device"
+        );
+        const desired = storeToRecords(
+          snapshotStore,
+          new Date(2000).toISOString(),
+          "snapshot"
+        );
+        const seenKeys = new Set(
+          seenStore
+            ? storeToRecords(seenStore, new Date(900).toISOString(), "seen").keys()
+            : current.keys()
+        );
+        const previouslyApproved = [...approvedProjectDeletions];
+        approvedProjectDeletions.clear();
+        approvedProjectIds.forEach((id) =>
+          approvedProjectDeletions.add(String(id))
+        );
+        const removed = [];
+        current.forEach((existing, key) => {
+          if (existing.deleted_at || desired.has(key)) return;
+          if (
+            canDeleteFromSnapshot(existing, key, desired, additiveOnly, seenKeys)
+          ) {
+            removed.push(key);
+          }
+        });
+        approvedProjectDeletions.clear();
+        previouslyApproved.forEach((id) => approvedProjectDeletions.add(id));
+        return removed.sort();
       },
       mergeStores(olderStore, newerStore) {
         const older = storeToRecords(
