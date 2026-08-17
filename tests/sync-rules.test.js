@@ -160,6 +160,44 @@ check("기존 노트를 고친 내용은 새로고침 후에도 살아남는다"
   assert.ok(result.outboxCount > 0, "고친 내용이 업로드 대기해야 함");
 });
 
+check("며칠 전 스냅샷을 든 기기가 재접속해도 최신 클라우드를 덮지 않는다", () => {
+  const daysOldLocal = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "3일 전에 쓰던 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    localStore: daysOldLocal,
+    // 이 기기가 마지막으로 적용한 상태도, 로컬을 마지막으로 쓴 시각도
+    // 클라우드 행(1000)보다 앞선다.
+    lastAppliedFingerprint: api.fingerprintStore(daysOldLocal),
+    localUpdatedAt: 500,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "클라우드에 있는 내용");
+});
+
+check("다른 기기가 보던 프로젝트가 이 기기의 화면을 끌고 가지 않는다", () => {
+  const twoProjectCloud = {
+    activeProjectId: "project-2",
+    projects: [
+      project({ notes: [note("note-1", "클라우드에 있는 내용")] }),
+      project({ id: "project-2", name: "다른 프로젝트" }),
+    ],
+  };
+  const localViewingFirst = { ...twoProjectCloud, activeProjectId: "project-1" };
+  const result = api.simulate({
+    remoteStore: twoProjectCloud,
+    localStore: localViewingFirst,
+    lastAppliedFingerprint: api.fingerprintStore(localViewingFirst),
+  });
+  assert.strictEqual(result.activeProjectId, "project-1");
+});
+
 // --- Rule 2: stale local never overwrites or resurrects --------------------
 
 check("오래된 로컬 스냅샷이 클라우드를 덮어쓰지 않는다", () => {

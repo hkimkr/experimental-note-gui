@@ -1,5 +1,7 @@
-// Experimental Note GUI v4.2.3 — keep unsynced local edits (new notes) across
-// refresh instead of letting a cloud-authoritative reconnect discard them.
+// Experimental Note GUI v4.3.0 — read every page of the cloud (a truncated
+// response made real rows look new and got overwritten by older local copies),
+// and require proof that this device edited a row after the cloud wrote it
+// before local content may replace it.
 (() => {
   "use strict";
 
@@ -498,7 +500,10 @@
       result.set(recordKey(record), record);
     };
 
-    const { projects = [], ...root } = store;
+    // Which project is open is per-device view state. Syncing it made another
+    // device (or a reconnecting stale tab) yank this browser into a different
+    // project mid-edit, so it stays out of the shared record.
+    const { projects = [], activeProjectId, ...root } = store;
     const projectList = Array.isArray(projects) ? projects : [];
 
     add("root", "main", {
@@ -593,8 +598,11 @@
 
   function recordsToStore(records, fallbackStore = {}) {
     const rootRecord = records.get("root::main");
-    const root =
+    const rootPayload =
       rootRecord && !rootRecord.deleted_at ? clone(rootRecord.payload) : {};
+    // Older cloud rows still carry activeProjectId; ignore it so the project
+    // this device has open survives every merge.
+    const { activeProjectId: syncedActiveProjectId, ...root } = rootPayload;
     const store = {
       ...clone(fallbackStore || {}),
       ...root,
@@ -751,6 +759,12 @@
         return itemSort(left, right);
       });
     store.projectOrder = store.projects.map((project) => project.id);
+    const hasProject = (id) =>
+      Boolean(id) && store.projects.some((project) => project.id === String(id));
+    store.activeProjectId = [
+      fallbackStore?.activeProjectId,
+      syncedActiveProjectId,
+    ].find(hasProject) || store.projects[0]?.id || null;
     return store;
   }
 
@@ -806,6 +820,7 @@
     outbox,
     localStore,
     lastAppliedFingerprint = "",
+    localUpdatedAt = 0,
   }) {
     const adopted = new Map();
     if (!localRecords?.size) return adopted;
@@ -816,6 +831,11 @@
     const known = (key) =>
       Boolean(remote?.get(key) || cached?.get(key) || outbox?.get(key));
     const allowMergeExisting = Boolean(lastAppliedFingerprint && localFp);
+    // A differing fingerprint alone cannot tell "typed seconds before reload"
+    // apart from "this browser sat on a days-old snapshot". Overwriting an
+    // existing row therefore also requires that this device wrote its local
+    // store after the cloud wrote that row.
+    const localTouchedAt = Number(localUpdatedAt) || 0;
 
     let sequence = 0;
     const now = Date.now();
@@ -846,8 +866,10 @@
         return;
       }
       if (!allowMergeExisting) return;
-      const merged = contentAwareRecord(remoteRec || cached?.get(key), stamp(local));
-      if (!sameRecordContent(merged, remoteRec || cached?.get(key))) {
+      const baseRec = remoteRec || cachedRec;
+      if (!localTouchedAt || timestampOf(baseRec) >= localTouchedAt) return;
+      const merged = contentAwareRecord(baseRec, stamp(local));
+      if (!sameRecordContent(merged, baseRec)) {
         adopted.set(key, merged);
       }
     });
@@ -863,6 +885,7 @@
     remoteFetched,
     localStore,
     lastAppliedFingerprint = "",
+    localUpdatedAt = 0,
   }) {
     const trustedOutbox = new Map();
     const legacyOutbox = new Map();
@@ -921,6 +944,7 @@
       outbox,
       localStore,
       lastAppliedFingerprint,
+      localUpdatedAt,
     });
     const merged = mergeRecordMaps(remote, trustedOutbox, unsyncedLocal);
     const repairs = repairRecordsAgainstRemote(merged, remote);
@@ -1215,16 +1239,39 @@
     if (message) setStatus(message);
   }
 
+  // Supabase caps a single response (1000 rows by default). An unpaged fetch
+  // silently returned a partial cloud, and rows beyond the cap looked like
+  // entities the cloud had never seen — so this device re-uploaded its older
+  // copies over newer content. Always read every page.
+  const REMOTE_PAGE_SIZE = 1000;
+
+  async function fetchAllRows(buildQuery) {
+    const rows = [];
+    for (let from = 0; ; from += REMOTE_PAGE_SIZE) {
+      const { data, error } = await buildQuery().range(
+        from,
+        from + REMOTE_PAGE_SIZE - 1
+      );
+      if (error) throw error;
+      const page = data || [];
+      rows.push(...page);
+      if (page.length < REMOTE_PAGE_SIZE) return rows;
+    }
+  }
+
   async function fetchRemoteRecords(userId) {
-    const { data, error } = await client
-      .from("exp_note_records")
-      .select(
-        "entity_type,entity_id,payload,updated_at,deleted_at,client_id"
-      )
-      .eq("user_id", userId);
-    if (error) throw error;
+    const rows = await fetchAllRows(() =>
+      client
+        .from("exp_note_records")
+        .select(
+          "entity_type,entity_id,payload,updated_at,deleted_at,client_id"
+        )
+        .eq("user_id", userId)
+        .order("entity_type", { ascending: true })
+        .order("entity_id", { ascending: true })
+    );
     const records = new Map();
-    (data || []).forEach((record) => records.set(recordKey(record), record));
+    rows.forEach((record) => records.set(recordKey(record), record));
     return records;
   }
 
@@ -1248,15 +1295,19 @@
 
   async function fetchSharedRemoteRecords(projectIds) {
     if (!projectIds?.length) return new Map();
-    const { data, error } = await client
-      .from("exp_note_shared_records")
-      .select(
-        "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id"
-      )
-      .in("project_id", projectIds);
-    if (error) throw error;
+    const rows = await fetchAllRows(() =>
+      client
+        .from("exp_note_shared_records")
+        .select(
+          "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id"
+        )
+        .in("project_id", projectIds)
+        .order("project_id", { ascending: true })
+        .order("entity_type", { ascending: true })
+        .order("entity_id", { ascending: true })
+    );
     const records = new Map();
-    (data || []).forEach((row) => {
+    rows.forEach((row) => {
       const record = {
         entity_type: row.entity_type,
         entity_id: row.entity_id,
@@ -2250,8 +2301,12 @@
         // Keep the localStorage snapshot if the in-flight iframe payload is invalid.
       }
     }
-    const localUpdatedAt =
-      Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || Date.now();
+    const storedLocalUpdatedAt =
+      Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || 0;
+    // An in-flight payload from the iframe is by definition current, so it
+    // carries the freshness this device is allowed to claim.
+    const localTouchedAt = pendingLocalRaw ? Date.now() : storedLocalUpdatedAt;
+    const localUpdatedAt = storedLocalUpdatedAt || Date.now();
     const localRecords = localStore
       ? storeToRecords(
           localStore,
@@ -2285,6 +2340,7 @@
       remoteFetched,
       localStore,
       lastAppliedFingerprint,
+      localUpdatedAt: localTouchedAt,
     });
     currentRecords = initialState.records;
     if (initialState.reason === "meaningful-local-recovery") {
@@ -2607,6 +2663,9 @@
         remoteFetched = true,
         lastAppliedFingerprint = "",
         remoteTombstoneKeys = [],
+        // When this device last wrote its local store. Defaults to the local
+        // snapshot's own write time (3000), i.e. after the cloud rows (1000).
+        localUpdatedAt = 3000,
       } = {}) {
         const recordsFor = (store, time, source) =>
           store
@@ -2641,6 +2700,7 @@
           remoteFetched,
           localStore,
           lastAppliedFingerprint,
+          localUpdatedAt,
         });
         const visible = recordsToStore(resolved.records, localStore || {});
         return {
@@ -2654,6 +2714,7 @@
           visibleNoteIds: (visible.projects || []).flatMap((project) =>
             (project.notes || []).map((item) => String(item?.id || ""))
           ),
+          activeProjectId: visible.activeProjectId || null,
           notePurposes: Object.fromEntries(
             [...resolved.records.values()]
               .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
