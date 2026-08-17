@@ -546,6 +546,173 @@ check("정말 빈 계정의 첫 동기화는 로컬 내용을 올린다", () => 
   assert.ok(result.intentOnly, "업로드는 의도 기록이어야 함");
 });
 
+// --- Rule 4 again: an all-deleted cloud is not an empty cloud --------------
+
+// 이름이 자리표시자인 프로젝트: 프로젝트 행이 살아 있어도 클라우드 점수가 0이라,
+// "클라우드가 아무 말도 하지 않았다"고 판정되는 경로를 지나간다. 옛 전체 저장소
+// 동기화가 남긴 빈 행이 이 모양이다.
+const placeholderProject = (overrides = {}) =>
+  project({ id: "default", name: "기본 프로젝트", ...overrides });
+
+check("전부 삭제된 클라우드는 빈 클라우드가 아니다", () => {
+  // 휴대폰에서 전부 지운 상태. 클라우드 행은 남아 있지만 모두 삭제 표시이고,
+  // 이 기기는 옛 로컬 내용과 예전에 받아둔 캐시를 들고 있다.
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    remoteAllDeleted: true,
+    cachedStore: cloudStore,
+    localStore: cloudStore,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    // 카운트 조회는 삭제된 행까지 세므로 0을 확인해줄 수 없다.
+    remoteEmptyConfirmed: false,
+  });
+  assert.ok(result.remoteRowCount > 0, "클라우드에 행이 있어야 하는 상황");
+  assert.strictEqual(
+    result.remoteTombstoneCount,
+    result.remoteRowCount,
+    "모든 행이 삭제 행인 상황"
+  );
+  assert.strictEqual(
+    result.remoteSaysNothing,
+    false,
+    "행이 있는 클라우드는 침묵이 아니다"
+  );
+  assert.notStrictEqual(
+    result.reason,
+    "remote-empty-unverified",
+    "삭제된 클라우드에 승격/보류 분기로 들어가면 안 됨"
+  );
+  assert.notStrictEqual(result.reason, "meaningful-local-recovery");
+  assert.ok(!result.noteIds.includes("note-1"), "지운 노트가 되살아나면 안 됨");
+  assert.ok(!result.visibleNoteIds.includes("note-1"));
+  assert.strictEqual(result.outboxCount, 0, "지운 내용을 다시 올려선 안 됨");
+});
+
+check("업로드를 보류하는 동안에도 클라우드 삭제는 적용된다", () => {
+  // 조회는 삭제 행 하나와 빈 행들만 돌려줬다(점수 0). 캐시에 행이 있어 승격은
+  // 금지되지만, 클라우드가 지웠다고 말한 노트는 사라져야 한다.
+  const placeholderCloud = {
+    activeProjectId: "default",
+    projects: [placeholderProject({ notes: [note("note-1", "클라우드에 있던 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: placeholderCloud,
+    remoteTombstoneKeys: ["project_note::default:note-1"],
+    cachedStore: placeholderCloud,
+    localStore: placeholderCloud,
+    lastAppliedFingerprint: api.fingerprintStore(placeholderCloud),
+    remoteEmptyConfirmed: false,
+  });
+  assert.strictEqual(result.reason, "remote-empty-unverified");
+  assert.strictEqual(result.remoteTombstoneCount, 1);
+  assert.strictEqual(result.outboxCount, 0, "보류 중에는 올리지 않는다");
+  assert.ok(
+    !result.noteIds.includes("note-1") && !result.visibleNoteIds.includes("note-1"),
+    "업로드를 보류해도 클라우드 삭제는 반영되어야 함"
+  );
+});
+
+check("행은 있지만 내용이 빈 클라우드는 내용 있는 기기를 지우지 않는다", () => {
+  const blankCloudRows = {
+    activeProjectId: "default",
+    projects: [placeholderProject()],
+  };
+  const richDevice = {
+    activeProjectId: "default",
+    projects: [
+      placeholderProject({
+        notes: [note("note-1", "이 기기에 있는 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: blankCloudRows,
+    cachedStore: richDevice,
+    outboxStore: blankCloudRows,
+    localStore: richDevice,
+  });
+  assert.ok(result.remoteRowCount > 0, "클라우드에 행은 있다");
+  assert.strictEqual(result.remoteTombstoneCount, 0, "빈 행은 삭제 행이 아니다");
+  assert.strictEqual(result.reason, "remote-empty-unverified");
+  assert.ok(
+    result.visibleNoteIds.includes("note-1"),
+    "빈 행이 이 기기의 내용을 지우면 안 됨"
+  );
+  assert.ok(result.contentScore > 0);
+});
+
+check("조회에 실패해도 로컬 스냅샷을 통째로 업로드 대기로 올리지 않는다", () => {
+  const result = api.simulate({ remoteFetched: false, localStore: cloudStore });
+  assert.strictEqual(result.reason, "offline-local");
+  assert.strictEqual(result.outboxCount, 0, "조회 없이 올릴 것을 만들면 안 됨");
+  assert.ok(
+    result.visibleNoteIds.includes("note-1"),
+    "로컬 내용은 이 기기에 남아 있어야 함"
+  );
+  // 옛 승격 분기의 전제는 "내용은 있는데 레코드는 0개"였다. 내용이 있는 스냅샷은
+  // 언제나 최소한 root 행을 만들므로 그 전제는 성립할 수 없다.
+  [
+    cloudStore,
+    { projects: [{ name: "이름만 있는 프로젝트" }] },
+    { projects: [project({ notes: [note("note-1", "내용")] })] },
+  ].forEach((localStore) => {
+    const offline = api.simulate({ remoteFetched: false, localStore });
+    assert.ok(
+      offline.localRecordCount > 0,
+      "내용이 있는 스냅샷은 항상 레코드를 만든다"
+    );
+    assert.strictEqual(offline.reason, "offline-local");
+  });
+});
+
+check("다른 기기가 올린 최신은 이 기기의 옛 화면에 가려지지 않는다", () => {
+  const phoneLatest = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "핸드폰에서 고친 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  // 노트 내용은 캐시와 같은데, 화면 상태만 달라 전체 지문이 어긋난다.
+  // 예전에는 이  Drift 만으로 모든 행이 "로컬 편집"이 되어 핸드폰 내용을 덮었다.
+  const desktopOld = {
+    ...cloudStore,
+    settings: { receivedProtocolTransferIds: ["stale-view"] },
+  };
+  const result = api.simulate({
+    remoteStore: phoneLatest,
+    cachedStore: cloudStore,
+    localStore: desktopOld,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 9000,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "핸드폰에서 고친 내용");
+});
+
+check("캐시와 같은 아웃박스는 다른 기기의 최신 클라우드를 덮지 않는다", () => {
+  const phoneLatest = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "핸드폰에서 고친 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: phoneLatest,
+    cachedStore: cloudStore,
+    outboxStore: cloudStore,
+    outboxIntent: true,
+    localStore: cloudStore,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "핸드폰에서 고친 내용");
+});
+
 // --- Report ---------------------------------------------------------------
 
 let failed = 0;

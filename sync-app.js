@@ -1,10 +1,8 @@
-// Experimental Note GUI v4.3.2 — rule 5's proof now comes from a key only real
-// user edits write (…-user-edited-at), and an "empty" cloud has to be proven
-// before this device's snapshot may be promoted to cloud truth: never when this
-// device already cached cloud rows, and only when an independent count agrees.
-// (v4.3.1: an in-flight snapshot equal to the stored one is not proof of an
-// edit. v4.3.0: read every page of the cloud; require edit-after-cloud proof
-// before local content may replace an existing row.)
+// Experimental Note GUI v4.3.3 — a row this device did not change must not
+// overlay a newer cloud row from another device (phone saved, desktop refresh
+// kept showing the old copy). HTML/JS are network-first so a desktop service
+// worker cannot stay on an old client. An all-deleted cloud is a definite
+// state, not an empty one.
 (() => {
   "use strict";
 
@@ -101,6 +99,11 @@
   let ackGateTimer = null;
   let captureGateUntilApply = false;
   let lastSnapshotKeys = null;
+  // Rows this device held when the current connect/apply started. A later
+  // snapshot that still matches these rows is an echo of the old screen, not
+  // an edit, and must not overlay newer cloud content.
+  let connectBaselineRecords = new Map();
+  let pushedOverFingerprint = "";
   const approvedProjectDeletions = new Set();
   let incomingProtocolTimer = null;
   let incomingProtocolLoading = false;
@@ -436,6 +439,24 @@
       storeContentScore(recordsToStore(records, fallbackStore))
     );
   };
+
+  // A cloud that holds rows has a definite state even when every row is a
+  // deletion: "these were all deleted" is an answer, not silence. The content
+  // score cannot tell the two apart, because it counts active rows only — an
+  // all-tombstone cloud scores 0 exactly like an empty one. Reading that as
+  // "empty" made this device promote its own old snapshot and throw the
+  // tombstones away, so notes deleted on another device came back (rule 4).
+  const recordsAllDeleted = (records) =>
+    Boolean(records?.size) &&
+    [...records.values()].every((record) => Boolean(record?.deleted_at));
+
+  // Did the cloud read give nothing to go on? No content, and no deletions
+  // either. Rows that are present but hold blank payloads count as nothing on
+  // purpose: the old whole-store sync could write those, and such a cloud must
+  // not be allowed to wipe a device that still holds real content. A tombstone
+  // is not a blank payload — it is a decision, and it gets applied.
+  const remoteSaysNothing = (records) =>
+    !recordsContentScore(records) && !recordsAllDeleted(records);
 
   const intentRecordsFromStore = (store, timestamp = Date.now()) => {
     const base = storeToRecords(
@@ -875,6 +896,20 @@
       }
       if (!allowMergeExisting) return;
       const baseRec = remoteRec || cachedRec;
+      // This device did not change the row: the payload still matches the
+      // last cloud copy we cached. A different remote payload is another
+      // device's work and must not be overlaid by this snapshot. Whole-store
+      // fingerprint drift (open project, ordering) used to make every row
+      // look like a local edit, so a phone's newer note lost to this
+      // desktop's days-old copy on every refresh.
+      if (
+        remoteRec &&
+        cachedRec &&
+        sameRecordContent(local, cachedRec) &&
+        !sameRecordContent(remoteRec, cachedRec)
+      ) {
+        return;
+      }
       if (!localTouchedAt || timestampOf(baseRec) >= localTouchedAt) return;
       const merged = contentAwareRecord(baseRec, stamp(local));
       if (!sameRecordContent(merged, baseRec)) {
@@ -882,6 +917,41 @@
       }
     });
     return adopted;
+  }
+
+  // Cloud deletions have to survive a merge that is otherwise led by
+  // timestamps. contentAwareRecord only lets a tombstone win when it is the
+  // newer row, and a device that re-saved its local store holds rows newer than
+  // the cloud's deletion, so the deletion would lose. Rule 4 does not depend on
+  // clocks: a deletion the cloud already holds stays a deletion, exactly as
+  // adoptUnsyncedLocalRecords already treats one.
+  function applyRemoteDeletions(records, remoteRecords) {
+    remoteRecords?.forEach((record) => {
+      if (record?.deleted_at) records.set(recordKey(record), clone(record));
+    });
+    return records;
+  }
+
+  // An overlay (outbox or adopted local) that still equals the last cached
+  // cloud row is not a real edit. If the live cloud moved on, drop the overlay
+  // so the other device's write is what this screen shows.
+  function dropIfUnchangedWhileRemoteMoved(overlays, remote, cached) {
+    if (!overlays?.size) return overlays || new Map();
+    const next = new Map();
+    overlays.forEach((record, key) => {
+      const remoteRec = remote?.get(key);
+      const cachedRec = cached?.get(key);
+      if (
+        remoteRec &&
+        cachedRec &&
+        sameRecordContent(record, cachedRec) &&
+        !sameRecordContent(remoteRec, cachedRec)
+      ) {
+        return;
+      }
+      next.set(key, record);
+    });
+    return next;
   }
 
   function resolveInitialRecordState({
@@ -906,31 +976,31 @@
     );
 
     if (!remoteFetched) {
-      const offlineRecords = mergeRecordMaps(
-        cached,
-        localRecords,
-        outbox,
-        pendingRecords
-      );
-      if (offlineRecords.size || storeContentScore(localStore) === 0) {
-        return {
-          records: offlineRecords,
-          outbox: new Map(outbox),
-          reason: "offline-local",
-        };
-      }
-      const recovered = intentRecordsFromStore(localStore);
+      // Without a cloud read there is nothing to compare against, so this
+      // device keeps what it holds and queues nothing new. There used to be a
+      // second path here that promoted the whole local snapshot into the outbox
+      // when this merge came out empty, which is the "a days-old snapshot
+      // becomes cloud truth" shape rule 5 exists to stop — and it could never
+      // run: storeToRecords emits a root row for any store object, so a
+      // localStore with content always yields localRecords, and this merge is
+      // never empty while there is content to promote.
       return {
-        records: recovered,
-        outbox: recovered,
-        reason: "offline-recovery",
+        records: mergeRecordMaps(cached, localRecords, outbox, pendingRecords),
+        outbox: new Map(outbox),
+        reason: "offline-local",
       };
     }
 
     // Online: cloud is authoritative for rows it already has. A refreshed
     // localStorage snapshot must not overwrite those rows. Local-only
     // entities (a note written just before reload) are adopted and uploaded.
-    if (!recordsContentScore(remote) && storeContentScore(localStore) === 0) {
+    // Both branches below are only for a cloud that said nothing at all; a
+    // cloud whose rows are all deletions has a definite state and belongs on
+    // the normal path, where its tombstones delete local content instead of
+    // being dropped by a promotion this device has no business making.
+    const cloudSaidNothing = remoteSaysNothing(remote);
+
+    if (cloudSaidNothing && storeContentScore(localStore) === 0) {
       return {
         records: mergeRecordMaps(remote),
         outbox: new Map(),
@@ -938,7 +1008,7 @@
       };
     }
 
-    if (!recordsContentScore(remote) && storeContentScore(localStore) > 0) {
+    if (cloudSaidNothing && storeContentScore(localStore) > 0) {
       // Promoting this device's whole snapshot to cloud truth bypasses rule 5,
       // so an "empty" cloud has to be believable first. It is not when:
       //   - this device has cached cloud rows before, so the account is known
@@ -950,7 +1020,16 @@
       const cloudRowsSeenBefore = cached.size > 0;
       if (cloudRowsSeenBefore || !remoteEmptyConfirmed) {
         return {
-          records: mergeRecordMaps(cached, localRecords, outbox, pendingRecords),
+          // `remote` is part of the merge, and its tombstones are laid over the
+          // result. Leaving it out discarded the deletions of the very rows the
+          // read did return — a cloud where some rows are deleted and the rest
+          // hold blank payloads scores 0 and lands here — so deleted items came
+          // back on this device. Holding uploads is about not writing, not about
+          // ignoring what the cloud says was deleted.
+          records: applyRemoteDeletions(
+            mergeRecordMaps(cached, localRecords, outbox, pendingRecords, remote),
+            remote
+          ),
           outbox: new Map(outbox),
           reason: "remote-empty-unverified",
         };
@@ -965,18 +1044,27 @@
       };
     }
 
-    const unsyncedLocal = adoptUnsyncedLocalRecords({
-      localRecords: mergeRecordMaps(localRecords, pendingRecords),
+    const unsyncedLocal = dropIfUnchangedWhileRemoteMoved(
+      adoptUnsyncedLocalRecords({
+        localRecords: mergeRecordMaps(localRecords, pendingRecords),
+        remote,
+        cached,
+        outbox,
+        localStore,
+        lastAppliedFingerprint,
+        localUpdatedAt,
+      }),
       remote,
-      cached,
-      outbox,
-      localStore,
-      lastAppliedFingerprint,
-      localUpdatedAt,
-    });
-    const merged = mergeRecordMaps(remote, trustedOutbox, unsyncedLocal);
+      cached
+    );
+    const trustedOutboxKept = dropIfUnchangedWhileRemoteMoved(
+      trustedOutbox,
+      remote,
+      cached
+    );
+    const merged = mergeRecordMaps(remote, trustedOutboxKept, unsyncedLocal);
     const repairs = repairRecordsAgainstRemote(merged, remote);
-    const nextOutbox = mergeRecordMaps(trustedOutbox, unsyncedLocal, repairs);
+    const nextOutbox = mergeRecordMaps(trustedOutboxKept, unsyncedLocal, repairs);
     let reason = "cloud-authoritative";
     if (unsyncedLocal.size) reason = "unsynced-local-adopt";
     else if (repairs.size) reason = "content-aware-merge";
@@ -1248,6 +1336,8 @@
     } catch {
       fallback = {};
     }
+    pushedOverFingerprint =
+      lastObservedFingerprint || fingerprintRaw(localRaw);
     const store = recordsToStore(records, fallback);
     const raw = JSON.stringify(store);
     const appliedFp = fingerprintValue(store);
@@ -1898,6 +1988,18 @@
       if (unchanged) return;
       // An uncertain snapshot must not bring a deleted item back to life.
       if (additiveOnly && existing?.deleted_at) return;
+      // Echo of the screen from before this cloud apply: the row still matches
+      // what this device already held. Overlaying it would put days-old local
+      // content on top of a newer row just fetched from the phone.
+      if (additiveOnly) {
+        const baseline = connectBaselineRecords.get(key);
+        if (
+          baseline &&
+          fingerprintValue(baseline.payload) === fingerprintValue(candidate.payload)
+        ) {
+          return;
+        }
+      }
       sequence += 1;
       const localCandidate = {
         ...candidate,
@@ -2028,6 +2130,9 @@
     if (!raw) return;
     // Identical to the store we pushed, so it was only an echo of it.
     if (fingerprintRaw(raw) === appliedFingerprint) return;
+    if (pushedOverFingerprint && fingerprintRaw(raw) === pushedOverFingerprint) {
+      return;
+    }
     queueLocalCapture(raw, true);
   }
 
@@ -2388,6 +2493,11 @@
         )
       : new Map();
     const lastAppliedFingerprint = localStorage.getItem(LAST_APPLIED_KEY) || "";
+    connectBaselineRecords = mergeRecordMaps(
+      cached,
+      sharedCached,
+      localRecords
+    );
     const legacyPending = readLegacyPending();
     let pendingRecords = new Map();
     if (legacyPending?.raw) {
@@ -2441,12 +2551,9 @@
     const outboxShared = [...initialState.outbox.values()].filter(
       (record) => record.__projectId
     );
+    // Only a read that succeeded may rewrite the outbox. Offline the resolved
+    // outbox is the stored one unchanged, so there is nothing to write back.
     if (remoteFetched) {
-      await Promise.all([
-        replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
-        replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
-      ]);
-    } else if (initialState.reason === "offline-recovery") {
       await Promise.all([
         replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
         replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
@@ -2758,6 +2865,9 @@
         remoteFetched = true,
         lastAppliedFingerprint = "",
         remoteTombstoneKeys = [],
+        // Tombstone every cloud row: the account someone emptied from another
+        // device. Off by default so existing scenarios keep their cloud intact.
+        remoteAllDeleted = false,
         // When this device last wrote its local store. Defaults to the local
         // snapshot's own write time (3000), i.e. after the cloud rows (1000).
         localUpdatedAt = 3000,
@@ -2770,7 +2880,10 @@
             ? storeToRecords(store, new Date(time).toISOString(), source)
             : new Map();
         const remote = recordsFor(remoteStore, 1000, "cloud-device");
-        remoteTombstoneKeys.forEach((key) => {
+        const tombstoneKeys = remoteAllDeleted
+          ? [...remote.keys()]
+          : remoteTombstoneKeys;
+        tombstoneKeys.forEach((key) => {
           const record = remote.get(key);
           if (!record) return;
           remote.set(key, {
@@ -2806,6 +2919,17 @@
           reason: resolved.reason,
           contentScore: recordsContentScore(resolved.records),
           outboxCount: resolved.outbox.size,
+          // How the cloud read was classified, so a test can assert the
+          // classification and the resulting behaviour in one call.
+          remoteRowCount: remote.size,
+          remoteTombstoneCount: [...remote.values()].filter(
+            (record) => record.deleted_at
+          ).length,
+          remoteSaysNothing: remoteSaysNothing(remote),
+          // Rows a content-bearing localStore produces. The offline path's
+          // "promote the whole snapshot" case required this to be 0 while the
+          // store still scored content, which cannot happen.
+          localRecordCount: localRecords.size,
           intentOnly: [...resolved.outbox.values()].every(isIntentRecord),
           noteIds: [...resolved.records.values()]
             .filter((record) => record.entity_type === "project_note" && !record.deleted_at)
