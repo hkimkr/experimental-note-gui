@@ -692,6 +692,49 @@ check("다른 기기가 올린 최신은 이 기기의 옛 화면에 가려지�
   assert.strictEqual(result.notePurposes["note-1"], "핸드폰에서 고친 내용");
 });
 
+check("로그인 전에 고친 기존 노트는 클라우드에 반영된다", () => {
+  // 로그아웃·첫 로그인: lastApplied도 캐시도 없다. 예전에는 기존 행 편집을
+  // 전부 버리고 새 id만 올렸다.
+  const edited = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "로그인 전에 고친 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    localStore: edited,
+    lastAppliedFingerprint: "",
+    localUpdatedAt: 3000,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "로그인 전에 고친 내용");
+  assert.ok(result.outboxCount > 0, "고친 내용이 업로드 대기해야 함");
+});
+
+check("오프라인에서 고친 기존 노트는 편집 키가 없어도 재접속 후 살아남는다", () => {
+  const edited = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "오프라인에서 고친 내용")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    cachedStore: cloudStore,
+    localStore: edited,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 0,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "오프라인에서 고친 내용");
+  assert.ok(result.outboxCount > 0);
+});
+
 check("캐시와 같은 아웃박스는 다른 기기의 최신 클라우드를 덮지 않는다", () => {
   const phoneLatest = {
     activeProjectId: "project-1",

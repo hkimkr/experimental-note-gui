@@ -1,4 +1,7 @@
-// Experimental Note GUI v4.3.3 — a row this device did not change must not
+// Experimental Note GUI v4.3.4 — offline / logged-out edits to an existing
+// note must survive login. Proof is the row differing from the last cached
+// cloud copy; lastAppliedFingerprint and USER_EDITED_KEY were dropping that
+// work because a logged-out session has no apply baseline.
 // overlay a newer cloud row from another device (phone saved, desktop refresh
 // kept showing the old copy). HTML/JS are network-first so a desktop service
 // worker cannot stay on an old client. An all-deleted cloud is a definite
@@ -859,11 +862,6 @@
     }
     const known = (key) =>
       Boolean(remote?.get(key) || cached?.get(key) || outbox?.get(key));
-    const allowMergeExisting = Boolean(lastAppliedFingerprint && localFp);
-    // A differing fingerprint alone cannot tell "typed seconds before reload"
-    // apart from "this browser sat on a days-old snapshot". Overwriting an
-    // existing row therefore also requires that this device wrote its local
-    // store after the cloud wrote that row.
     const localTouchedAt = Number(localUpdatedAt) || 0;
 
     let sequence = 0;
@@ -894,14 +892,11 @@
         adopted.set(key, stamp(local));
         return;
       }
-      if (!allowMergeExisting) return;
       const baseRec = remoteRec || cachedRec;
+      if (sameRecordContent(local, baseRec)) return;
       // This device did not change the row: the payload still matches the
       // last cloud copy we cached. A different remote payload is another
-      // device's work and must not be overlaid by this snapshot. Whole-store
-      // fingerprint drift (open project, ordering) used to make every row
-      // look like a local edit, so a phone's newer note lost to this
-      // desktop's days-old copy on every refresh.
+      // device's work and must not be overlaid by this snapshot.
       if (
         remoteRec &&
         cachedRec &&
@@ -910,7 +905,18 @@
       ) {
         return;
       }
-      if (!localTouchedAt || timestampOf(baseRec) >= localTouchedAt) return;
+      // Offline / logged-out edits change the row against the last cached
+      // cloud copy. That is enough proof — requiring lastAppliedFingerprint
+      // dropped every edit to an existing note at login (a logged-out session
+      // has no apply baseline), and requiring USER_EDITED_KEY dropped them
+      // when the iframe skipped a stamp. Clocks are only the fallback when
+      // this device has never cached the row (first login on this browser).
+      const editedSinceCache = Boolean(
+        cachedRec && !sameRecordContent(local, cachedRec)
+      );
+      const editedByClock =
+        Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
+      if (!editedSinceCache && !editedByClock) return;
       const merged = contentAwareRecord(baseRec, stamp(local));
       if (!sameRecordContent(merged, baseRec)) {
         adopted.set(key, merged);
