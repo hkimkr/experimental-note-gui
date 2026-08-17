@@ -181,6 +181,63 @@ check("며칠 전 스냅샷을 든 기기가 재접속해도 최신 클라우드
   assert.strictEqual(result.notePurposes["note-1"], "클라우드에 있는 내용");
 });
 
+check("페이지를 열며 다시 보낸 저장본은 신선도 증거가 되지 않는다", () => {
+  const storedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "저장본")] })] });
+  // 저장본을 그대로 다시 보낸 in-flight 스냅샷: 저장 시각(500)이 그대로여야 한다.
+  assert.strictEqual(
+    api.localFreshnessAt({ pendingRaw: storedRaw, storedRaw, storedUpdatedAt: 500, now: 9000 }),
+    500
+  );
+  // 키 순서만 다른 같은 내용도 마찬가지.
+  const reverseKeys = (value) =>
+    Array.isArray(value)
+      ? value.map(reverseKeys)
+      : value && typeof value === "object"
+        ? Object.fromEntries(Object.keys(value).reverse().map((k) => [k, reverseKeys(value[k])]))
+        : value;
+  const reordered = JSON.stringify(reverseKeys(JSON.parse(storedRaw)));
+  assert.notStrictEqual(reordered, storedRaw);
+  assert.strictEqual(
+    api.localFreshnessAt({ pendingRaw: reordered, storedRaw, storedUpdatedAt: 500, now: 9000 }),
+    500
+  );
+  // in-flight 스냅샷이 없으면 저장 시각을 그대로 쓴다. 시각이 없으면 증거 없음(0).
+  assert.strictEqual(api.localFreshnessAt({ storedRaw, storedUpdatedAt: 500, now: 9000 }), 500);
+  assert.strictEqual(api.localFreshnessAt({ storedRaw, storedUpdatedAt: 0, now: 9000 }), 0);
+});
+
+check("저장본과 다른 in-flight 스냅샷(아직 안 쓴 편집)은 지금 시각을 증거로 삼는다", () => {
+  const storedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "저장본")] })] });
+  const editedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "방금 고친 내용")] })] });
+  assert.strictEqual(
+    api.localFreshnessAt({ pendingRaw: editedRaw, storedRaw, storedUpdatedAt: 500, now: 9000 }),
+    9000
+  );
+});
+
+check("오래된 기기가 새로 열려 저장본을 다시 보내도 최신 클라우드를 덮지 않는다", () => {
+  const daysOldLocal = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "3일 전에 쓰던 내용")] })],
+  };
+  const storedRaw = JSON.stringify(daysOldLocal);
+  // 예전 코드는 in-flight 스냅샷만 있으면 Date.now()를 증거로 삼아 이 게이트를 항상 통과시켰다.
+  const localUpdatedAt = api.localFreshnessAt({
+    pendingRaw: storedRaw,
+    storedRaw,
+    storedUpdatedAt: 500,
+    now: 9000,
+  });
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    localStore: daysOldLocal,
+    // 지문이 마지막 적용본과 다르다고 가정(배포로 정규화 형태가 바뀐 경우 등).
+    lastAppliedFingerprint: "something-else",
+    localUpdatedAt,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "클라우드에 있는 내용");
+});
+
 check("다른 기기가 보던 프로젝트가 이 기기의 화면을 끌고 가지 않는다", () => {
   const twoProjectCloud = {
     activeProjectId: "project-2",

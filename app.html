@@ -2692,7 +2692,10 @@
         const [toastMsg, setToastMsg] = useState("");
         const [sharedRoles, setSharedRoles] = useState([]);
         const [incomingInvites, setIncomingInvites] = useState([]);
-        const skipRef = useRef(false);
+        // Starts true so the mount effect does not re-save (and re-post) the
+        // snapshot that was just loaded: that write stamped LOCAL_UPDATED_KEY
+        // with "now" and made a days-old device look freshly edited.
+        const skipRef = useRef(true);
         const storeRef = useRef(store);
         storeRef.current = store;
         const loadCurrentView = () => {
@@ -2792,6 +2795,9 @@
           const flush = () => {
             try {
               const raw = JSON.stringify(storeRef.current);
+              // Nothing new since the last save: leaving the tab must not
+              // re-stamp the stored snapshot as freshly edited.
+              if (raw === localStorage.getItem(STORAGE_KEY)) return;
               localStorage.setItem(STORAGE_KEY, raw);
               localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
               localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
@@ -2822,7 +2828,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.3.0</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.3.1</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>

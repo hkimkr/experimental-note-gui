@@ -1,7 +1,8 @@
-// Experimental Note GUI v4.3.0 — read every page of the cloud (a truncated
-// response made real rows look new and got overwritten by older local copies),
-// and require proof that this device edited a row after the cloud wrote it
-// before local content may replace it.
+// Experimental Note GUI v4.3.1 — the "this device edited after the cloud"
+// proof (rule 5) must come from a real edit: an in-flight iframe snapshot that
+// merely re-serialises what is already stored is not evidence of freshness.
+// (v4.3.0: read every page of the cloud; require edit-after-cloud proof before
+// local content may replace an existing row.)
 (() => {
   "use strict";
 
@@ -1239,6 +1240,17 @@
     if (message) setStatus(message);
   }
 
+  // Rule 5 evidence. `pendingRaw` is a snapshot the iframe posted before the
+  // cloud was read. The iframe re-posts its stored snapshot on plain load, so
+  // an in-flight payload only proves freshness when it differs from what is
+  // already stored (i.e. it carries an edit that has not been written yet).
+  function localFreshnessAt({ pendingRaw = "", storedRaw = "", storedUpdatedAt = 0, now = Date.now() }) {
+    const stored = Number(storedUpdatedAt) || 0;
+    if (!pendingRaw) return stored;
+    if (fingerprintRaw(pendingRaw) === fingerprintRaw(storedRaw || "")) return stored;
+    return now;
+  }
+
   // Supabase caps a single response (1000 rows by default). An unpaged fetch
   // silently returned a partial cloud, and rows beyond the cap looked like
   // entities the cloud had never seen — so this device re-uploaded its older
@@ -2303,9 +2315,13 @@
     }
     const storedLocalUpdatedAt =
       Number(localStorage.getItem(LOCAL_UPDATED_KEY)) || 0;
-    // An in-flight payload from the iframe is by definition current, so it
-    // carries the freshness this device is allowed to claim.
-    const localTouchedAt = pendingLocalRaw ? Date.now() : storedLocalUpdatedAt;
+    // An in-flight payload counts as fresh only if it differs from the stored
+    // snapshot; a re-post of the stored snapshot (plain page load) does not.
+    const localTouchedAt = localFreshnessAt({
+      pendingRaw: pendingLocalRaw,
+      storedRaw: localRaw,
+      storedUpdatedAt: storedLocalUpdatedAt,
+    });
     const localUpdatedAt = storedLocalUpdatedAt || Date.now();
     const localRecords = localStore
       ? storeToRecords(
@@ -2727,6 +2743,9 @@
       },
       fingerprintStore(store) {
         return fingerprintValue(store);
+      },
+      localFreshnessAt(input) {
+        return localFreshnessAt(input);
       },
       // Which rows a given app snapshot would remove, given what this device
       // currently holds. Used to verify that stale or partial snapshots can
