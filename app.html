@@ -93,6 +93,11 @@
 
       const STORAGE_KEY = "hamin-exp-note-v1";
       const LOCAL_UPDATED_KEY = "hamin-exp-note-v1-local-updated-at";
+      // When the user last actually changed something. LOCAL_UPDATED_KEY means
+      // "the local store was written for any reason" — including a write that
+      // merely stores what the cloud just sent — so it cannot serve as proof
+      // that this device holds edits the cloud has not seen (sync rule 5).
+      const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
       const PENDING_SYNC_KEY = "hamin-exp-note-v1-pending-sync";
       const VIEW_STORAGE_KEY = "exp-note-current-view";
       const VALID_VIEWS = ["protocol", "notes", "memo", "inventory"];
@@ -2783,9 +2788,14 @@
           let raw = "";
           try {
             raw = JSON.stringify(store);
+            // The mount and cloud-apply paths are already excluded by skipRef;
+            // a re-render that serialises to the stored snapshot is not an edit
+            // either, so only a real content change stamps USER_EDITED_KEY.
+            const edited = raw !== localStorage.getItem(STORAGE_KEY);
             if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
             localStorage.setItem(STORAGE_KEY, raw);
             localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+            if (edited) localStorage.setItem(USER_EDITED_KEY, String(Date.now()));
             localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
             setSaveState("이 기기에 저장됨");
           } catch { setSaveState("저장 실패"); toast("저장 공간 확인"); }
@@ -2800,6 +2810,9 @@
               if (raw === localStorage.getItem(STORAGE_KEY)) return;
               localStorage.setItem(STORAGE_KEY, raw);
               localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
+              // Past the guard above the store really did change, i.e. the user
+              // edited something that was not written yet.
+              localStorage.setItem(USER_EDITED_KEY, String(Date.now()));
               localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
               if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
             } catch {}
@@ -2828,7 +2841,7 @@
           <div className="app">
             <header className="header no-print">
               <div className="header-inner">
-                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.3.1</small></div></button>
+                <button className="brand" style={{ border: 0, background: "transparent", padding: 0, textAlign: "left" }} onClick={() => setScreen("library")}><span className="brand-mark"><img src="./assets/icon-192.png?v=3.5.0" alt="" /></span><div><strong>실험 노트</strong><small>Experimental Note GUI · ver4.3.2</small></div></button>
                 {screen === "tool" && <nav className="nav" aria-label="주요 보기">
                   {[["protocol","프로토콜"],["notes","실험 노트"],["memo","실험 메모"],["inventory","재고 관리"]].map(([v,l]) => (
                     <button key={v} className={view === v ? "active" : ""} onClick={() => setView(v)}>{l}</button>
