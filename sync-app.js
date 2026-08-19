@@ -1,7 +1,14 @@
-// Experimental Note GUI v4.3.4 — offline / logged-out edits to an existing
-// note must survive login. Proof is the row differing from the last cached
-// cloud copy; lastAppliedFingerprint and USER_EDITED_KEY were dropping that
-// work because a logged-out session has no apply baseline.
+// Experimental Note GUI v4.3.5 — the cached copy is only evidence that the
+// cloud moved on when the remote row is NEWER than the cache. queueRecords
+// writes pending (not yet uploaded) edits into the records cache too, so a
+// phone that edited and was closed before its upload finished came back to a
+// cache equal to its own edit while the cloud still held the old row — and
+// v4.3.3's "unchanged vs cache while remote moved" rule read that as another
+// device's work, reverted the screen and erased the outbox. Timestamps break
+// the tie: contamination is cache-newer-than-remote, a genuine remote update
+// is remote-newer-than-cache.
+// (v4.3.4: offline / logged-out edits to an existing note must survive login;
+// proof is the row differing from the last cached cloud copy.)
 // overlay a newer cloud row from another device (phone saved, desktop refresh
 // kept showing the old copy). HTML/JS are network-first so a desktop service
 // worker cannot stay on an old client. An all-deleted cloud is a definite
@@ -895,13 +902,17 @@
       const baseRec = remoteRec || cachedRec;
       if (sameRecordContent(local, baseRec)) return;
       // This device did not change the row: the payload still matches the
-      // last cloud copy we cached. A different remote payload is another
-      // device's work and must not be overlaid by this snapshot.
+      // last cloud copy we cached, AND the remote row is newer than that
+      // cache — the cloud really moved on (another device's work). When the
+      // cache is newer than the remote it is not cloud evidence at all: it is
+      // this device's own pending edit that queueRecords wrote into the cache
+      // before the upload finished, and dropping it reverted phone edits.
       if (
         remoteRec &&
         cachedRec &&
         sameRecordContent(local, cachedRec) &&
-        !sameRecordContent(remoteRec, cachedRec)
+        !sameRecordContent(remoteRec, cachedRec) &&
+        timestampOf(remoteRec) >= timestampOf(cachedRec)
       ) {
         return;
       }
@@ -951,7 +962,13 @@
         remoteRec &&
         cachedRec &&
         sameRecordContent(record, cachedRec) &&
-        !sameRecordContent(remoteRec, cachedRec)
+        !sameRecordContent(remoteRec, cachedRec) &&
+        // The cache proves the cloud moved on only when the remote row is
+        // newer than the cache. A cache newer than the remote is this
+        // device's own pending edit (queueRecords stores queued rows in the
+        // records cache too) — dropping that erased the very upload the
+        // outbox was holding, so phone edits vanished on reopen.
+        timestampOf(remoteRec) >= timestampOf(cachedRec)
       ) {
         return;
       }
@@ -2871,6 +2888,9 @@
         remoteFetched = true,
         lastAppliedFingerprint = "",
         remoteTombstoneKeys = [],
+        // When the cloud rows were written. 1000 keeps old scenarios intact;
+        // pass a value above cached (2000) to model "the cloud moved on".
+        remoteTime = 1000,
         // Tombstone every cloud row: the account someone emptied from another
         // device. Off by default so existing scenarios keep their cloud intact.
         remoteAllDeleted = false,
@@ -2885,7 +2905,7 @@
           store
             ? storeToRecords(store, new Date(time).toISOString(), source)
             : new Map();
-        const remote = recordsFor(remoteStore, 1000, "cloud-device");
+        const remote = recordsFor(remoteStore, remoteTime, "cloud-device");
         const tombstoneKeys = remoteAllDeleted
           ? [...remote.keys()]
           : remoteTombstoneKeys;

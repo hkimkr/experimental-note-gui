@@ -684,6 +684,9 @@ check("다른 기기가 올린 최신은 이 기기의 옛 화면에 가려지�
   };
   const result = api.simulate({
     remoteStore: phoneLatest,
+    // 서버의 LWW upsert 는 더 새로운 updated_at 만 받아들이므로, 클라우드가 움직였다면
+    // 원격 행은 언제나 이 기기의 캐시(예전 조회분)보다 최신이다.
+    remoteTime: 5000,
     cachedStore: cloudStore,
     localStore: desktopOld,
     lastAppliedFingerprint: api.fingerprintStore(cloudStore),
@@ -747,6 +750,8 @@ check("캐시와 같은 아웃박스는 다른 기기의 최신 클라우드를 
   };
   const result = api.simulate({
     remoteStore: phoneLatest,
+    // 실제 상황: 캐시는 예전 클라우드를 읽어 둔 것(옛 시각), 핸드폰의 새 쓰기가 더 최신.
+    remoteTime: 5000,
     cachedStore: cloudStore,
     outboxStore: cloudStore,
     outboxIntent: true,
@@ -754,6 +759,43 @@ check("캐시와 같은 아웃박스는 다른 기기의 최신 클라우드를 
     lastAppliedFingerprint: api.fingerprintStore(cloudStore),
   });
   assert.strictEqual(result.notePurposes["note-1"], "핸드폰에서 고친 내용");
+});
+
+check("업로드 전에 앱이 닫혀도 폰에서 고친 내용은 재진입 때 유지된다", () => {
+  // queueRecords 는 대기 중 편집을 기록 캐시(RECORDS_STORE)에도 쓴다. 업로드가 끝나기 전에
+  // 앱이 닫히면 다음 연결에서 캐시 = 내 편집본, 원격 = 옛 행이 된다. 캐시가 원격보다
+  // 새것이면 "클라우드가 움직였다"는 증거가 아니라 이 기기의 대기 편집이다.
+  const edited = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "폰에서 고친 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,          // 옛 서버 상태 (t=1000)
+    cachedStore: edited,              // 오염된 캐시 (t=2000)
+    outboxStore: edited,              // 업로드 대기 (t=4000)
+    outboxIntent: true,
+    localStore: edited,
+    lastAppliedFingerprint: api.fingerprintStore(edited),
+    localUpdatedAt: 5000,
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "폰에서 고친 내용");
+  assert.ok(result.outboxCount > 0, "대기 중 업로드가 지워지면 안 됨");
+});
+
+check("아웃박스가 유실돼도 오염된 캐시+편집 키만으로 폰 편집이 살아남는다", () => {
+  const edited = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "폰에서 고친 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    cachedStore: edited,
+    localStore: edited,
+    // 마지막으로 화면에 적용된 것은 편집 전 클라우드 상태다 (편집은 그 뒤에 일어남).
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 5000,             // USER_EDITED_KEY
+  });
+  assert.strictEqual(result.notePurposes["note-1"], "폰에서 고친 내용");
 });
 
 // --- Report ---------------------------------------------------------------
