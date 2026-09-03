@@ -391,7 +391,7 @@ check("빈 로컬 상태가 클라우드 내용을 지우지 않는다", () => {
 
 // --- Rule 3: deletions require proof --------------------------------------
 
-check("스냅샷에서 노트가 빠지면 실제 삭제로 처리된다", () => {
+check("스냅샷에서 노트가 빠져도 앱의 삭제 신호가 없으면 지우지 않고 보류한다", () => {
   const afterDelete = {
     activeProjectId: "project-1",
     projects: [
@@ -402,7 +402,24 @@ check("스냅샷에서 노트가 빠지면 실제 삭제로 처리된다", () =>
     currentStore: cloudStore,
     snapshotStore: afterDelete,
   });
+  equalList(removed, []);
+  equalList(removed.held, ["project_note::project-1:note-1"]);
+});
+
+check("앱이 사용자의 삭제를 알린 노트만 실제로 지운다", () => {
+  const afterDelete = {
+    activeProjectId: "project-1",
+    projects: [
+      project({ experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }] }),
+    ],
+  };
+  const removed = api.deletionPlan({
+    currentStore: cloudStore,
+    snapshotStore: afterDelete,
+    approvedItemKeys: ["project_note::project-1:note-1"],
+  });
   equalList(removed, ["project_note::project-1:note-1"]);
+  equalList(removed.held, []);
 });
 
 check("프로젝트가 통째로 빠진 스냅샷은 아무것도 지우지 않는다", () => {
@@ -796,6 +813,107 @@ check("아웃박스가 유실돼도 오염된 캐시+편집 키만으로 폰 편
     localUpdatedAt: 5000,             // USER_EDITED_KEY
   });
   assert.strictEqual(result.notePurposes["note-1"], "폰에서 고친 내용");
+});
+
+
+// --- v4.4.0: 함부로 지우지 않기 · 충돌은 검토로 ---------------------------------
+
+check("새 노트가 캐시에만 남고 아웃박스가 유실돼도 재접속 때 살아남아 다시 올라간다", () => {
+  const withNew = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        notes: [note("note-1", "클라우드에 있는 내용"), note("note-2", "폰에서 새로 쓴 노트")],
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [] }],
+      }),
+    ],
+  };
+  // cachedStore 는 storeToRecords 로 만들어져 intent 스탬프가 없으므로, 실제 상황
+  // (queueRecords 가 캐시에 쓴 intent 행)은 outboxIntent 캐시로 모델링한다.
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    cachedStore: withNew,
+    cachedIntent: true,
+    localStore: withNew,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 5000,
+  });
+  assert.ok(result.noteIds.includes("note-2"), "새 노트가 유지되어야 함");
+  assert.ok(result.outboxCount > 0, "새 노트가 다시 업로드 대기해야 함");
+});
+
+check("실험 행이 아직 없는 프로토콜은 '앱에 보여 준 행'으로 기록되지 않는다", () => {
+  const withProto = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [{ id: "proto-1", name: "새 프로토콜", versions: [] }] }],
+      }),
+    ],
+  };
+  const records = api.recordsOf(withProto);
+  records.delete("project_experiment::project-1:exp-1"); // 실험 행이 나중에 도착하는 상황
+  const rendered = api.renderedKeys(records);
+  assert.ok(!rendered.includes("experiment_protocol::project-1:exp-1:proto-1"), "화면에 못 실은 프로토콜은 보여 준 행이 아님");
+});
+
+check("두 기기가 같은 노트를 동시에 고치면 합치되 검토 항목으로 남긴다", () => {
+  const remoteEdited = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "다른 기기에서 고친 내용")] })],
+  };
+  const localEdited = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "이 기기에서 고친 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: remoteEdited,
+    remoteTime: 5000,
+    cachedStore: cloudStore,
+    localStore: localEdited,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 6000,
+  });
+  assert.ok(result.noteIds.includes("note-1"), "노트가 사라지면 안 됨");
+  assert.strictEqual(result.conflictCount, 1, "충돌 1건이 검토로 남아야 함");
+  equalList(result.conflictVariants, ["concurrent"]);
+});
+
+check("다른 기기가 지운 노트를 이 기기가 고쳤다면 삭제는 유지하되 검토 항목으로 남긴다", () => {
+  const localEdited = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "이 기기에서 고친 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
+    cachedStore: cloudStore,
+    localStore: localEdited,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 6000,
+  });
+  assert.ok(!result.noteIds.includes("note-1"), "삭제는 그대로 유지");
+  assert.strictEqual(result.conflictCount, 1);
+  equalList(result.conflictVariants, ["remote-deleted"]);
+});
+
+check("사용자가 삭제한 실험은 그 안의 프로토콜 행까지 지운다", () => {
+  const withProto = {
+    activeProjectId: "project-1",
+    projects: [
+      project({
+        experiments: [{ id: "exp-1", name: "실험 A", protocols: [{ id: "proto-1", name: "프로토콜", versions: [] }] }],
+      }),
+    ],
+  };
+  const withoutExp = { activeProjectId: "project-1", projects: [project({ experiments: [] })] };
+  const removed = api.deletionPlan({
+    currentStore: withProto,
+    snapshotStore: withoutExp,
+    approvedItemKeys: ["project_experiment::project-1:exp-1"],
+    approvedExperimentIds: ["project-1:exp-1"],
+  });
+  equalList(removed, ["experiment_protocol::project-1:exp-1:proto-1", "project_experiment::project-1:exp-1"]);
 });
 
 // --- Report ---------------------------------------------------------------

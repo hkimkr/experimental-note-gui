@@ -242,6 +242,97 @@ input {
   overflow-wrap: anywhere;
 }
 
+.cloud-review {
+  margin: 0 0 12px;
+  padding: 12px;
+  background: #fff8ee;
+  border: 1px solid #f1d9b4;
+  border-radius: 11px;
+}
+
+.cloud-review-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8a5a12;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cloud-review-count {
+  min-width: 18px;
+  padding: 1px 6px;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+  background: #d9822b;
+  border-radius: 999px;
+}
+
+.cloud-review-hint {
+  margin: 6px 0 10px;
+  color: #7c6a4f;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cloud-review-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cloud-review-item {
+  padding: 10px 11px;
+  background: #fff;
+  border: 1px solid #efe1cc;
+  border-radius: 10px;
+}
+
+.cloud-review-title {
+  color: #34404c;
+  font-size: 13px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.cloud-review-desc {
+  margin: 4px 0 8px;
+  color: #67727e;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cloud-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cloud-review-button {
+  padding: 7px 10px;
+  color: #4a5b9f;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #f5f7ff;
+  border: 1px solid #dce2ff;
+  border-radius: 9px;
+}
+
+.cloud-review-button.primary {
+  color: #fff;
+  background: #5b7cfa;
+  border-color: #5b7cfa;
+}
+
+.cloud-review-button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
 .cloud-status {
   margin: 12px 0;
   padding: 10px 12px;

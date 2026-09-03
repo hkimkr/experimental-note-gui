@@ -1,4 +1,7 @@
-// Experimental Note GUI v4.3.5 — the cached copy is only evidence that the
+// Experimental Note GUI v4.4.0 — nothing is deleted on a hunch: a row may be
+// tombstoned only when the app explicitly said the user deleted it; any other
+// disappearance and every concurrent edit is parked for review in the shell.
+// (v4.3.5 — the cached copy is only evidence that the
 // cloud moved on when the remote row is NEWER than the cache. queueRecords
 // writes pending (not yet uploaded) edits into the records cache too, so a
 // phone that edited and was closed before its upload finished came back to a
@@ -28,11 +31,13 @@
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
   const TAB_CHANNEL_NAME = "exp-note-sync-tabs-v1";
   const DB_NAME = "exp-note-sync-v1";
-  const DB_VERSION = 2;
+  const DB_VERSION = 3;
   const RECORDS_STORE = "records";
   const OUTBOX_STORE = "outbox";
   const SHARED_RECORDS_STORE = "shared_records";
   const SHARED_OUTBOX_STORE = "shared_outbox";
+  /** 검토 대기: 설명 없는 사라짐(hold) · 동시 편집/원격 삭제 충돌(conflict) */
+  const REVIEW_STORE = "review";
   const INTENT_CLIENT_PREFIX = "intent-v3:";
   const DELETE_INTENT_CLIENT_PREFIX = "delete-v3:";
   const SUPABASE_URL = "https://wajhlnpyxcnhoybwtdqe.supabase.co";
@@ -99,6 +104,8 @@
   let appEditingSince = 0;
   let uploadAfterEditing = false;
   let reconnectAfterEditing = false;
+  /** 편집 중에 보류가 생겨 화면 재적용을 미룬 상태 */
+  let reapplyAfterEditing = false;
   let deferredRemoteRecords = new Map();
   let deferredRemoteMessage = "";
   let localCaptureChain = Promise.resolve();
@@ -115,6 +122,13 @@
   let connectBaselineRecords = new Map();
   let pushedOverFingerprint = "";
   const approvedProjectDeletions = new Set();
+  /** 앱이 사용자의 삭제를 명시적으로 알린 항목 키 (type::id) */
+  const approvedItemDeletions = new Set();
+  /** 사용자가 삭제한 실험 (projectId:experimentId) — 그 안의 프로토콜 행도 함께 정리 */
+  const approvedExperimentDeletions = new Set();
+  /** 이미 보류 목록에 올린 키 — 같은 항목으로 화면을 반복해서 되돌리지 않기 위함 */
+  const heldKeys = new Set();
+  let reviewCount = 0;
   let incomingProtocolTimer = null;
   let incomingProtocolLoading = false;
   let resumeSyncTimer = null;
@@ -860,6 +874,8 @@
     localStore,
     lastAppliedFingerprint = "",
     localUpdatedAt = 0,
+    // Filled with { kind: "conflict", ... } items the caller parks for review.
+    conflicts = null,
   }) {
     const adopted = new Map();
     if (!localRecords?.size) return adopted;
@@ -867,8 +883,18 @@
     if (lastAppliedFingerprint && localFp && localFp === lastAppliedFingerprint) {
       return adopted;
     }
-    const known = (key) =>
-      Boolean(remote?.get(key) || cached?.get(key) || outbox?.get(key));
+    // A cached row that carries this device's own intent stamp is a pending
+    // edit queueRecords mirrored into the cache, not proof the cloud has it.
+    // Counting it as "known" silently dropped a brand-new note whose outbox
+    // entry was lost (the app was killed between the two IndexedDB writes).
+    const known = (key) => {
+      const cachedRec = cached?.get(key);
+      return Boolean(
+        remote?.get(key) ||
+          outbox?.get(key) ||
+          (cachedRec && !isIntentRecord(cachedRec))
+      );
+    };
     const localTouchedAt = Number(localUpdatedAt) || 0;
 
     let sequence = 0;
@@ -893,6 +919,20 @@
       // local content back would resurrect an item deleted elsewhere.
       const cachedRec = cached?.get(key);
       if (remoteRec?.deleted_at || outboxRec?.deleted_at || cachedRec?.deleted_at) {
+        // The row was deleted elsewhere but this device edited it since the
+        // last cloud copy: keep the deletion on screen, but let the user
+        // decide in the review list instead of losing the edit silently.
+        if (
+          conflicts &&
+          remoteRec?.deleted_at &&
+          cachedRec &&
+          !cachedRec.deleted_at &&
+          !sameRecordContent(local, cachedRec)
+        ) {
+          conflicts.push(
+            makeConflict("remote-deleted", key, stamp(local), remoteRec, remoteRec)
+          );
+        }
         return;
       }
       if (!known(key)) {
@@ -928,12 +968,40 @@
       const editedByClock =
         Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
       if (!editedSinceCache && !editedByClock) return;
-      const merged = contentAwareRecord(baseRec, stamp(local));
+      const mine = stamp(local);
+      const merged = contentAwareRecord(baseRec, mine);
+      // Both sides moved since the last cloud copy this device saw: a real
+      // concurrent edit. The merge is applied so nothing is lost on screen,
+      // and both full versions are parked so the user can pick one.
+      if (
+        conflicts &&
+        remoteRec &&
+        cachedRec &&
+        !sameRecordContent(remoteRec, cachedRec) &&
+        !sameRecordContent(local, remoteRec)
+      ) {
+        conflicts.push(makeConflict("concurrent", key, mine, remoteRec, merged));
+      }
       if (!sameRecordContent(merged, baseRec)) {
         adopted.set(key, merged);
       }
     });
     return adopted;
+  }
+
+  /** 검토 항목 (충돌) 하나 */
+  function makeConflict(variant, key, mine, theirs, applied) {
+    return {
+      kind: "conflict",
+      variant,
+      key,
+      entity_type: (mine || theirs)?.entity_type,
+      entity_id: (mine || theirs)?.entity_id,
+      mine: clone(mine),
+      theirs: clone(theirs),
+      applied: clone(applied),
+      at: Date.now(),
+    };
   }
 
   // Cloud deletions have to survive a merge that is otherwise led by
@@ -1067,6 +1135,7 @@
       };
     }
 
+    const conflicts = [];
     const unsyncedLocal = dropIfUnchangedWhileRemoteMoved(
       adoptUnsyncedLocalRecords({
         localRecords: mergeRecordMaps(localRecords, pendingRecords),
@@ -1076,6 +1145,7 @@
         localStore,
         lastAppliedFingerprint,
         localUpdatedAt,
+        conflicts,
       }),
       remote,
       cached
@@ -1095,6 +1165,7 @@
       records: mergeRecordMaps(merged, repairs),
       outbox: nextOutbox,
       reason,
+      conflicts,
     };
   }
 
@@ -1114,6 +1185,9 @@
         }
         if (!db.objectStoreNames.contains(SHARED_OUTBOX_STORE)) {
           db.createObjectStore(SHARED_OUTBOX_STORE, { keyPath: "local_key" });
+        }
+        if (!db.objectStoreNames.contains(REVIEW_STORE)) {
+          db.createObjectStore(REVIEW_STORE, { keyPath: "review_key" });
         }
       };
       request.onsuccess = () => resolve(request.result);
@@ -1155,6 +1229,99 @@
           local_key: localRecordKey(userId, record),
         });
       });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  /**
+   * 여러 저장소에 한 트랜잭션으로 씁니다. queueRecords 가 캐시와 아웃박스를
+   * 따로 쓰다가 앱이 죽으면 캐시에만 남은 행이 "클라우드가 아는 행"으로 오인돼
+   * 새 노트가 사라졌습니다. 둘은 함께 커밋되거나 함께 실패해야 합니다.
+   */
+  async function putStoredRecordsAtomic(userId, writes) {
+    const active = writes.filter(([, records]) => records?.length);
+    if (!active.length) return;
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(
+        active.map(([storeName]) => storeName),
+        "readwrite"
+      );
+      active.forEach(([storeName, records, keyOf]) => {
+        const objectStore = transaction.objectStore(storeName);
+        records.forEach((record) => {
+          objectStore.put({
+            ...clone(record),
+            user_id: userId,
+            local_key: keyOf(userId, record),
+          });
+        });
+      });
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  /** 아웃박스에서 특정 키를 시각과 무관하게 제거 (충돌에서 상대 버전을 택했을 때) */
+  async function removeOutboxKeys(userId, keys) {
+    if (!keys?.length) return;
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(OUTBOX_STORE, "readwrite");
+      const objectStore = transaction.objectStore(OUTBOX_STORE);
+      keys.forEach((key) => objectStore.delete(`${userId}|${key}`));
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  // --- 검토 대기 저장소 ---------------------------------------------------
+  const reviewKeyOf = (userId, item) => `${userId}|${item.kind}|${item.key}`;
+
+  async function getReviewItems(userId) {
+    const db = await openSyncDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(REVIEW_STORE, "readonly");
+      const request = transaction.objectStore(REVIEW_STORE).getAll();
+      request.onsuccess = () =>
+        resolve(
+          (request.result || [])
+            .filter((entry) => entry.user_id === userId)
+            .sort((a, b) => (b.at || 0) - (a.at || 0))
+        );
+      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => db.close();
+    });
+  }
+
+  async function putReviewItems(userId, items) {
+    if (!items?.length) return;
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(REVIEW_STORE, "readwrite");
+      const objectStore = transaction.objectStore(REVIEW_STORE);
+      items.forEach((item) =>
+        objectStore.put({
+          ...clone(item),
+          user_id: userId,
+          review_key: reviewKeyOf(userId, item),
+        })
+      );
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+
+  async function deleteReviewItem(userId, item) {
+    const db = await openSyncDb();
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction(REVIEW_STORE, "readwrite");
+      transaction.objectStore(REVIEW_STORE).delete(reviewKeyOf(userId, item));
       transaction.oncomplete = resolve;
       transaction.onerror = () => reject(transaction.error);
     });
@@ -1317,9 +1484,13 @@
     signOutButton.disabled = busy;
   };
 
+  let lastStatusMessage = "";
   const setStatus = (message) => {
+    lastStatusMessage = String(message || "");
     statusBox.textContent = message;
-    if (currentSession) label.textContent = message;
+    if (currentSession) {
+      label.textContent = reviewCount ? `${message} · 검토 ${reviewCount}` : message;
+    }
     frame?.contentWindow?.postMessage(
       { type: "exp-note-sync-status", message: String(message || "") },
       window.location.origin
@@ -1335,6 +1506,156 @@
     }).format(new Date());
     setStatus(`이 기기 반영됨 · ${time}`);
   };
+
+  // --- 검토 패널 -----------------------------------------------------------
+  const reviewBox = document.getElementById("cloud-review");
+  const reviewList = document.getElementById("cloud-review-list");
+  const reviewCountBox = document.getElementById("cloud-review-count");
+  const ENTITY_LABEL = {
+    project: "프로젝트",
+    project_experiment: "실험",
+    experiment_protocol: "프로토콜",
+    project_note: "실험 노트",
+    project_inventory: "재고",
+    project_memo: "메모",
+    project_scratch: "메모장",
+    root: "설정",
+  };
+  const describeRecord = (record) => {
+    const item = record?.payload?.item || record?.payload || {};
+    const name = item.title || item.name || "";
+    const type = ENTITY_LABEL[record?.entity_type] || record?.entity_type || "항목";
+    return name ? `${type} · ${String(name).slice(0, 60)}` : type;
+  };
+  const changedFields = (left, right) => {
+    const a = left?.payload?.item || left?.payload || {};
+    const b = right?.payload?.item || right?.payload || {};
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])]
+      .filter((k) => k !== "id" && fingerprintValue(a[k]) !== fingerprintValue(b[k]))
+      .slice(0, 6);
+  };
+  const fmtTime = (iso) => {
+    const t = Date.parse(iso || "");
+    if (!t) return "";
+    return new Intl.DateTimeFormat("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(t));
+  };
+
+  function renderReview(items) {
+    reviewCount = items.length;
+    if (reviewCountBox) reviewCountBox.textContent = items.length ? String(items.length) : "";
+    if (reviewBox) reviewBox.hidden = !items.length;
+    if (label && currentSession) {
+      label.textContent = reviewCount ? `${lastStatusMessage} · 검토 ${reviewCount}` : lastStatusMessage;
+    }
+    if (!reviewList) return;
+    reviewList.innerHTML = "";
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.className = "cloud-review-item";
+      const title = document.createElement("div");
+      title.className = "cloud-review-title";
+      title.textContent = describeRecord(item.theirs || item.mine);
+      const desc = document.createElement("div");
+      desc.className = "cloud-review-desc";
+      const actions = document.createElement("div");
+      actions.className = "cloud-review-actions";
+      const button = (text, action, primary = false) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = `cloud-review-button${primary ? " primary" : ""}`;
+        b.textContent = text;
+        b.addEventListener("click", () => {
+          actions.querySelectorAll("button").forEach((x) => (x.disabled = true));
+          void resolveReview(item, action).catch((error) => {
+            errorBox.textContent = `검토 처리 실패: ${error?.message || error}`;
+            actions.querySelectorAll("button").forEach((x) => (x.disabled = false));
+          });
+        });
+        actions.appendChild(b);
+      };
+      if (item.kind === "hold") {
+        desc.textContent = `이 기기 화면에서 설명 없이 사라졌습니다 (${fmtTime(new Date(item.at).toISOString())}). 확인 전까지는 그대로 남아 있습니다.`;
+        button("유지", "keep", true);
+        button("삭제 확정", "delete");
+      } else if (item.variant === "remote-deleted") {
+        desc.textContent = `다른 기기에서 삭제됐지만 이 기기에는 올리지 못한 편집이 있습니다 (내 편집 ${fmtTime(item.mine?.updated_at)}, 삭제 ${fmtTime(item.theirs?.updated_at)}).`;
+        button("내 편집으로 복원", "mine", true);
+        button("삭제 유지", "theirs");
+      } else {
+        const fields = changedFields(item.mine, item.theirs);
+        desc.textContent = `두 기기에서 동시에 고쳤습니다 (내 편집 ${fmtTime(item.mine?.updated_at)}, 다른 기기 ${fmtTime(item.theirs?.updated_at)}). 지금은 합친 내용이 보입니다.${fields.length ? ` 겹친 항목: ${fields.join(", ")}` : ""}`;
+        button("합친 내용 유지", "keep", true);
+        button("내 버전으로", "mine");
+        button("다른 기기 버전으로", "theirs");
+      }
+      li.appendChild(title);
+      li.appendChild(desc);
+      li.appendChild(actions);
+      reviewList.appendChild(li);
+    });
+  }
+
+  async function refreshReview() {
+    if (!initializedUserId) {
+      renderReview([]);
+      return;
+    }
+    let items = [];
+    try {
+      items = await getReviewItems(initializedUserId);
+    } catch {
+      items = [];
+    }
+    renderReview(items);
+  }
+
+  async function resolveReview(item, action) {
+    const userId = initializedUserId;
+    if (!userId) return;
+    const key = item.key;
+    if (item.kind === "hold") {
+      if (action === "delete") {
+        const existing = currentRecords.get(key) || item.theirs;
+        const now = Date.now();
+        const list = [tombstoneRecord(existing, key, now)];
+        if (existing.entity_type === "project_experiment") {
+          let n = 0;
+          currentRecords.forEach((rec, k) => {
+            if (
+              rec.entity_type === "experiment_protocol" &&
+              !rec.deleted_at &&
+              k.startsWith(`experiment_protocol::${existing.entity_id}:`)
+            ) {
+              n += 1;
+              list.push(tombstoneRecord(rec, k, now + n));
+            }
+          });
+        }
+        list.forEach((t) => currentRecords.set(recordKey(t), t));
+        await queueRecords(list);
+      }
+      heldKeys.delete(key);
+    } else if (action === "mine") {
+      const rec = {
+        ...clone(item.mine),
+        updated_at: new Date().toISOString(),
+        client_id: intentClientId,
+        local_intent: true,
+        deleted_at: null,
+      };
+      currentRecords.set(key, rec);
+      await queueRecords([rec]);
+    } else if (action === "theirs") {
+      const rec = clone(item.theirs);
+      currentRecords.set(key, rec);
+      await putStoredRecords(RECORDS_STORE, userId, [rec]);
+      await removeOutboxKeys(userId, [key]);
+    }
+    await deleteReviewItem(userId, item);
+    await refreshReview();
+    if (appEditing) reapplyAfterEditing = true;
+    else applyRecordsToApp(currentRecords, "검토 결과를 반영했습니다");
+  }
 
   const postStoreToApp = (store) => {
     if (!frame?.contentWindow || !store) return;
@@ -1367,10 +1688,11 @@
     lastObservedFingerprint = appliedFp;
     appliedFingerprint = appliedFp;
     // The app is about to display exactly these rows, so they become the
-    // baseline that a later snapshot is compared against.
-    lastSnapshotKeys = new Set(
-      [...records.keys()].filter((key) => !records.get(key)?.deleted_at)
-    );
+    // baseline a later snapshot is compared against. Derived from the store
+    // that is really pushed, not from the record map: a row the rebuild could
+    // not place (a protocol whose experiment row has not arrived yet) is not
+    // on screen, and treating it as "shown" let the next snapshot delete it.
+    lastSnapshotKeys = new Set(storeToRecords(store).keys());
     localStorage.setItem(STORAGE_KEY, raw);
     localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
     // Records what this device last received from the cloud, so a later
@@ -1793,6 +2115,17 @@
     incomingProtocolTimer = window.setInterval(fetchIncomingProtocols, 12000);
   };
 
+  const ENTITY_RANK = {
+    root: 0,
+    project: 1,
+    project_experiment: 2,
+    experiment_protocol: 3,
+    project_note: 4,
+    project_inventory: 5,
+    project_memo: 6,
+    project_scratch: 7,
+  };
+
   const rpcPayload = (records) =>
     records.map((record) => ({
       entity_type: record.entity_type,
@@ -1823,7 +2156,13 @@
     }
     const userId = currentSession.user.id;
     const outbox = await getStoredRecords(OUTBOX_STORE, userId);
-    const records = [...outbox.values()];
+    // Parents before children. IndexedDB returned protocol rows ahead of their
+    // experiment row, so a phone received an orphan protocol it could not show.
+    const records = [...outbox.values()].sort(
+      (a, b) =>
+        (ENTITY_RANK[a.entity_type] ?? 99) - (ENTITY_RANK[b.entity_type] ?? 99) ||
+        String(a.entity_id).localeCompare(String(b.entity_id))
+    );
     if (!records.length) {
       setStatus("클라우드 저장됨");
       return true;
@@ -1932,19 +2271,11 @@
     );
     const personal = records.filter((record) => !record.__projectId);
     const shared = records.filter((record) => record.__projectId);
-    await Promise.all([
-      personal.length
-        ? Promise.all([
-            putStoredRecords(RECORDS_STORE, userId, personal),
-            putStoredRecords(OUTBOX_STORE, userId, personal),
-          ])
-        : Promise.resolve(),
-      shared.length
-        ? Promise.all([
-            putStoredSharedRecords(SHARED_RECORDS_STORE, userId, shared),
-            putStoredSharedRecords(SHARED_OUTBOX_STORE, userId, shared),
-          ])
-        : Promise.resolve(),
+    await putStoredRecordsAtomic(userId, [
+      [RECORDS_STORE, personal, localRecordKey],
+      [OUTBOX_STORE, personal, localRecordKey],
+      [SHARED_RECORDS_STORE, shared, sharedLocalKey],
+      [SHARED_OUTBOX_STORE, shared, sharedLocalKey],
     ]);
     announceTabRecords(userId, records);
     setStatus(
@@ -1967,25 +2298,71 @@
   // Rule: an item is deleted only when the snapshot proves it. "Missing from
   // the snapshot" alone is not proof — a stale, partial, or other-tab snapshot
   // looks exactly the same and would wipe good data everywhere.
+  // Returns "delete" (tombstone now), "hold" (park for review, keep the row)
+  // or false (ignore). A row is deleted only when the app said the user
+  // deleted it (project / item signal). A row that merely vanished from a
+  // snapshot is held: the app may have failed to render it, the snapshot may
+  // be stale, or another device may have just added it.
   function canDeleteFromSnapshot(existing, key, desired, additiveOnly, seenKeys) {
     if (additiveOnly) return false;
-    // Deletion must be an observed transition: the app showed this row before
-    // and no longer does. A row this tab never displayed (for example one that
-    // just arrived from another tab or device) is not ours to remove.
-    if (!seenKeys || !seenKeys.has(key)) return false;
     // The root row exists in every valid snapshot, so it is never removable.
     if (existing.entity_type === "root") return false;
     const projectId = recordProjectId(existing, key);
     if (!projectId) return false;
     if (existing.entity_type === "project") {
       // Whole projects disappear only when the user confirmed it in the app.
-      return approvedProjectDeletions.has(projectId);
+      return approvedProjectDeletions.has(projectId) ? "delete" : false;
     }
-    // A child (note, experiment, protocol, memo, inventory) may be deleted
-    // only when its project is still present in the snapshot, so we know the
-    // snapshot actually covers that project and simply no longer lists it.
-    if (desired.has(`project::${projectId}`)) return true;
-    return approvedProjectDeletions.has(projectId);
+    if (approvedProjectDeletions.has(projectId)) return "delete";
+    if (approvedItemDeletions.has(key)) return "delete";
+    if (existing.entity_type === "experiment_protocol") {
+      const experimentId = String(
+        existing.payload?.experiment_id || key.split("::")[1]?.split(":")[1] || ""
+      );
+      if (approvedExperimentDeletions.has(`${projectId}:${experimentId}`)) return "delete";
+    }
+    // Deletion must be an observed transition: the app showed this row before
+    // and no longer does. A row this tab never displayed (for example one that
+    // just arrived from another tab or device) is not ours to touch.
+    if (!seenKeys || !seenKeys.has(key)) return false;
+    // A partial snapshot (project missing) says nothing about its children.
+    if (!desired.has(`project::${projectId}`)) return false;
+    // An empty placeholder that vanished is not worth a review entry.
+    if (!hasMeaningfulValue(existing.payload)) return "delete";
+    return "hold";
+  }
+
+  /** 검토 항목 (보류): 설명 없이 화면에서 사라진 행 */
+  function makeHold(key, record) {
+    return {
+      kind: "hold",
+      variant: "vanished",
+      key,
+      entity_type: record.entity_type,
+      entity_id: record.entity_id,
+      mine: null,
+      theirs: clone(record),
+      applied: clone(record),
+      at: Date.now(),
+    };
+  }
+
+  /** 삭제 표식 행. parent/id 는 남겨 두어 payload 가 null 로 돌아와도 재구성 시 지울 수 있게 합니다. */
+  function tombstoneRecord(existing, key, when = Date.now()) {
+    return {
+      ...existing,
+      payload: existing.payload
+        ? {
+            parent_id: existing.payload.parent_id || recordProjectId(existing, key),
+            item_order: existing.payload.item_order,
+            item: { id: existing.payload.item?.id || key.split("::")[1]?.split(":").slice(1).join(":") },
+          }
+        : { parent_id: recordProjectId(existing, key) },
+      updated_at: new Date(when).toISOString(),
+      deleted_at: new Date(when).toISOString(),
+      client_id: deleteIntentClientId,
+      local_intent: true,
+    };
   }
 
   async function captureLocalChanges(raw, additiveOnly = false) {
@@ -2048,30 +2425,24 @@
       }
     });
 
+    const holds = [];
     currentRecords.forEach((existing, key) => {
       if (existing.deleted_at || desired.has(key)) return;
-      if (
-        !canDeleteFromSnapshot(existing, key, desired, additiveOnly, lastSnapshotKeys)
-      ) {
+      const verdict = canDeleteFromSnapshot(
+        existing,
+        key,
+        desired,
+        additiveOnly,
+        lastSnapshotKeys
+      );
+      if (!verdict) return;
+      if (verdict === "hold") {
+        if (!heldKeys.has(key)) holds.push(makeHold(key, existing));
+        heldKeys.add(key);
         return;
       }
       sequence += 1;
-      changed.push({
-        ...existing,
-        // Keep parent/id so a later full rebuild can still drop this row even
-        // if the cloud round-trip stores payload as null.
-        payload: existing.payload
-          ? {
-              parent_id: existing.payload.parent_id || recordProjectId(existing, key),
-              item_order: existing.payload.item_order,
-              item: { id: existing.payload.item?.id || key.split("::")[1]?.split(":").slice(1).join(":") },
-            }
-          : { parent_id: recordProjectId(existing, key) },
-        updated_at: new Date(now + sequence).toISOString(),
-        deleted_at: new Date(now + sequence).toISOString(),
-        client_id: deleteIntentClientId,
-        local_intent: true,
-      });
+      changed.push(tombstoneRecord(existing, key, now + sequence));
     });
 
     // Remember what the app was showing, so the next snapshot can be read as a
@@ -2084,6 +2455,14 @@
       return !membership || membership.role !== "viewer";
     });
     if (writable.length) await queueRecords(writable);
+    if (holds.length && initializedUserId) {
+      await putReviewItems(initializedUserId, holds);
+      await refreshReview();
+      // Put the held rows back on screen so nothing silently disappears;
+      // the review list decides whether they go for good.
+      if (appEditing) reapplyAfterEditing = true;
+      else applyRecordsToApp(currentRecords, `삭제 보류 ${holds.length}건 · 검토 필요`);
+    }
   }
 
   const queueLocalCapture = (raw, additiveOnly = false) => {
@@ -2173,13 +2552,34 @@
   async function mergeIncomingRecords(userId, incomingRecords, message = "") {
     const updates = [];
     const repairs = [];
+    const conflicts = [];
     let sequence = 0;
     const now = Date.now();
+    // Rows this device still has to upload. An incoming change to one of them
+    // is a real concurrent edit (or a deletion of what is being edited here).
+    let pendingOutbox = new Map();
+    try {
+      pendingOutbox = await getStoredRecords(OUTBOX_STORE, userId);
+    } catch {
+      pendingOutbox = new Map();
+    }
     incomingRecords.forEach((incoming) => {
       expandedRecords(incoming).forEach((expanded) => {
         const key = recordKey(expanded);
         const existing = currentRecords.get(key);
         const merged = contentAwareRecord(existing, expanded);
+        const pending = pendingOutbox.get(key);
+        if (pending && !pending.deleted_at && !sameRecordContent(pending, expanded)) {
+          conflicts.push(
+            makeConflict(
+              expanded.deleted_at ? "remote-deleted" : "concurrent",
+              key,
+              pending,
+              expanded,
+              merged
+            )
+          );
+        }
         merged.__projectId =
           merged.__projectId || expanded.__projectId || existing?.__projectId || null;
         if (!merged.__projectId) delete merged.__projectId;
@@ -2212,7 +2612,14 @@
       setStatus("내용이 있는 항목 우선 병합 · 클라우드 복구 중");
       await queueRecords(repairs);
     }
-    applyRecordsToApp(currentRecords, message);
+    if (conflicts.length) {
+      await putReviewItems(userId, conflicts);
+      await refreshReview();
+    }
+    applyRecordsToApp(
+      currentRecords,
+      conflicts.length ? `${message} · 충돌 ${conflicts.length}건 검토 필요` : message
+    );
   }
 
   async function flushDeferredRemote(raw = "") {
@@ -2236,6 +2643,10 @@
     if (uploadAfterEditing) {
       uploadAfterEditing = false;
       scheduleUpload(0);
+    }
+    if (reapplyAfterEditing && initializedUserId) {
+      reapplyAfterEditing = false;
+      applyRecordsToApp(currentRecords, "삭제 보류 항목을 다시 표시했습니다 · 검토 필요");
     }
   }
 
@@ -2559,6 +2970,9 @@
       remoteEmptyConfirmed,
     });
     currentRecords = initialState.records;
+    if (initialState.conflicts?.length) {
+      await putReviewItems(userId, initialState.conflicts);
+    }
     if (initialState.reason === "remote-empty-unverified") {
       setStatus("클라우드 확인 불가, 업로드 보류");
     } else if (initialState.reason === "meaningful-local-recovery") {
@@ -2577,6 +2991,25 @@
     // Only a read that succeeded may rewrite the outbox. Offline the resolved
     // outbox is the stored one unchanged, so there is nothing to write back.
     if (remoteFetched) {
+      // Rows another tab queued while this connect was running are not in the
+      // resolved outbox; a blind replace would drop them before upload.
+      try {
+        const latestOutbox = await getStoredRecords(OUTBOX_STORE, userId);
+        latestOutbox.forEach((record, key) => {
+          const seenAtStart = outbox.get(key);
+          const resolved = outboxPersonal.find((r) => recordKey(r) === key);
+          const newerThanStart =
+            !seenAtStart || timestampOf(record) > timestampOf(seenAtStart);
+          if (newerThanStart && (!resolved || timestampOf(record) > timestampOf(resolved))) {
+            const index = outboxPersonal.findIndex((r) => recordKey(r) === key);
+            if (index >= 0) outboxPersonal[index] = record;
+            else outboxPersonal.push(record);
+            currentRecords.set(key, contentAwareRecord(currentRecords.get(key), record));
+          }
+        });
+      } catch {
+        // Fall back to the resolved outbox alone.
+      }
       await Promise.all([
         replaceStoredRecords(OUTBOX_STORE, userId, outboxPersonal),
         replaceStoredSharedRecords(SHARED_OUTBOX_STORE, userId, outboxShared),
@@ -2598,6 +3031,8 @@
     // boot, or pre-merge content on reconnect) could be captured as an edit.
     captureGateUntilApply = true;
     initializedUserId = userId;
+    heldKeys.clear();
+    await refreshReview();
     // On first boot, discard the iframe's default snapshot. During a reconnect,
     // keep edits that truly arrived while the remote fetch was in flight. They
     // are merged additively because they predate the cloud state just fetched.
@@ -2664,6 +3099,11 @@
       pendingAppStore = null;
       pendingAppFingerprint = "";
       approvedProjectDeletions.clear();
+      approvedItemDeletions.clear();
+      approvedExperimentDeletions.clear();
+      heldKeys.clear();
+      reapplyAfterEditing = false;
+      renderReview([]);
       lastSnapshotKeys = null;
       if (ackGateTimer) window.clearTimeout(ackGateTimer);
       ackGateTimer = null;
@@ -2780,6 +3220,28 @@
       await removeProjectMember(event.data);
       return;
     }
+    if (event.data?.type === "exp-note-delete-item" && event.data.projectId) {
+      // The user confirmed deleting a note / experiment / memo / inventory
+      // item (or moved a protocol away). Only these rows may be tombstoned.
+      const projectId = String(event.data.projectId);
+      const itemId = String(event.data.itemId || "");
+      const type = String(event.data.entityType || "");
+      if (type === "experiment") {
+        approvedItemDeletions.add(`project_experiment::${projectId}:${itemId}`);
+        approvedExperimentDeletions.add(`${projectId}:${itemId}`);
+      } else if (type === "protocol") {
+        approvedItemDeletions.add(
+          `experiment_protocol::${projectId}:${String(event.data.experimentId || "")}:${itemId}`
+        );
+      } else if (type === "note") {
+        approvedItemDeletions.add(`project_note::${projectId}:${itemId}`);
+      } else if (type === "inventory") {
+        approvedItemDeletions.add(`project_inventory::${projectId}:${itemId}`);
+      } else if (type === "memo") {
+        approvedItemDeletions.add(`project_memo::${projectId}:${itemId}`);
+      }
+      return;
+    }
     if (
       event.data?.type === "exp-note-delete-project" &&
       event.data.projectId
@@ -2884,6 +3346,9 @@
         cachedStore = null,
         outboxStore = null,
         outboxIntent = false,
+        // Model a cache written by queueRecords (this device's own pending
+        // edit, intent-stamped) rather than a copy fetched from the cloud.
+        cachedIntent = false,
         localStore = null,
         remoteFetched = true,
         lastAppliedFingerprint = "",
@@ -2919,7 +3384,9 @@
             client_id: "cloud-device",
           });
         });
-        const cached = recordsFor(cachedStore, 2000, "cached-device");
+        const cached = cachedIntent
+          ? intentRecordsFromStore(cachedStore, 2000)
+          : recordsFor(cachedStore, 2000, "cached-device");
         const outbox = outboxIntent
           ? intentRecordsFromStore(outboxStore, 4000)
           : recordsFor(outboxStore, 4000, "legacy-phone");
@@ -2943,6 +3410,8 @@
         const visible = recordsToStore(resolved.records, localStore || {});
         return {
           reason: resolved.reason,
+          conflictCount: resolved.conflicts?.length || 0,
+          conflictVariants: (resolved.conflicts || []).map((c) => c.variant),
           contentScore: recordsContentScore(resolved.records),
           outboxCount: resolved.outbox.size,
           // How the cloud read was classified, so a test can assert the
@@ -2977,6 +3446,14 @@
       fingerprintStore(store) {
         return fingerprintValue(store);
       },
+      // Keys the shell would mark as "shown to the app" for a record set:
+      // what the rebuilt store really contains, not what the map holds.
+      renderedKeys(records) {
+        return [...storeToRecords(recordsToStore(records, {})).keys()];
+      },
+      recordsOf(store, time = 1000, source = "cloud-device") {
+        return storeToRecords(store, new Date(time).toISOString(), source);
+      },
       localFreshnessAt(input) {
         return localFreshnessAt(input);
       },
@@ -2992,6 +3469,11 @@
         currentStore,
         snapshotStore,
         approvedProjectIds = [],
+        // Item keys (type::id) the app reported as user-confirmed deletions.
+        approvedItemKeys = [],
+        // "projectId:experimentId" of experiments the user deleted (their
+        // protocol rows go with them).
+        approvedExperimentIds = [],
         additiveOnly = false,
         // Rows the app was showing before this snapshot. Defaults to
         // everything this device holds; pass a store to model a tab that
@@ -3014,20 +3496,38 @@
             : current.keys()
         );
         const previouslyApproved = [...approvedProjectDeletions];
+        const previouslyApprovedItems = [...approvedItemDeletions];
         approvedProjectDeletions.clear();
+        approvedItemDeletions.clear();
         approvedProjectIds.forEach((id) =>
           approvedProjectDeletions.add(String(id))
         );
+        approvedItemKeys.forEach((key) => approvedItemDeletions.add(String(key)));
+        const previouslyApprovedExperiments = [...approvedExperimentDeletions];
+        approvedExperimentDeletions.clear();
+        approvedExperimentIds.forEach((id) => approvedExperimentDeletions.add(String(id)));
         const removed = [];
+        const held = [];
         current.forEach((existing, key) => {
           if (existing.deleted_at || desired.has(key)) return;
-          if (
-            canDeleteFromSnapshot(existing, key, desired, additiveOnly, seenKeys)
-          ) {
-            removed.push(key);
-          }
+          const verdict = canDeleteFromSnapshot(
+            existing,
+            key,
+            desired,
+            additiveOnly,
+            seenKeys
+          );
+          if (verdict === "delete") removed.push(key);
+          else if (verdict === "hold") held.push(key);
         });
         approvedProjectDeletions.clear();
+        approvedItemDeletions.clear();
+        previouslyApprovedItems.forEach((key) => approvedItemDeletions.add(key));
+        approvedExperimentDeletions.clear();
+        previouslyApprovedExperiments.forEach((id) => approvedExperimentDeletions.add(id));
+        // Held keys ride along as a non-enumerable property so existing
+        // callers that compare the array still work.
+        Object.defineProperty(removed, "held", { value: held, enumerable: false });
         previouslyApproved.forEach((id) => approvedProjectDeletions.add(id));
         return removed.sort();
       },

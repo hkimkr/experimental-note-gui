@@ -376,6 +376,12 @@
         store.projects?.find((p) => p.id === store.activeProjectId) ||
         store.projects?.[0] ||
         emptyProject("기본 프로젝트", COLORS[0]);
+      // 사용자가 확인한 삭제를 동기화 셸에 알립니다. 셸은 이 신호가 있는 행만 지우고,
+      // 그 밖에 화면에서 사라진 행은 "검토 필요"로 보류합니다.
+      const signalDeleteItem = (entityType, projectId, itemId, experimentId = null) => {
+        if (window.parent === window) return;
+        window.parent.postMessage({ type: "exp-note-delete-item", entityType, projectId, itemId, experimentId }, window.location.origin);
+      };
       const updateProject = (setStore, projectId, fn) => setStore(s => ({
         ...s, projects: s.projects.map(p => p.id === projectId ? fn(p) : p),
       }));
@@ -419,6 +425,7 @@
         const detail = purpose ? `\n목적: ${purpose.slice(0, 80)}${purpose.length > 80 ? "…" : ""}` : "";
         if (!window.confirm(`“${name}” 실험 노트를 삭제할까요?${detail}\n\n실행 기록·결과·조건 라벨이 함께 삭제됩니다.`)) return;
         if (!window.confirm("정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+        signalDeleteItem("note", projectId, note.id);
         updateProject(setStore, projectId, p => ({
           ...p,
           notes: (p.notes || []).filter(n => n.id !== note.id),
@@ -1343,6 +1350,7 @@
             onShared={(mode, email) => {
               setShowShareModal(false);
               if (mode === "move") {
+                signalDeleteItem("protocol", project.id, protocol.id, experiment.id);
                 updateProject(setStore, project.id, p => ({ ...p, experiments: p.experiments.map(ex => ex.id === experiment.id ? { ...ex, protocols: ex.protocols.filter(pr => pr.id !== protocol.id) } : ex) }));
                 toast(`${email} 사용자에게 프로토콜을 이동했습니다`);
               } else {
@@ -1413,6 +1421,7 @@
           const protocolCount = experiment.protocols?.length || 0;
           const warning = protocolCount > 0 ? `\n이 안에는 프로토콜 ${protocolCount}개가 있으며 함께 삭제됩니다.` : "";
           if (!window.confirm(`“${experiment.name || "제목 없는 실험"}” 실험을 삭제할까요?${warning}\n\n삭제 후에는 되돌릴 수 없습니다.`)) return;
+          signalDeleteItem("experiment", project.id, experiment.id);
           patchProject(p => ({ ...p, experiments: p.experiments.filter(e => e.id !== experiment.id) }));
           if (selExp === experiment.id) { setSelProto(null); setSelExp(null); }
           toast("실험을 삭제했습니다");
@@ -2187,6 +2196,7 @@
         }));
         const removeMemo = (id) => {
           if (!confirm("이 메모를 삭제할까요?")) return;
+          signalDeleteItem("memo", project.id, id);
           updateProject(setStore, project.id, p => ({ ...p, memoSnapshots: (p.memoSnapshots || []).filter(m => m.id !== id) }));
           toast("메모를 삭제했습니다");
         };
@@ -2359,7 +2369,7 @@
                     <div className="inventory-level" style={{ color: INVENTORY_COLORS[it.level] }}>{INVENTORY_LEVELS[it.level]}</div>
                   </div>
                   <input className="field" value={it.notes} onChange={e => patchItem(it.id, { notes: e.target.value })} placeholder="메모" />
-                  <Button className="ghost danger" onClick={() => updateProject(setStore, project.id, p => ({ ...p, inventory: p.inventory.filter(x => x.id !== it.id) }))}>×</Button>
+                  <Button className="ghost danger" onClick={() => { signalDeleteItem("inventory", project.id, it.id); updateProject(setStore, project.id, p => ({ ...p, inventory: p.inventory.filter(x => x.id !== it.id) })); }}>×</Button>
                 </div>
                 <div className="inventory-check-row">
                   <span className="inventory-last-checked">{it.lastCheckedAt ? `마지막 확인 · ${fmtDateTime(it.lastCheckedAt)}` : "확인 기록 없음"}</span>

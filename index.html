@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Experimental Note GUI v4.3.5 deployment marker -->
+<!-- Experimental Note GUI v4.4.0 deployment marker -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -31,7 +31,7 @@
       <iframe
         id="exp-note-frame"
         class="planner-frame"
-        src="./app.html?v=4.3.5"
+        src="./app.html?v=4.4.0"
         title="실험 노트 GUI"
         allow="clipboard-read; clipboard-write"
       ></iframe>
@@ -99,6 +99,15 @@
                 <strong id="cloud-account-email"></strong>
               </div>
               <div class="cloud-status" id="cloud-status">클라우드 확인 중…</div>
+              <section class="cloud-review" id="cloud-review" hidden aria-live="polite">
+                <div class="cloud-review-head">
+                  검토 필요 <span class="cloud-review-count" id="cloud-review-count"></span>
+                </div>
+                <p class="cloud-review-hint">
+                  설명 없이 화면에서 사라진 항목과 다른 기기와 겹친 편집입니다. 여기서 확인하기 전에는 아무것도 지워지지 않습니다.
+                </p>
+                <ul class="cloud-review-list" id="cloud-review-list"></ul>
+              </section>
               <button class="cloud-auth-button" id="cloud-signout" type="button">로그아웃</button>
             </div>
           </div>
@@ -108,7 +117,7 @@
 
     <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./sync-app.js?v=4.3.5"></script>
+    <script src="./sync-app.js?v=4.4.0"></script>
     <script>
       (() => {
         const installButton = document.getElementById("app-install-launcher");
