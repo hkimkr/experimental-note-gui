@@ -916,6 +916,36 @@ check("사용자가 삭제한 실험은 그 안의 프로토콜 행까지 지운
   equalList(removed, ["experiment_protocol::project-1:exp-1:proto-1", "project_experiment::project-1:exp-1"]);
 });
 
+check("삭제 표식이 이미 캐시에 있어도 이 기기에 내용이 남아 있으면 복원 후보로 남긴다", () => {
+  const localHas = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "이 기기에만 남은 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
+    cachedStore: cloudStore,
+    cachedTombstoneKeys: ["project_note::project-1:note-1"],
+    localStore: localHas,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+  });
+  assert.ok(!result.noteIds.includes("note-1"), "삭제는 그대로 유지");
+  assert.strictEqual(result.conflictCount, 1, "복원 선택지가 남아야 함");
+  equalList(result.conflictVariants, ["remote-deleted"]);
+});
+
+check("다른 기기의 삭제를 아직 화면에 못 받은 옛 스냅샷은 조용히 삭제를 따른다", () => {
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
+    cachedStore: cloudStore,
+    localStore: cloudStore,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+  });
+  assert.ok(!result.noteIds.includes("note-1"));
+  assert.strictEqual(result.conflictCount, 0, "내용이 같은 옛 화면은 검토 대상이 아님");
+});
+
 // --- Report ---------------------------------------------------------------
 
 let failed = 0;

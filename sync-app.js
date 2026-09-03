@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.0 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.1 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -919,18 +919,17 @@
       // local content back would resurrect an item deleted elsewhere.
       const cachedRec = cached?.get(key);
       if (remoteRec?.deleted_at || outboxRec?.deleted_at || cachedRec?.deleted_at) {
-        // The row was deleted elsewhere but this device edited it since the
-        // last cloud copy: keep the deletion on screen, but let the user
-        // decide in the review list instead of losing the edit silently.
-        if (
-          conflicts &&
-          remoteRec?.deleted_at &&
-          cachedRec &&
-          !cachedRec.deleted_at &&
-          !sameRecordContent(local, cachedRec)
-        ) {
+        // The row was deleted elsewhere but this device still holds real
+        // content for it: keep the deletion on screen, but park this copy so
+        // the user can restore it. The only silent case is a copy that just
+        // echoes the cloud row this device cached before the deletion — a
+        // stale screen, not content the cloud never had.
+        const tombstone = remoteRec?.deleted_at ? remoteRec : outboxRec?.deleted_at ? outboxRec : cachedRec;
+        const merelyStale =
+          cachedRec && !cachedRec.deleted_at && sameRecordContent(local, cachedRec);
+        if (conflicts && tombstone && !merelyStale && !(outboxRec?.deleted_at)) {
           conflicts.push(
-            makeConflict("remote-deleted", key, stamp(local), remoteRec, remoteRec)
+            makeConflict("remote-deleted", key, stamp(local), tombstone, tombstone)
           );
         }
         return;
@@ -3349,6 +3348,8 @@
         // Model a cache written by queueRecords (this device's own pending
         // edit, intent-stamped) rather than a copy fetched from the cloud.
         cachedIntent = false,
+        // Cloud tombstones this device already merged into its cache.
+        cachedTombstoneKeys = [],
         localStore = null,
         remoteFetched = true,
         lastAppliedFingerprint = "",
@@ -3387,6 +3388,16 @@
         const cached = cachedIntent
           ? intentRecordsFromStore(cachedStore, 2000)
           : recordsFor(cachedStore, 2000, "cached-device");
+        cachedTombstoneKeys.forEach((key) => {
+          const record = cached.get(key);
+          if (!record) return;
+          cached.set(key, {
+            ...record,
+            payload: null,
+            deleted_at: new Date(6000).toISOString(),
+            client_id: "cloud-device",
+          });
+        });
         const outbox = outboxIntent
           ? intentRecordsFromStore(outboxStore, 4000)
           : recordsFor(outboxStore, 4000, "legacy-phone");
