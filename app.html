@@ -2713,6 +2713,10 @@
         const skipRef = useRef(true);
         const storeRef = useRef(store);
         storeRef.current = store;
+        // 클라우드에서 받아 정규화한 스토어. 정규화로 채워진 기본값 차이를
+        // "사용자가 고쳤다"로 세면, 낡은 기기가 자기 스냅샷을 최신 내용 위로
+        // 밀어 올리는 근거가 됩니다.
+        const cloudAppliedRawRef = useRef("");
         const loadCurrentView = () => {
           try { const s = sessionStorage.getItem(VIEW_STORAGE_KEY); return VALID_VIEWS.includes(s) ? s : "protocol"; } catch { return "protocol"; }
         };
@@ -2726,7 +2730,9 @@
             if (event.origin !== window.location.origin || event.source !== window.parent) return;
             if (event.data?.type === "exp-note-cloud-store" && event.data.store) {
               skipRef.current = true;
-              setStore(normalizeStore(event.data.store));
+              const applied = normalizeStore(event.data.store);
+              try { cloudAppliedRawRef.current = JSON.stringify(applied); } catch { cloudAppliedRawRef.current = ""; }
+              setStore(applied);
               setSaveState("이 기기에 반영됨");
               window.parent.postMessage({ type: "exp-note-cloud-store-applied", fingerprint: event.data.fingerprint || "" }, window.location.origin);
               return;
@@ -2801,7 +2807,7 @@
             // The mount and cloud-apply paths are already excluded by skipRef;
             // a re-render that serialises to the stored snapshot is not an edit
             // either, so only a real content change stamps USER_EDITED_KEY.
-            const edited = raw !== localStorage.getItem(STORAGE_KEY);
+            const edited = raw !== localStorage.getItem(STORAGE_KEY) && raw !== cloudAppliedRawRef.current;
             if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
             localStorage.setItem(STORAGE_KEY, raw);
             localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
@@ -2821,8 +2827,12 @@
               localStorage.setItem(STORAGE_KEY, raw);
               localStorage.setItem(LOCAL_UPDATED_KEY, String(Date.now()));
               // Past the guard above the store really did change, i.e. the user
-              // edited something that was not written yet.
-              localStorage.setItem(USER_EDITED_KEY, String(Date.now()));
+              // edited something that was not written yet. A store that only
+              // differs from the cloud copy by normalisation defaults is not an
+              // edit, and stamping it made this device look freshly edited.
+              if (raw !== cloudAppliedRawRef.current) {
+                localStorage.setItem(USER_EDITED_KEY, String(Date.now()));
+              }
               localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify({ raw, updatedAt: Date.now() }));
               if (window.parent !== window) window.parent.postMessage({ type: "exp-note-local-store", raw }, window.location.origin);
             } catch {}

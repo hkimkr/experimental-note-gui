@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.2 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.3 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.2";
+  const APP_VERSION = "4.4.3";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -362,6 +362,28 @@
       deleted_at: null,
     };
   }
+
+  // 앱이 화면을 그렸다가 다시 스토어로 되돌릴 때 스스로 다시 계산하는 필드들.
+  // 배열 위치에서 도출되므로 삭제 이력이 있으면 클라우드 값과 어긋나기 쉽고,
+  // 그 차이를 "사용자가 고쳤다"로 읽으면 낡은 스냅샷이 최신 내용을 덮어씁니다.
+  const DERIVED_PAYLOAD_KEYS = ["item_order", "order"];
+  const userContentValue = (record) => {
+    const payload = record?.payload;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return payload ?? null;
+    }
+    const rest = { ...payload };
+    DERIVED_PAYLOAD_KEYS.forEach((key) => delete rest[key]);
+    return rest;
+  };
+
+  /** 사용자가 실제로 쓴 내용만 비교 (정렬용 파생 필드 제외) */
+  const sameUserContent = (left, right) =>
+    Boolean(left) === Boolean(right) &&
+    (!left ||
+      (Boolean(left.deleted_at) === Boolean(right.deleted_at) &&
+        fingerprintValue(userContentValue(left)) ===
+          fingerprintValue(userContentValue(right))));
 
   const sameRecordContent = (left, right) =>
     Boolean(left) === Boolean(right) &&
@@ -958,6 +980,22 @@
       ) {
         return;
       }
+      // A cloud row written after this device's last user edit cannot be
+      // older than what this device holds: nothing was typed here since. The
+      // app re-derives ordering fields when it rebuilds its store, so such a
+      // row often *looks* edited — and pushing it reverted the other device's
+      // newer work to this device's last-seen state.
+      if (remoteRec && localTouchedAt && timestampOf(remoteRec) > localTouchedAt) {
+        const behindOnly = cachedRec && sameUserContent(local, cachedRec);
+        if (conflicts && !behindOnly && !sameUserContent(local, remoteRec)) {
+          // Real divergence with no edit evidence on this side: show the cloud
+          // copy, but let the user restore this device's version.
+          conflicts.push(
+            makeConflict("stale-local", key, stamp(local), remoteRec, remoteRec)
+          );
+        }
+        return;
+      }
       // Offline / logged-out edits change the row against the last cached
       // cloud copy. That is enough proof — requiring lastAppliedFingerprint
       // dropped every edit to an existing note at login (a logged-out session
@@ -965,7 +1003,7 @@
       // when the iframe skipped a stamp. Clocks are only the fallback when
       // this device has never cached the row (first login on this browser).
       const editedSinceCache = Boolean(
-        cachedRec && !sameRecordContent(local, cachedRec)
+        cachedRec && !sameUserContent(local, cachedRec)
       );
       const editedByClock =
         Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
@@ -1674,6 +1712,10 @@
         desc.textContent = `이 기기 화면에서 설명 없이 사라졌습니다 (${fmtTime(new Date(item.at).toISOString())}). 확인 전까지는 그대로 남아 있습니다.`;
         button("유지", "keep", true);
         button("삭제 확정", "delete");
+      } else if (item.variant === "stale-local") {
+        desc.textContent = `다른 기기가 나중에 고친 내용을 표시했습니다 (다른 기기 ${fmtTime(item.theirs?.updated_at)}). 이 기기에 있던 내용은 아래에서 되살릴 수 있습니다.`;
+        button("다른 기기 내용 유지", "theirs", true);
+        button("이 기기 내용으로", "mine");
       } else if (item.variant === "remote-deleted") {
         desc.textContent = `다른 기기에서 삭제됐지만 이 기기에는 올리지 못한 편집이 있습니다 (내 편집 ${fmtTime(item.mine?.updated_at)}, 삭제 ${fmtTime(item.theirs?.updated_at)}).`;
         button("내 편집으로 복원", "mine", true);
@@ -3560,8 +3602,53 @@
       renderedKeys(records) {
         return [...storeToRecords(recordsToStore(records, {})).keys()];
       },
+      // 레코드를 앱에 밀어 넣는 스토어로 되돌립니다 (렌더 왕복 재현용).
+      storeOf(records, fallbackStore = {}) {
+        return recordsToStore(records, fallbackStore);
+      },
       recordsOf(store, time = 1000, source = "cloud-device") {
         return storeToRecords(store, new Date(time).toISOString(), source);
+      },
+      // 레코드 맵을 직접 넘겨 초기 병합을 돌립니다 (item_order 같은 세부 필드를
+      // 손으로 어긋나게 만들어 재현할 때 사용).
+      resolveState({
+        remote = new Map(),
+        cached = new Map(),
+        outbox = new Map(),
+        localRecords = new Map(),
+        localStore = null,
+        remoteFetched = true,
+        lastAppliedFingerprint = "",
+        localUpdatedAt = 3000,
+        remoteEmptyConfirmed = true,
+      }) {
+        const resolved = resolveInitialRecordState({
+          remote,
+          cached,
+          outbox,
+          localRecords,
+          pendingRecords: new Map(),
+          remoteFetched,
+          localStore,
+          lastAppliedFingerprint,
+          localUpdatedAt,
+          remoteEmptyConfirmed,
+        });
+        const readPurpose = (records, id) => {
+          const record = [...records.values()].find(
+            (item) =>
+              item.entity_type === "project_note" &&
+              String(item.payload?.item?.id || "") === id
+          );
+          return String(record?.payload?.item?.purpose || "");
+        };
+        return {
+          reason: resolved.reason,
+          outboxKeys: [...resolved.outbox.keys()],
+          conflictCount: resolved.conflicts?.length || 0,
+          purposeOf: (id) => readPurpose(resolved.records, id),
+          uploadsOf: (id) => readPurpose(resolved.outbox, id),
+        };
       },
       localFreshnessAt(input) {
         return localFreshnessAt(input);

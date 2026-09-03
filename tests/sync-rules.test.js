@@ -946,6 +946,93 @@ check("다른 기기의 삭제를 아직 화면에 못 받은 옛 스냅샷은 �
   assert.strictEqual(result.conflictCount, 0, "내용이 같은 옛 화면은 검토 대상이 아님");
 });
 
+check("폰을 껐다 켜도, 그 사이 컴퓨터가 고친 내용이 옛 스냅샷에 덮이지 않는다", () => {
+  const both = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "공동작업"), note("note-3", "공동작업3")] })],
+  };
+  // 클라우드는 삭제 이력 때문에 item_order 에 구멍(0,2)이 있다.
+  const cached = api.recordsOf(both, 2000, "cloud-device");
+  const K3 = "project_note::project-1:note-3";
+  cached.set(K3, { ...cached.get(K3), payload: { ...cached.get(K3).payload, item_order: 2 } });
+  // 폰의 localStorage 는 셸이 그려서 저장한 스토어이므로 item_order 가 재도출된다.
+  const phoneStore = api.storeOf(cached, {});
+  const localRecords = api.recordsOf(phoneStore, 3000, "legacy-local");
+  assert.notStrictEqual(
+    localRecords.get(K3).payload.item_order,
+    cached.get(K3).payload.item_order,
+    "렌더 왕복으로 정렬 필드가 어긋나는 상황이어야 함"
+  );
+  // 폰이 꺼진 동안 컴퓨터가 note-3 을 고쳤다.
+  const remote = api.recordsOf(
+    {
+      activeProjectId: "project-1",
+      projects: [project({ notes: [note("note-1", "공동작업"), note("note-3", "컴퓨터가 나중에 고친 내용")] })],
+    },
+    9000,
+    "cloud-device"
+  );
+  remote.set(K3, { ...remote.get(K3), payload: { ...remote.get(K3).payload, item_order: 2 } });
+
+  const result = api.resolveState({
+    remote,
+    cached,
+    localRecords,
+    localStore: phoneStore,
+    localUpdatedAt: 2500, // 폰의 마지막 사용자 편집은 컴퓨터 수정보다 이전
+  });
+  assert.strictEqual(result.purposeOf("note-3"), "컴퓨터가 나중에 고친 내용");
+  assert.strictEqual(result.uploadsOf("note-3"), "", "옛 내용을 올리지 않아야 함");
+});
+
+check("정렬 필드만 다른 것은 편집이 아니다", () => {
+  const store = { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "같은 내용")] })] };
+  const cloud = api.recordsOf(store, 2000, "cloud-device");
+  const K = "project_note::project-1:note-1";
+  const shifted = new Map(cloud);
+  shifted.set(K, { ...cloud.get(K), payload: { ...cloud.get(K).payload, item_order: 7 } });
+  const result = api.resolveState({
+    remote: api.recordsOf(store, 9000, "cloud-device"),
+    cached: shifted,
+    localRecords: api.recordsOf(store, 3000, "legacy-local"),
+    localStore: store,
+    localUpdatedAt: 2500,
+  });
+  equalList(result.outboxKeys, []);
+  assert.strictEqual(result.conflictCount, 0);
+});
+
+check("폰이 진짜로 고친 뒤 껐다면 그 편집은 살아남는다", () => {
+  const both = { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "공동작업")] })] };
+  const phoneEdited = { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "폰에서 진짜 고침")] })] };
+  const result = api.resolveState({
+    remote: api.recordsOf(both, 9000, "cloud-device"),
+    cached: api.recordsOf(both, 2000, "cloud-device"),
+    localRecords: api.recordsOf(phoneEdited, 3000, "legacy-local"),
+    localStore: phoneEdited,
+    localUpdatedAt: 12000, // 편집 시각이 클라우드 행보다 늦다
+  });
+  assert.strictEqual(result.purposeOf("note-1"), "폰에서 진짜 고침");
+  assert.strictEqual(result.uploadsOf("note-1"), "폰에서 진짜 고침");
+});
+
+check("편집 증거 없이 내용이 갈렸으면 클라우드를 보여 주고 복원 선택지를 남긴다", () => {
+  const phoneOld = { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "폰에만 있던 내용")] })] };
+  const result = api.resolveState({
+    remote: api.recordsOf(
+      { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "클라우드 내용")] })] },
+      9000,
+      "cloud-device"
+    ),
+    cached: new Map(), // 이 기기가 그 행의 클라우드 사본을 가진 적이 없다
+    localRecords: api.recordsOf(phoneOld, 3000, "legacy-local"),
+    localStore: phoneOld,
+    localUpdatedAt: 2500,
+  });
+  assert.strictEqual(result.purposeOf("note-1"), "클라우드 내용");
+  assert.strictEqual(result.conflictCount, 1, "복원 선택지가 남아야 함");
+});
+
 // --- Report ---------------------------------------------------------------
 
 let failed = 0;
