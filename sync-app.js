@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.1 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.2 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -26,6 +26,9 @@
   // included, so it says nothing about whether this device holds edits the
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
+  /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
+  const APP_VERSION = "4.4.2";
+  const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
@@ -1505,6 +1508,101 @@
     }).format(new Date());
     setStatus(`이 기기 반영됨 · ${time}`);
   };
+
+  // --- 버전 확인 · 강제 업데이트 -------------------------------------------
+  // 낡은 클라이언트가 계속 돌면 옛 동기화 규칙이 데이터를 망칩니다. 어느 버전이
+  // 돌고 있는지 화면에 보여 주고, 서버에 새 버전이 있으면 서비스워커·캐시를
+  // 지우고 한 번만 자동으로 다시 불러옵니다. (사용자 데이터는 건드리지 않음)
+  const versionBox = document.getElementById("cloud-version");
+  const updateBox = document.getElementById("cloud-update");
+  const updateButton = document.getElementById("cloud-update-now");
+  const forceButton = document.getElementById("cloud-force-refresh");
+  if (versionBox) versionBox.textContent = `버전 ${APP_VERSION}`;
+
+  const setUpdateBanner = (latest) => {
+    // 대화상자를 열지 않아도 보이도록 런처에도 표시합니다.
+    launcher?.classList.toggle("needs-update", Boolean(latest));
+    if (launcher) {
+      launcher.title = latest
+        ? `새 버전 ${latest} · 눌러서 업데이트 (현재 ${APP_VERSION})`
+        : `버전 ${APP_VERSION}`;
+    }
+    if (!updateBox) return;
+    updateBox.hidden = !latest;
+    if (latest) {
+      updateBox.querySelector("[data-update-text]").textContent =
+        `새 버전 ${latest} 이(가) 있습니다. 이 기기는 ${APP_VERSION} 을 쓰고 있어 동기화가 어긋날 수 있습니다.`;
+    }
+  };
+
+  async function hardUpdate() {
+    // 저장된 노트(localStorage)와 업로드 대기열(IndexedDB)은 그대로 두고,
+    // 앱 파일 캐시와 서비스워커만 비웁니다.
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map((registration) => registration.unregister().catch(() => false))
+        );
+      }
+    } catch {
+      // 무시하고 캐시 정리로 진행
+    }
+    try {
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key).catch(() => false)));
+      }
+    } catch {
+      // 무시하고 새로고침
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.set("_upd", String(Date.now()));
+    window.location.replace(url.toString());
+  }
+
+  async function checkAppVersion(auto = true) {
+    let latest = "";
+    try {
+      const response = await fetch(`./version.json?cb=${Date.now()}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      latest = String(data?.version || "");
+    } catch {
+      return; // 오프라인 등
+    }
+    if (!latest || latest === APP_VERSION) {
+      setUpdateBanner("");
+      return;
+    }
+    setUpdateBanner(latest);
+    if (!auto || appEditing) return;
+    // 한 버전에 한 번만 자동 갱신합니다 (새로고침 반복 방지).
+    let tried = "";
+    try {
+      tried = sessionStorage.getItem(UPDATE_GUARD_KEY) || "";
+    } catch {
+      tried = "";
+    }
+    if (tried === latest) return;
+    try {
+      sessionStorage.setItem(UPDATE_GUARD_KEY, latest);
+    } catch {
+      // 저장 못 해도 아래 갱신은 진행 (다음 로드에서 배너로 안내)
+    }
+    await hardUpdate();
+  }
+
+  updateButton?.addEventListener("click", () => {
+    updateButton.disabled = true;
+    void hardUpdate();
+  });
+  forceButton?.addEventListener("click", () => {
+    forceButton.disabled = true;
+    void hardUpdate();
+  });
 
   // --- 검토 패널 -----------------------------------------------------------
   const reviewBox = document.getElementById("cloud-review");
@@ -3775,6 +3873,22 @@
   });
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => undefined);
+    navigator.serviceWorker
+      .register("./sw.js", { updateViaCache: "none" })
+      .then((registration) => {
+        registration.update().catch(() => undefined);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            registration.update().catch(() => undefined);
+          }
+        });
+      })
+      .catch(() => undefined);
   }
+
+  void checkAppVersion();
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void checkAppVersion();
+  });
+  window.setInterval(() => void checkAppVersion(), 10 * 60_000);
 })();

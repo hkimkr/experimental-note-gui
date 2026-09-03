@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Experimental Note GUI v4.4.1 deployment marker -->
+<!-- Experimental Note GUI v4.4.2 deployment marker -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -31,7 +31,7 @@
       <iframe
         id="exp-note-frame"
         class="planner-frame"
-        src="./app.html?v=4.4.1"
+        src="./app.html?v=4.4.2"
         title="실험 노트 GUI"
         allow="clipboard-read; clipboard-write"
       ></iframe>
@@ -64,6 +64,10 @@
           </header>
 
           <div class="cloud-auth-body">
+            <div class="cloud-update" id="cloud-update" hidden role="alert">
+              <span data-update-text></span>
+              <button class="cloud-review-button primary" id="cloud-update-now" type="button">지금 업데이트</button>
+            </div>
             <div id="cloud-signed-out">
               <label class="cloud-auth-label" for="cloud-email">이메일</label>
               <input
@@ -108,6 +112,10 @@
                 </p>
                 <ul class="cloud-review-list" id="cloud-review-list"></ul>
               </section>
+              <div class="cloud-version-row">
+                <span class="cloud-version" id="cloud-version">버전 확인 중…</span>
+                <button class="cloud-review-button" id="cloud-force-refresh" type="button">앱 새로 받기 (캐시 정리)</button>
+              </div>
               <button class="cloud-auth-button" id="cloud-signout" type="button">로그아웃</button>
             </div>
           </div>
@@ -117,7 +125,7 @@
 
     <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./sync-app.js?v=4.4.1"></script>
+    <script src="./sync-app.js?v=4.4.2"></script>
     <script>
       (() => {
         const installButton = document.getElementById("app-install-launcher");

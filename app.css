@@ -242,6 +242,40 @@ input {
   overflow-wrap: anywhere;
 }
 
+.cloud-sync-launcher.needs-update {
+  color: #8a3b12;
+  background: #fff1e8;
+  border-color: #f3c7ab;
+}
+
+.cloud-update {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 11px 12px;
+  color: #8a3b12;
+  font-size: 12px;
+  line-height: 1.45;
+  background: #fff1e8;
+  border: 1px solid #f3c7ab;
+  border-radius: 11px;
+}
+
+.cloud-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+
+.cloud-version {
+  color: #67727e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .cloud-review {
   margin: 0 0 12px;
   padding: 12px;

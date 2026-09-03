@@ -1,4 +1,4 @@
-const CACHE = "exp-note-v4.4.1";
+const CACHE = "exp-note-v4.4.2";
 const ASSETS = [
   "./index.html",
   "./app.html",
@@ -37,8 +37,11 @@ self.addEventListener("fetch", (event) => {
   // an old client after the phone had already picked up a new version, so the
   // desktop kept overlaying its stale snapshot on every refresh.
   if (isShellRequest(event.request)) {
+    // cache: "reload" skips the browser HTTP cache as well. GitHub Pages sends
+    // max-age=600 on HTML, so a plain fetch here could still hand back the
+    // previous build and leave a device running an old sync client.
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request.url, { cache: "reload" })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(event.request, copy));
