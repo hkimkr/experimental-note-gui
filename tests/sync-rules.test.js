@@ -842,7 +842,7 @@ check("새 노트가 캐시에만 남고 아웃박스가 유실돼도 재접속 
   assert.ok(result.outboxCount > 0, "새 노트가 다시 업로드 대기해야 함");
 });
 
-check("실험 행이 아직 없는 프로토콜은 '앱에 보여 준 행'으로 기록되지 않는다", () => {
+check("실험 행이 아직 없는 프로토콜도 화면에 실려 사라지지 않는다", () => {
   const withProto = {
     activeProjectId: "project-1",
     projects: [
@@ -854,10 +854,12 @@ check("실험 행이 아직 없는 프로토콜은 '앱에 보여 준 행'으로
   const records = api.recordsOf(withProto);
   records.delete("project_experiment::project-1:exp-1"); // 실험 행이 나중에 도착하는 상황
   const rendered = api.renderedKeys(records);
-  assert.ok(!rendered.includes("experiment_protocol::project-1:exp-1:proto-1"), "화면에 못 실은 프로토콜은 보여 준 행이 아님");
+  // 플래너처럼 부모 컨테이너를 만들어 주므로 자식이 버려지지 않습니다.
+  assert.ok(rendered.includes("experiment_protocol::project-1:exp-1:proto-1"), "프로토콜이 화면에 남아야 함");
+  assert.ok(rendered.includes("project_experiment::project-1:exp-1"), "임시 실험 컨테이너가 만들어져야 함");
 });
 
-check("두 기기가 같은 노트를 동시에 고치면 합치되 검토 항목으로 남긴다", () => {
+check("두 기기가 같은 노트를 동시에 고치면 최신 쪽으로 덮어쓴다 (검토 없음)", () => {
   const remoteEdited = {
     activeProjectId: "project-1",
     projects: [project({ notes: [note("note-1", "다른 기기에서 고친 내용")] })],
@@ -875,11 +877,15 @@ check("두 기기가 같은 노트를 동시에 고치면 합치되 검토 항�
     localUpdatedAt: 6000,
   });
   assert.ok(result.noteIds.includes("note-1"), "노트가 사라지면 안 됨");
-  assert.strictEqual(result.conflictCount, 1, "충돌 1건이 검토로 남아야 함");
-  equalList(result.conflictVariants, ["concurrent"]);
+  assert.strictEqual(result.conflictCount, 0, "동시 편집은 최신 기준으로 처리하고 검토를 띄우지 않는다");
+  assert.strictEqual(
+    result.notePurposes["note-1"],
+    "이 기기에서 고친 내용",
+    "이 기기 편집(6000)이 클라우드(5000)보다 나중이므로 이 기기 내용이 이긴다"
+  );
 });
 
-check("다른 기기가 지운 노트를 이 기기가 고쳤다면 삭제는 유지하되 검토 항목으로 남긴다", () => {
+check("다른 기기가 지운 노트를 그보다 나중에 고쳤다면 검토 항목으로 남긴다", () => {
   const localEdited = {
     activeProjectId: "project-1",
     projects: [project({ notes: [note("note-1", "이 기기에서 고친 내용")] })],
@@ -890,7 +896,7 @@ check("다른 기기가 지운 노트를 이 기기가 고쳤다면 삭제는 �
     cachedStore: cloudStore,
     localStore: localEdited,
     lastAppliedFingerprint: api.fingerprintStore(cloudStore),
-    localUpdatedAt: 6000,
+    localUpdatedAt: 9000, // 삭제 표식(6000)보다 나중
   });
   assert.ok(!result.noteIds.includes("note-1"), "삭제는 그대로 유지");
   assert.strictEqual(result.conflictCount, 1);
@@ -916,7 +922,7 @@ check("사용자가 삭제한 실험은 그 안의 프로토콜 행까지 지운
   equalList(removed, ["experiment_protocol::project-1:exp-1:proto-1", "project_experiment::project-1:exp-1"]);
 });
 
-check("삭제 표식이 이미 캐시에 있어도 이 기기에 내용이 남아 있으면 복원 후보로 남긴다", () => {
+check("삭제보다 나중에 고친 내용이 있으면 복원 후보로 남긴다", () => {
   const localHas = {
     activeProjectId: "project-1",
     projects: [project({ notes: [note("note-1", "이 기기에만 남은 내용")] })],
@@ -928,10 +934,28 @@ check("삭제 표식이 이미 캐시에 있어도 이 기기에 내용이 남�
     cachedTombstoneKeys: ["project_note::project-1:note-1"],
     localStore: localHas,
     lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 9000, // 삭제(6000)보다 나중에 이 기기에서 고쳤다
   });
   assert.ok(!result.noteIds.includes("note-1"), "삭제는 그대로 유지");
   assert.strictEqual(result.conflictCount, 1, "복원 선택지가 남아야 함");
   equalList(result.conflictVariants, ["remote-deleted"]);
+});
+
+check("삭제가 이 기기의 편집보다 나중이면 조용히 삭제를 따른다", () => {
+  const localHas = {
+    activeProjectId: "project-1",
+    projects: [project({ notes: [note("note-1", "이 기기에만 남은 내용")] })],
+  };
+  const result = api.simulate({
+    remoteStore: cloudStore,
+    remoteTombstoneKeys: ["project_note::project-1:note-1"],
+    cachedStore: cloudStore,
+    localStore: localHas,
+    lastAppliedFingerprint: api.fingerprintStore(cloudStore),
+    localUpdatedAt: 3000, // 삭제(6000)보다 이전
+  });
+  assert.ok(!result.noteIds.includes("note-1"));
+  assert.strictEqual(result.conflictCount, 0, "최신인 삭제를 따르므로 검토가 필요 없다");
 });
 
 check("다른 기기의 삭제를 아직 화면에 못 받은 옛 스냅샷은 조용히 삭제를 따른다", () => {
@@ -1016,7 +1040,7 @@ check("폰이 진짜로 고친 뒤 껐다면 그 편집은 살아남는다", () 
   assert.strictEqual(result.uploadsOf("note-1"), "폰에서 진짜 고침");
 });
 
-check("편집 증거 없이 내용이 갈렸으면 클라우드를 보여 주고 복원 선택지를 남긴다", () => {
+check("편집 증거가 없으면 클라우드가 그대로 이기고 검토도 띄우지 않는다", () => {
   const phoneOld = { activeProjectId: "project-1", projects: [project({ notes: [note("note-1", "폰에만 있던 내용")] })] };
   const result = api.resolveState({
     remote: api.recordsOf(
@@ -1030,7 +1054,8 @@ check("편집 증거 없이 내용이 갈렸으면 클라우드를 보여 주고
     localUpdatedAt: 2500,
   });
   assert.strictEqual(result.purposeOf("note-1"), "클라우드 내용");
-  assert.strictEqual(result.conflictCount, 1, "복원 선택지가 남아야 함");
+  assert.strictEqual(result.conflictCount, 0, "결정할 것이 없으므로 검토를 띄우지 않는다");
+  equalList(result.outboxKeys, []);
 });
 
 // --- Report ---------------------------------------------------------------

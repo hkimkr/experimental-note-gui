@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.3 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.4 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.3";
+  const APP_VERSION = "4.4.4";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -712,6 +712,43 @@
       projects.set(record.entity_id, project);
     });
 
+    // 부모 행이 아직 도착하지 않아도 자식을 버리지 않습니다. 플래너가 날짜·주차
+    // 컨테이너를 자동으로 만들어 자식을 잃지 않는 것과 같은 방식입니다. 예전에는
+    // 실험 행보다 프로토콜 행이 먼저 도착하면 프로토콜을 조용히 버렸고, 그러면
+    // 화면에서 사라진 것처럼 보이다가 삭제로 이어졌습니다. 여기서 임시로 붙이는
+    // 이름은 EMPTY_PLACEHOLDERS 에 있어 실제 행이 도착하면 그대로 밀려납니다.
+    const ensureProject = (projectId) => {
+      const id = String(projectId || "");
+      if (!id) return null;
+      let project = projects.get(id);
+      if (!project) {
+        project = {
+          id,
+          name: "새 프로젝트",
+          experiments: [],
+          notes: [],
+          inventory: [],
+          memoSnapshots: [],
+          memoScratch: { content: "", updatedAt: null },
+        };
+        projects.set(id, project);
+      }
+      return project;
+    };
+    const ensureExperiment = (project, experimentId) => {
+      const id = String(experimentId || "");
+      if (!project || !id) return null;
+      project.experiments = project.experiments || [];
+      let experiment = project.experiments.find(
+        (item) => String(item?.id || "") === id
+      );
+      if (!experiment) {
+        experiment = { id, name: "새 실험", memo: "", protocols: [] };
+        project.experiments.push(experiment);
+      }
+      return experiment;
+    };
+
     [
       ["project_experiment", "experiments"],
       ["project_note", "notes"],
@@ -726,7 +763,7 @@
           const parentId = String(
             payload.parent_id || record.entity_id.split(":")[0] || ""
           );
-          const project = projects.get(parentId);
+          const project = ensureProject(parentId);
           if (!project) return;
           const itemId = String(
             payload.item?.id || record.entity_id.split(":").slice(1).join(":")
@@ -754,10 +791,8 @@
         const parts = String(record.entity_id || "").split(":");
         const parentId = String(payload.parent_id || parts[0] || "");
         const experimentId = String(payload.experiment_id || parts[1] || "");
-        const project = projects.get(parentId);
-        const experiment = project?.experiments?.find(
-          (item) => String(item?.id || "") === experimentId
-        );
+        const project = ensureProject(parentId);
+        const experiment = ensureExperiment(project, experimentId);
         if (!experiment) return;
         const protocolId = String(
           payload.item?.id || parts.slice(2).join(":")
@@ -781,7 +816,7 @@
       .sort(compareRecords)
       .forEach((record) => {
         const payload = record.payload || {};
-        const project = projects.get(payload.parent_id || record.entity_id);
+        const project = ensureProject(payload.parent_id || record.entity_id);
         if (!project) return;
         project.memoScratch = record.deleted_at
           ? { content: "", updatedAt: null }
@@ -949,10 +984,12 @@
         // the user can restore it. The only silent case is a copy that just
         // echoes the cloud row this device cached before the deletion — a
         // stale screen, not content the cloud never had.
+        // 삭제도 수정의 하나로 보고 최신을 따릅니다. 다만 이 기기의 편집이
+        // 삭제보다 나중이라면 그대로 버리면 손실이므로 복원 선택지만 남깁니다.
         const tombstone = remoteRec?.deleted_at ? remoteRec : outboxRec?.deleted_at ? outboxRec : cachedRec;
-        const merelyStale =
-          cachedRec && !cachedRec.deleted_at && sameRecordContent(local, cachedRec);
-        if (conflicts && tombstone && !merelyStale && !(outboxRec?.deleted_at)) {
+        const localIsNewer =
+          tombstone && localTouchedAt && localTouchedAt > timestampOf(tombstone);
+        if (conflicts && localIsNewer && !outboxRec?.deleted_at) {
           conflicts.push(
             makeConflict("remote-deleted", key, stamp(local), tombstone, tombstone)
           );
@@ -985,15 +1022,9 @@
       // app re-derives ordering fields when it rebuilds its store, so such a
       // row often *looks* edited — and pushing it reverted the other device's
       // newer work to this device's last-seen state.
+      // 이 기기가 손대지 않은 행은 클라우드가 그대로 이깁니다. 검토 목록에
+      // 올리지 않습니다 — 결정할 것이 없고, 매번 뜨면 방해만 됩니다.
       if (remoteRec && localTouchedAt && timestampOf(remoteRec) > localTouchedAt) {
-        const behindOnly = cachedRec && sameUserContent(local, cachedRec);
-        if (conflicts && !behindOnly && !sameUserContent(local, remoteRec)) {
-          // Real divergence with no edit evidence on this side: show the cloud
-          // copy, but let the user restore this device's version.
-          conflicts.push(
-            makeConflict("stale-local", key, stamp(local), remoteRec, remoteRec)
-          );
-        }
         return;
       }
       // Offline / logged-out edits change the row against the last cached
@@ -1009,19 +1040,9 @@
         Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
       if (!editedSinceCache && !editedByClock) return;
       const mine = stamp(local);
+      // 같은 부분을 양쪽에서 고쳤으면 최신 시각을 기준으로 덮어씁니다
+      // (contentAwareRecord 가 최신 쪽을 택하고, 빈 값이 내용을 지우지는 않게 합니다).
       const merged = contentAwareRecord(baseRec, mine);
-      // Both sides moved since the last cloud copy this device saw: a real
-      // concurrent edit. The merge is applied so nothing is lost on screen,
-      // and both full versions are parked so the user can pick one.
-      if (
-        conflicts &&
-        remoteRec &&
-        cachedRec &&
-        !sameRecordContent(remoteRec, cachedRec) &&
-        !sameRecordContent(local, remoteRec)
-      ) {
-        conflicts.push(makeConflict("concurrent", key, mine, remoteRec, merged));
-      }
       if (!sameRecordContent(merged, baseRec)) {
         adopted.set(key, merged);
       }
@@ -1646,6 +1667,7 @@
   const reviewBox = document.getElementById("cloud-review");
   const reviewList = document.getElementById("cloud-review-list");
   const reviewCountBox = document.getElementById("cloud-review-count");
+  const reviewKeepAll = document.getElementById("cloud-review-keep-all");
   const ENTITY_LABEL = {
     project: "프로젝트",
     project_experiment: "실험",
@@ -1681,6 +1703,20 @@
     if (reviewBox) reviewBox.hidden = !items.length;
     if (label && currentSession) {
       label.textContent = reviewCount ? `${lastStatusMessage} · 검토 ${reviewCount}` : lastStatusMessage;
+    }
+    // 보류 항목이 여럿이면 한 번에 정리할 수 있게 합니다.
+    const holds = items.filter((item) => item.kind === "hold");
+    if (reviewKeepAll) reviewKeepAll.hidden = holds.length < 2;
+    if (reviewKeepAll) {
+      reviewKeepAll.onclick = () => {
+        reviewKeepAll.disabled = true;
+        void (async () => {
+          for (const item of holds) {
+            await resolveReview(item, "keep").catch(() => undefined);
+          }
+          reviewKeepAll.disabled = false;
+        })();
+      };
     }
     if (!reviewList) return;
     reviewList.innerHTML = "";
@@ -2707,16 +2743,18 @@
         const key = recordKey(expanded);
         const existing = currentRecords.get(key);
         const merged = contentAwareRecord(existing, expanded);
+        // 다른 기기의 변경이 이 기기가 아직 못 올린 편집과 겹치면 최신 시각이
+        // 이깁니다. 단, 상대가 삭제한 것을 이 기기가 더 나중에 고쳤다면 복원
+        // 선택지를 남깁니다 (그대로 버리면 손실).
         const pending = pendingOutbox.get(key);
-        if (pending && !pending.deleted_at && !sameRecordContent(pending, expanded)) {
+        if (
+          pending &&
+          !pending.deleted_at &&
+          expanded.deleted_at &&
+          timestampOf(pending) > timestampOf(expanded)
+        ) {
           conflicts.push(
-            makeConflict(
-              expanded.deleted_at ? "remote-deleted" : "concurrent",
-              key,
-              pending,
-              expanded,
-              merged
-            )
+            makeConflict("remote-deleted", key, pending, expanded, merged)
           );
         }
         merged.__projectId =
@@ -3521,6 +3559,8 @@
           remote.set(key, {
             ...record,
             payload: null,
+            // 실제 삭제는 updated_at 도 삭제 시각으로 씁니다 (LWW 비교 대상).
+            updated_at: new Date(6000).toISOString(),
             deleted_at: new Date(6000).toISOString(),
             client_id: "cloud-device",
           });
@@ -3534,6 +3574,7 @@
           cached.set(key, {
             ...record,
             payload: null,
+            updated_at: new Date(6000).toISOString(),
             deleted_at: new Date(6000).toISOString(),
             client_id: "cloud-device",
           });

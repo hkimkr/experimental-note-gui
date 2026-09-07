@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Experimental Note GUI v4.4.3 deployment marker -->
+<!-- Experimental Note GUI v4.4.4 deployment marker -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -31,7 +31,7 @@
       <iframe
         id="exp-note-frame"
         class="planner-frame"
-        src="./app.html?v=4.4.3"
+        src="./app.html?v=4.4.4"
         title="실험 노트 GUI"
         allow="clipboard-read; clipboard-write"
       ></iframe>
@@ -106,6 +106,7 @@
               <section class="cloud-review" id="cloud-review" hidden aria-live="polite">
                 <div class="cloud-review-head">
                   검토 필요 <span class="cloud-review-count" id="cloud-review-count"></span>
+                  <button class="cloud-review-button" id="cloud-review-keep-all" type="button" hidden>모두 유지</button>
                 </div>
                 <p class="cloud-review-hint">
                   설명 없이 화면에서 사라진 항목과 다른 기기와 겹친 편집입니다. 여기서 확인하기 전에는 아무것도 지워지지 않습니다.
@@ -125,7 +126,7 @@
 
     <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./sync-app.js?v=4.4.3"></script>
+    <script src="./sync-app.js?v=4.4.4"></script>
     <script>
       (() => {
         const installButton = document.getElementById("app-install-launcher");

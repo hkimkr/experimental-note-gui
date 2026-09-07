@@ -288,6 +288,7 @@ input {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   color: #8a5a12;
   font-size: 13px;
   font-weight: 800;
