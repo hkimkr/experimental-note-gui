@@ -206,12 +206,20 @@ check("페이지를 열며 다시 보낸 저장본은 신선도 증거가 되지
   assert.strictEqual(api.localFreshnessAt({ storedRaw, storedUpdatedAt: 0, now: 9000 }), 0);
 });
 
-check("저장본과 다른 in-flight 스냅샷(아직 안 쓴 편집)은 지금 시각을 증거로 삼는다", () => {
-  const storedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "저장본")] })] });
-  const editedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "방금 고친 내용")] })] });
+check("정규화 때문에 달라진 in-flight 스냅샷은 편집 증거가 아니다", () => {
+  const storedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "내용")] })] });
+  const normalized = JSON.stringify({
+    projects: [project({ notes: [{ ...note("note-1", "내용"), protocolImports: [], conditionLabels: [] }] })],
+  });
+  // 앱이 기본값을 채워 저장본과 달라도 "방금 편집함"이 되어서는 안 된다.
   assert.strictEqual(
-    api.localFreshnessAt({ pendingRaw: editedRaw, storedRaw, storedUpdatedAt: 500, now: 9000 }),
-    9000
+    api.localFreshnessAt({ pendingRaw: normalized, storedRaw, storedUpdatedAt: 500, now: 9000 }),
+    500
+  );
+  // 편집 도장이 없으면 증거 없음(0).
+  assert.strictEqual(
+    api.localFreshnessAt({ pendingRaw: normalized, storedRaw, storedUpdatedAt: 0, now: 9000 }),
+    0
   );
 });
 
@@ -305,11 +313,17 @@ check("편집 없이 페이지만 열면 규칙 5의 증거가 없다", () => {
   assert.strictEqual(result.notePurposes["note-1"], "클라우드에 있는 내용");
 });
 
-check("아직 저장되지 않은 in-flight 편집은 편집 키가 없어도 증거가 된다", () => {
+check("편집 증거는 앱이 찍은 편집 도장뿐이다 (in-flight 스냅샷은 증거가 아니다)", () => {
   const storedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "저장본")] })] });
   const editedRaw = JSON.stringify({ projects: [project({ notes: [note("note-1", "방금 고친 내용")] })] });
+  // 앱은 localStorage 를 쓰는 그 자리에서 도장을 찍으므로, 도장이 없다는 것은
+  // 이 기기에서 아무도 고치지 않았다는 뜻이다. 정규화로 스냅샷만 달라진 경우가
+  // 여기에 해당하고, 그걸 편집으로 세면 옛 상태가 최신 클라우드를 덮는다.
   setStoredLocal({ raw: storedRaw, localUpdatedAt: 9000, userEditedAt: null });
-  assert.ok(api.localEditEvidenceAt(editedRaw) > 0);
+  assert.strictEqual(api.localEditEvidenceAt(editedRaw), 0);
+  // 실제 편집에는 도장이 찍혀 있고, 그 시각이 증거가 된다.
+  setStoredLocal({ raw: editedRaw, localUpdatedAt: 9000, userEditedAt: 8500 });
+  assert.strictEqual(api.localEditEvidenceAt(editedRaw), 8500);
 });
 
 check("다른 기기가 보던 프로젝트가 이 기기의 화면을 끌고 가지 않는다", () => {
@@ -1056,6 +1070,25 @@ check("편집 증거가 없으면 클라우드가 그대로 이기고 검토도 
   assert.strictEqual(result.purposeOf("note-1"), "클라우드 내용");
   assert.strictEqual(result.conflictCount, 0, "결정할 것이 없으므로 검토를 띄우지 않는다");
   equalList(result.outboxKeys, []);
+});
+
+check("프로젝트 행이 없는 자식 때문에 '새 프로젝트'가 생기지 않는다", () => {
+  const withGone = {
+    activeProjectId: "keep",
+    projects: [
+      project({ id: "gone-1", name: "지워진 A", notes: [note("n1", "내용")] }),
+      project({ id: "gone-2", name: "지워진 B", notes: [note("n2", "내용")] }),
+      project({ id: "keep", name: "살아있는 프로젝트", notes: [note("n4", "내용")] }),
+    ],
+  };
+  const records = api.recordsOf(withGone, 1000, "cloud-device");
+  records.delete("project::gone-1");
+  records.delete("project::gone-2");
+  const store = api.storeOf(records, {});
+  equalList(
+    (store.projects || []).map((item) => String(item.id)),
+    ["keep"]
+  );
 });
 
 // --- Report ---------------------------------------------------------------

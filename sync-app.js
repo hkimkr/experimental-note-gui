@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.4 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.5 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.4";
+  const APP_VERSION = "4.4.5";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -717,24 +717,12 @@
     // 실험 행보다 프로토콜 행이 먼저 도착하면 프로토콜을 조용히 버렸고, 그러면
     // 화면에서 사라진 것처럼 보이다가 삭제로 이어졌습니다. 여기서 임시로 붙이는
     // 이름은 EMPTY_PLACEHOLDERS 에 있어 실제 행이 도착하면 그대로 밀려납니다.
-    const ensureProject = (projectId) => {
-      const id = String(projectId || "");
-      if (!id) return null;
-      let project = projects.get(id);
-      if (!project) {
-        project = {
-          id,
-          name: "새 프로젝트",
-          experiments: [],
-          notes: [],
-          inventory: [],
-          memoSnapshots: [],
-          memoScratch: { content: "", updatedAt: null },
-        };
-        projects.set(id, project);
-      }
-      return project;
-    };
+    // 프로젝트는 만들어 주지 않습니다. 삭제된 프로젝트의 자식 행이 클라우드에
+    // 남아 있는 경우가 있어서, 없는 프로젝트를 만들면 "새 프로젝트"가 유령처럼
+    // 되살아납니다(v4.4.4 에서 실제로 3개가 생겼습니다). 부모 프로젝트가 없는
+    // 자식은 화면에 싣지 않되, 화면에 실린 행만 "보여 준 행"으로 기록하므로
+    // 나중에 삭제 후보가 되지도 않습니다.
+    const ensureProject = (projectId) => projects.get(String(projectId || "")) || null;
     const ensureExperiment = (project, experimentId) => {
       const id = String(experimentId || "");
       if (!project || !id) return null;
@@ -1882,10 +1870,19 @@
   // an in-flight payload only proves freshness when it differs from what is
   // already stored (i.e. it carries an edit that has not been written yet).
   function localFreshnessAt({ pendingRaw = "", storedRaw = "", storedUpdatedAt = 0, now = Date.now() }) {
-    const stored = Number(storedUpdatedAt) || 0;
-    if (!pendingRaw) return stored;
-    if (fingerprintRaw(pendingRaw) === fingerprintRaw(storedRaw || "")) return stored;
-    return now;
+    // 앱이 찍는 편집 도장(USER_EDITED_KEY)만 증거로 씁니다.
+    //
+    // 예전에는 "저장본과 다른 in-flight 스냅샷"을 아직 안 쓴 편집으로 보고 지금
+    // 시각을 증거로 삼았습니다. 그런데 앱(iframe)은 스토어를 정규화해 기본값을
+    // 채우므로, 아무것도 고치지 않은 새로고침에서도 그 스냅샷은 저장본과 다릅니다.
+    // 그러면 매번 "방금 편집함"이 되어, 꺼져 있던 기기가 접속할 때 자기 옛 상태를
+    // 최신 클라우드 위로 밀어 올렸습니다 (한쪽을 꺼두면 반영이 안 되던 원인).
+    // 실제 편집은 앱이 localStorage 를 쓰는 그 자리에서 도장을 찍고, 이미 캡처된
+    // 편집은 아웃박스에 있어 이 시각과 무관하게 반영됩니다.
+    void pendingRaw;
+    void storedRaw;
+    void now;
+    return Number(storedUpdatedAt) || 0;
   }
 
   // Rule 5's only source of evidence. A device upgrading from an older version
