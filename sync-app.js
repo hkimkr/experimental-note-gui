@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.6 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.7 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.6";
+  const APP_VERSION = "4.4.7";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -263,14 +263,24 @@
   const arrayItemKey = (item) =>
     isPlainObject(item) && item.id != null ? String(item.id) : "";
 
+  // preferredIntent: 최신 쪽이 사용자의 실제 편집이라 목록에서 빠진 항목은 지운 것으로 본다.
+  // honorClears: 최신 쪽이 비운 칸·빈 목록도 지운 것으로 본다. 직접 관찰한 편집에만 켠다.
   function mergeContentValues(
     olderValue,
     preferredValue,
-    preferredIntent = false
+    preferredIntent = false,
+    honorClears = preferredIntent
   ) {
     const olderMeaningful = hasMeaningfulValue(olderValue);
     const preferredMeaningful = hasMeaningfulValue(preferredValue);
-    if (!preferredMeaningful && olderMeaningful) return clone(olderValue);
+    // "빈 값은 내용을 지우지 못한다"는 보호는 의도가 확인되지 않은 최신 쪽
+    // (옛 스냅샷, 덜 불러온 화면, 추가 전용 병합)에만 적용합니다. 사용자가 이
+    // 기기나 다른 기기에서 직접 비운 것(의도 표식이 있는 최신)은 그대로 비웁니다.
+    // 예전엔 여기서 막혀, 목록의 마지막 항목을 지우거나 글자를 빈칸으로 지우면
+    // 저장 단계에서 이전 내용으로 되돌아가 다음 동기화 때 다시 나타났습니다.
+    if (!preferredMeaningful && olderMeaningful && !honorClears) {
+      return clone(olderValue);
+    }
     if (!olderMeaningful) return clone(preferredValue);
 
     if (Array.isArray(olderValue) && Array.isArray(preferredValue)) {
@@ -286,7 +296,7 @@
         const merged = preferredValue.map((item) => {
           const id = arrayItemKey(item);
           return id && olderById.has(id)
-            ? mergeContentValues(olderById.get(id), item, preferredIntent)
+            ? mergeContentValues(olderById.get(id), item, preferredIntent, honorClears)
             : clone(item);
         });
         const preferredIds = new Set(
@@ -323,7 +333,8 @@
             merged[childKey] = mergeContentValues(
               olderValue[childKey],
               preferredValue[childKey],
-              preferredIntent
+              preferredIntent,
+              honorClears
             );
           }
         });
@@ -333,7 +344,9 @@
     return clone(preferredValue);
   }
 
-  function contentAwareRecord(left, right) {
+  // options.honorClears: 기본은 최신 쪽의 의도 표식을 따릅니다. 재접속 때 전역 편집
+  // 시각만으로 채택하는 추정 경로는 false 를 넘겨 빈칸이 내용을 지우지 못하게 합니다.
+  function contentAwareRecord(left, right, options = {}) {
     if (!left) return clone(right);
     if (!right) return clone(left);
     const preferred = compareRecords(left, right) >= 0 ? left : right;
@@ -369,7 +382,8 @@
       payload: mergeContentValues(
         older.payload,
         preferred.payload,
-        isIntentRecord(preferred)
+        isIntentRecord(preferred),
+        options.honorClears ?? isIntentRecord(preferred)
       ),
       deleted_at: null,
     };
@@ -1040,9 +1054,14 @@
         Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
       if (!editedSinceCache && !editedByClock) return;
       const mine = stamp(local);
-      // 같은 부분을 양쪽에서 고쳤으면 최신 시각을 기준으로 덮어씁니다
-      // (contentAwareRecord 가 최신 쪽을 택하고, 빈 값이 내용을 지우지는 않게 합니다).
-      const merged = contentAwareRecord(baseRec, mine);
+      // 같은 부분을 양쪽에서 고쳤으면 최신 시각을 기준으로 덮어씁니다.
+      // 비운 칸을 지운 것으로 볼지는 근거에 따라 다릅니다. 이 행이 지난번 캐시와
+      // 다르면(editedSinceCache) 이 기기가 그 행을 직접 고친 것이라 비운 것도
+      // 반영합니다. 전역 편집 시각만 근거라면(이 행을 캐시한 적 없음) 추정이므로,
+      // 빈칸이 클라우드 내용을 지우지 못하게 막습니다.
+      const merged = contentAwareRecord(baseRec, mine, {
+        honorClears: editedSinceCache,
+      });
       if (!sameRecordContent(merged, baseRec)) {
         adopted.set(key, merged);
       }

@@ -651,6 +651,129 @@ scenario("한 번에 여러 항목이 바뀌어도 (프로토콜 저장 등) 화
   );
 });
 
+// --- protocol contents -----------------------------------------------------
+const PROTOCOL_SEED = {
+  activeProjectId: "p1",
+  projects: [
+    {
+      id: "p1",
+      name: "프로젝트",
+      notes: [{ id: "n1", title: "노트 1", purpose: "처음" }],
+      experiments: [
+        {
+          id: "e1",
+          name: "실험",
+          memo: "",
+          protocols: [
+            {
+              id: "pr1",
+              name: "프로토콜 A",
+              summary: "개요",
+              beforeStarting: [{ id: "b1", title: "준비물 1" }, { id: "b2", title: "준비물 2" }],
+              activeVersionId: "v1",
+              versions: [{ id: "v1", label: "v1", stepGroups: [] }],
+              draftVersion: {
+                id: "v1",
+                label: "v1",
+                stepGroups: [
+                  {
+                    id: "s1",
+                    title: "1단계 분주",
+                    panelRows: [
+                      {
+                        id: "r1",
+                        texts: [{ id: "t1", content: "설명 줄", position: "before" }],
+                        panels: [
+                          {
+                            id: "pa1",
+                            type: "reagent",
+                            title: "시약",
+                            rows: [
+                              { id: "rg1", material: "PBS", volume: "100" },
+                              { id: "rg2", material: "DMEM", volume: "50" },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  { id: "s2", title: "2단계 배양", panelRows: [] },
+                  { id: "s3", title: "3단계 측정", panelRows: [] },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+      inventory: [],
+      memoSnapshots: [],
+      memoScratch: { content: "" },
+    },
+  ],
+};
+const protocolOf = (store) => store?.projects?.[0]?.experiments?.[0]?.protocols?.[0];
+const serverProtocol = () => server.rows.get("experiment_protocol::p1:e1:pr1")?.payload?.item;
+const editProtocol = (fn) => (store) => {
+  fn(protocolOf(store));
+  return store;
+};
+
+async function twoDevicesWithProtocol() {
+  resetClock();
+  resetServer();
+  const desktop = makeDevice("desktop", { seedStore: PROTOCOL_SEED });
+  await desktop.ready();
+  await advance(3000);
+  const phone = makeDevice("phone");
+  await phone.ready();
+  await advance(3000);
+  assert.ok(protocolOf(phone.app.store), "setup: phone should load the protocol");
+  return { desktop, phone };
+}
+
+// 삭제한 뒤 흔한 동기화 사건들(다른 곳 편집, 앱 전환, 따라잡기 주기)을 거쳐도 남는지 본다.
+async function stirAfterDelete(desktop, phone) {
+  await advance(5000);
+  phone.edit((store) => {
+    store.projects[0].notes[0].purpose = "폰에서 다른 곳 수정";
+    return store;
+  });
+  await advance(5000);
+  desktop.background();
+  await advance(1000);
+  desktop.foreground();
+  await advance(5000);
+  phone.background();
+  await advance(1000);
+  phone.foreground();
+  await advance(65000);
+}
+
+const DELETIONS = [
+  ["목록의 마지막 시약 행까지 전부 지우기", (pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels[0].rows = []; },
+    (pr) => pr?.draftVersion?.stepGroups?.[0]?.panelRows?.[0]?.panels?.[0]?.rows?.length, 0],
+  ["유일한 설명 줄 지우기", (pr) => { pr.draftVersion.stepGroups[0].panelRows[0].texts = []; },
+    (pr) => pr?.draftVersion?.stepGroups?.[0]?.panelRows?.[0]?.texts?.length, 0],
+  ["유일한 패널 지우기", (pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels = []; },
+    (pr) => pr?.draftVersion?.stepGroups?.[0]?.panelRows?.[0]?.panels?.length, 0],
+  ["단계 제목을 빈칸으로 지우기", (pr) => { pr.draftVersion.stepGroups[0].title = ""; },
+    (pr) => pr?.draftVersion?.stepGroups?.[0]?.title, ""],
+  ["개요 문구를 빈칸으로 지우기", (pr) => { pr.summary = ""; }, (pr) => pr?.summary, ""],
+  ["준비 항목 전부 지우기", (pr) => { pr.beforeStarting = []; }, (pr) => pr?.beforeStarting?.length, 0],
+  ["단계 하나 지우기 (여러 개 중)", (pr) => { pr.draftVersion.stepGroups = pr.draftVersion.stepGroups.filter((g) => g.id !== "s3"); },
+    (pr) => pr?.draftVersion?.stepGroups?.map((g) => g.id).join(","), "s1,s2"],
+];
+for (const [label, mutate, pick, expected] of DELETIONS) {
+  scenario(`프로토콜에서 지운 것이 되살아나지 않는다: ${label}`, async () => {
+    const { desktop, phone } = await twoDevicesWithProtocol();
+    desktop.edit(editProtocol(mutate));
+    await stirAfterDelete(desktop, phone);
+    assert.strictEqual(pick(protocolOf(desktop.app.store)), expected, "컴퓨터");
+    assert.strictEqual(pick(serverProtocol()), expected, "서버");
+    assert.strictEqual(pick(protocolOf(phone.app.store)), expected, "폰");
+  });
+}
+
 // --- run -------------------------------------------------------------------
 (async () => {
   let failed = 0;
