@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.8 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.5.0 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.8";
+  const APP_VERSION = "4.5.0";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -41,8 +41,14 @@
   const SHARED_OUTBOX_STORE = "shared_outbox";
   /** 검토 대기: 설명 없는 사라짐(hold) · 동시 편집/원격 삭제 충돌(conflict) */
   const REVIEW_STORE = "review";
+  // 편집·삭제 표식은 옛 버전과 같은 v3 를 씁니다. 전환 기간에 옛 버전 기기가 새 버전의
+  // 기록을 받아도 "사용자의 실제 편집·삭제"로 알아보고 반영하게 하기 위해서입니다.
   const INTENT_CLIENT_PREFIX = "intent-v3:";
   const DELETE_INTENT_CLIENT_PREFIX = "delete-v3:";
+  const INTENT_PREFIXES = [INTENT_CLIENT_PREFIX];
+  const DELETE_INTENT_PREFIXES = [DELETE_INTENT_CLIENT_PREFIX];
+  const startsWithAny = (text, prefixes) =>
+    prefixes.some((prefix) => String(text || "").startsWith(prefix));
   const SUPABASE_URL = "https://wajhlnpyxcnhoybwtdqe.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_Kp3KAxlyT1eXot9vHE1wlQ_h4C0BVeJ";
@@ -234,6 +240,7 @@
     "linkedExperimentId",
     "sourceStepGroupId",
     "sourceProtocolId",
+    "__sync",
   ]);
 
   const isPlainObject = (value) =>
@@ -344,6 +351,417 @@
     return clone(preferredValue);
   }
 
+  // ===========================================================================
+  // 부분별 수정 시각 (v4.5)
+  // ===========================================================================
+  // 프로토콜과 실험 노트는 한 건의 기록 안에 단계·패널·표·실행 기록이 통째로
+  // 들어 있습니다. 기록 전체에 시각이 하나뿐이면, 두 기기가 서로 다른 부분을
+  // 고쳐도 나중에 저장한 쪽 기록 전체가 이겨 다른 쪽 변경이 사라지고, 한쪽에서
+  // 지운 항목이 다른 쪽의 옛 사본과 함께 되살아납니다.
+  //
+  // 그래서 기록 안에 "어느 부분이 언제 바뀌었는지"를 함께 저장합니다.
+  //
+  //   payload.__sync = {
+  //     v: 1,
+  //     h: <내용 해시>   — 옛 버전 앱이 내용만 바꾸고 시각표를 그대로 복사해 올렸으면
+  //                        해시가 맞지 않으므로, 그 시각표는 믿지 않습니다.
+  //     c: { 경로: ms }  — 부분이 마지막으로 바뀐 시각. 하위 경로는 상위 시각을 물려받고,
+  //                        "" 는 기록 전체의 기본 시각입니다.
+  //     d: { 경로: ms }  — 목록에서 지워진 항목의 삭제 시각.
+  //   }
+  //   경로: 객체 키 "/키", 목록 항목 "/@항목키", 목록 순서 "/#".
+  //
+  // 병합 규칙: 부분마다 최신 시각이 이깁니다.
+  //   - 손대지 않은 부분은 시각이 오르지 않으므로, 아무것도 안 한 기기가 덮어쓰지 못합니다.
+  //   - 서로 다른 부분을 고쳤으면 둘 다 남습니다.
+  //   - 같은 부분을 고쳤으면 나중 것이 이깁니다.
+  //   - 지운 항목은, 삭제 시각이 그 항목의 마지막 편집보다 나중이면 되살아나지 않습니다.
+  const SYNC_META_KEY = "__sync";
+  const PART_CLOCK_VERSION = 1;
+  const PART_TOMBSTONE_TTL_MS = 90 * 24 * 3600 * 1000;
+  // 기록 맨 위에서 앱이 배열 위치로 다시 계산하는 값은 편집으로 치지 않습니다.
+  const DERIVED_ROOT_KEYS = new Set(["item_order", "order"]);
+
+  // 경로 조각. 대부분 같은 키(item, stepGroups, id 들)가 반복되므로 기억해 둡니다.
+  const segmentCache = new Map();
+  const pathSegment = (key) => {
+    const text = String(key);
+    let segment = segmentCache.get(text);
+    if (segment === undefined) {
+      segment = /[/%]/.test(text) ? encodeURIComponent(text) : text;
+      if (segmentCache.size > 20000) segmentCache.clear();
+      segmentCache.set(text, segment);
+    }
+    return segment;
+  };
+
+  // 목록 항목을 알아보는 열쇠. 실행 기록·주석 목록은 id 없이 단계·패널·라벨로 식별됩니다.
+  const partItemKey = (item) => {
+    if (!isPlainObject(item)) return "";
+    if (item.id != null && item.id !== "") return String(item.id);
+    if (item.stepGroupId != null && item.stepGroupId !== "") {
+      return `~${item.stepGroupId}|${item.panelId ?? ""}|${item.labelId ?? ""}`;
+    }
+    return "";
+  };
+  const keyedListCache = new WeakMap();
+  const isKeyedList = (list) => {
+    if (!Array.isArray(list)) return false;
+    const cached = keyedListCache.get(list);
+    if (cached !== undefined) return cached;
+    const seen = new Set();
+    let keyed = true;
+    for (const item of list) {
+      const key = partItemKey(item);
+      if (!key || seen.has(key)) {
+        keyed = false;
+        break;
+      }
+      seen.add(key);
+    }
+    keyedListCache.set(list, keyed);
+    return keyed;
+  };
+  const keyedLists = (left, right) =>
+    isKeyedList(left) && isKeyedList(right) && (left.length > 0 || right.length > 0);
+
+  const payloadContent = (payload) => {
+    if (!isPlainObject(payload) || !(SYNC_META_KEY in payload)) return payload;
+    const { [SYNC_META_KEY]: _meta, ...rest } = payload;
+    return rest;
+  };
+  // 목록이 아닌 배열·객체 칸이 바뀌었는지 비교할 때 쓰는 구조 해시. 키는 정렬하고
+  // undefined 는 건너뛰어, 저장소를 거치며 키 순서가 바뀌어도 같은 값이 나옵니다.
+  // 같은 키 이름(material, volume, id …)이 수천 번 반복되므로 키 해시는 기억해 둡니다.
+  const keyHashCache = new Map();
+  function structuralHash(value) {
+    // 객체는 키마다 (키, 값) 해시를 더해 합칩니다. 덧셈은 순서와 무관하므로 키를 정렬할
+    // 필요가 없고, 저장소(jsonb)를 거치며 키 순서가 바뀌어도 같은 값이 나옵니다.
+    const walk = (node) => {
+      if (Array.isArray(node)) {
+        let hash = 2166136261 ^ 91;
+        for (let index = 0; index < node.length; index += 1) {
+          hash = Math.imul(hash ^ walk(node[index]), 16777619);
+        }
+        return Math.imul(hash ^ 93, 16777619);
+      }
+      if (node !== null && typeof node === "object") {
+        let sum = 0;
+        for (const key in node) {
+          const child = node[key];
+          if (child === undefined || key === SYNC_META_KEY) continue;
+          let hash = keyHashCache.get(key);
+          if (hash === undefined) {
+            hash = 2166136261;
+            for (let index = 0; index < key.length; index += 1) {
+              hash = Math.imul(hash ^ key.charCodeAt(index), 16777619);
+            }
+            if (keyHashCache.size > 50000) keyHashCache.clear();
+            keyHashCache.set(key, hash);
+          }
+          sum = (sum + Math.imul(hash ^ walk(child), 16777619)) | 0;
+        }
+        return Math.imul(2166136261 ^ 123 ^ sum, 16777619);
+      }
+      const isText = typeof node === "string";
+      const text = isText ? node : String(node);
+      let hash = 2166136261 ^ (isText ? 34 : 35);
+      for (let index = 0; index < text.length; index += 1) {
+        hash = Math.imul(hash ^ text.charCodeAt(index), 16777619);
+      }
+      return hash;
+    };
+    return (walk(value) >>> 0).toString(36);
+  }
+
+
+
+  // 믿을 수 있는 시각표만 돌려줍니다. 시각표에는 그것을 쓸 때의 내용 해시(h)가 함께
+  // 있어서, 옛 버전 기기가 시각표를 모른 채 내용만 바꾸거나 합쳐 올렸으면 해시가 맞지
+  // 않습니다. 그런 기록은 믿지 않고 모든 부분이 그 기록의 저장 시각에 바뀐 것으로 봅니다.
+  // 이 기기가 만들었거나 이미 확인한 내용 객체는 다시 해시하지 않습니다.
+  const verifiedPayloads = new WeakSet();
+  function partMetaOf(record) {
+    const payload = record?.payload;
+    if (!isPlainObject(payload)) return null;
+    const meta = payload[SYNC_META_KEY];
+    if (!isPlainObject(meta) || meta.v !== PART_CLOCK_VERSION || !isPlainObject(meta.c)) {
+      return null;
+    }
+    if (verifiedPayloads.has(payload)) return meta;
+    if (meta.h !== structuralHash(payload)) return null;
+    verifiedPayloads.add(payload);
+    return meta;
+  }
+
+  // 시각표가 없는(옛) 기록은 모든 부분이 그 기록의 시각에 바뀐 것으로 봅니다.
+  function partMetaOrBase(record) {
+    const meta = partMetaOf(record);
+    if (meta) return { c: { ...meta.c }, d: { ...(meta.d || {}) } };
+    return { c: { "": timestampOf(record) }, d: {} };
+  }
+
+  function partClockAt(meta, path) {
+    let clock = Number(meta.c[""]) || 0;
+    for (let index = 1; index <= path.length; index += 1) {
+      if (index === path.length || path[index] === "/") {
+        const value = Number(meta.c[path.slice(0, index)]) || 0;
+        if (value > clock) clock = value;
+      }
+    }
+    return clock;
+  }
+
+  // 목록 항목 경로마다 그 아래에서 가장 늦은 시각. 한 번 훑어 만들어 둡니다.
+  const subtreeCache = new WeakMap();
+  function partSubtreeClock(meta, path) {
+    let index = subtreeCache.get(meta);
+    if (!index) {
+      index = new Map();
+      for (const [key, value] of Object.entries(meta.c)) {
+        const clock = Number(value) || 0;
+        for (let at = key.indexOf("/@"); at !== -1; at = key.indexOf("/@", at + 2)) {
+          const end = key.indexOf("/", at + 2);
+          const itemPath = end === -1 ? key : key.slice(0, end);
+          if (clock > (index.get(itemPath) || 0)) index.set(itemPath, clock);
+        }
+      }
+      subtreeCache.set(meta, index);
+    }
+    return Math.max(partClockAt(meta, path), index.get(path) || 0);
+  }
+
+  // 이 기기에서 old → next 로 바뀐 부분에 시각 now 를 적습니다.
+  // additive(불확실한 스냅샷)면 채우기·추가만 인정하고, 비우기·삭제·순서 변경은 무시합니다.
+  function diffPartsInto(meta, oldValue, nextValue, path, now, additive) {
+    if (isPlainObject(oldValue) && isPlainObject(nextValue)) {
+      for (const key of new Set([...Object.keys(oldValue), ...Object.keys(nextValue)])) {
+        if (key === SYNC_META_KEY) continue;
+        if (path === "" && DERIVED_ROOT_KEYS.has(key)) continue;
+        diffPartsInto(meta, oldValue[key], nextValue[key], `${path}/${pathSegment(key)}`, now, additive);
+      }
+      return;
+    }
+    if (keyedLists(oldValue, nextValue)) {
+      const oldMap = new Map(oldValue.map((item) => [partItemKey(item), item]));
+      const nextMap = new Map(nextValue.map((item) => [partItemKey(item), item]));
+      let inserted = false;
+      for (const [key, item] of nextMap) {
+        const itemPath = `${path}/@${pathSegment(key)}`;
+        if (oldMap.has(key)) {
+          diffPartsInto(meta, oldMap.get(key), item, itemPath, now, additive);
+        } else {
+          meta.c[itemPath] = now;
+          delete meta.d[itemPath];
+          inserted = true;
+        }
+      }
+      if (!additive) {
+        for (const key of oldMap.keys()) {
+          if (!nextMap.has(key)) {
+            meta.d[`${path}/@${pathSegment(key)}`] = now;
+            meta.removed = true;
+          }
+        }
+      }
+      const survivingOld = oldValue.map(partItemKey).filter((key) => nextMap.has(key));
+      const survivingNext = nextValue.map(partItemKey).filter((key) => oldMap.has(key));
+      const reordered = survivingOld.join("\u0000") !== survivingNext.join("\u0000");
+      if (inserted || (reordered && !additive)) meta.c[`${path}/#`] = now;
+      return;
+    }
+    const same =
+      oldValue === nextValue ||
+      ((oldValue ?? null) === null && (nextValue ?? null) === null) ||
+      (typeof oldValue === "object" &&
+        typeof nextValue === "object" &&
+        oldValue !== null &&
+        nextValue !== null &&
+        structuralHash(oldValue) === structuralHash(nextValue));
+    if (same) return;
+    if (additive && !hasMeaningfulValue(nextValue)) return;
+    meta.c[path] = now;
+  }
+
+  const pruneTombstones = (tombstones) => {
+    const floor = Date.now() - PART_TOMBSTONE_TTL_MS;
+    const kept = {};
+    for (const [key, value] of Object.entries(tombstones || {})) {
+      if (Number(value) >= floor) kept[key] = Number(value);
+    }
+    return kept;
+  };
+
+  // 내용에 실제로 있는 목록 항목 경로들. 지워진 항목 아래의 부분 시각은 병합에 쓰이지
+  // 않으므로(지워진 항목은 삭제 시각만 봄) 정리해서 기록이 끝없이 커지지 않게 합니다.
+  function liveItemPaths(value, path = "", out = new Set()) {
+    if (isPlainObject(value)) {
+      for (const [key, child] of Object.entries(value)) {
+        if (key === SYNC_META_KEY) continue;
+        liveItemPaths(child, `${path}/${pathSegment(key)}`, out);
+      }
+    } else if (isKeyedList(value)) {
+      value.forEach((item) => {
+        const itemPath = `${path}/@${pathSegment(partItemKey(item))}`;
+        out.add(itemPath);
+        liveItemPaths(item, itemPath, out);
+      });
+    }
+    return out;
+  }
+  function pruneClocks(clocks, content) {
+    const live = liveItemPaths(content);
+    const kept = {};
+    for (const [key, value] of Object.entries(clocks || {})) {
+      let alive = true;
+      for (let index = key.indexOf("/@"); index !== -1; index = key.indexOf("/@", index + 2)) {
+        const end = key.indexOf("/", index + 2);
+        if (!live.has(end === -1 ? key : key.slice(0, end))) {
+          alive = false;
+          break;
+        }
+      }
+      if (alive) kept[key] = Number(value);
+    }
+    return kept;
+  }
+
+  function withPartMeta(record, content, meta) {
+    if (!isPlainObject(content)) return { ...clone(record), payload: clone(content) };
+    const payload = { ...clone(content) };
+    delete payload[SYNC_META_KEY];
+    payload[SYNC_META_KEY] = {
+      v: PART_CLOCK_VERSION,
+      h: structuralHash(payload),
+      // 지운 항목이 있을 때만 그 아래 시각을 정리합니다 (내용 전체를 훑는 작업이라).
+      c: meta.removed ? pruneClocks(meta.c, payload) : { ...meta.c },
+      d: pruneTombstones(meta.d),
+    };
+    verifiedPayloads.add(payload);
+    const { payload: _oldPayload, ...rest } = record;
+    return { ...clone(rest), payload };
+  }
+
+  // 두 쪽의 내용을 부분별로 합칩니다. rank 가 높은 쪽이 시각이 같은 부분을 가져갑니다.
+  // 부모의 시각을 내려받으며 훑으므로 칸마다 시각 조회가 한 번이면 됩니다.
+  function mergePartContents(a, b) {
+    let dropped = false;
+    const copy = (value) => (value !== null && typeof value === "object" ? clone(value) : value);
+    const own = (meta, path, inherited) => {
+      const value = Number(meta.c[path]) || 0;
+      return value > inherited ? value : inherited;
+    };
+    const walk = (va, vb, path, inheritedA, inheritedB) => {
+      const clockA = own(a.meta, path, inheritedA);
+      const clockB = own(b.meta, path, inheritedB);
+      if (isPlainObject(va) && isPlainObject(vb)) {
+        const out = {};
+        for (const key of Object.keys(va)) {
+          if (key === SYNC_META_KEY) continue;
+          out[key] = key in vb
+            ? walk(va[key], vb[key], `${path}/${pathSegment(key)}`, clockA, clockB)
+            : copy(va[key]);
+        }
+        for (const key of Object.keys(vb)) {
+          // 한쪽에만 있는 키는 없는 쪽이 모르는 것이지 지운 것이 아닙니다.
+          if (key === SYNC_META_KEY || key in va) continue;
+          out[key] = copy(vb[key]);
+        }
+        return out;
+      }
+      if (keyedLists(va, vb)) {
+        const mapA = new Map(va.map((item) => [partItemKey(item), item]));
+        const mapB = new Map(vb.map((item) => [partItemKey(item), item]));
+        const kept = new Map();
+        const consider = (key) => {
+          if (kept.has(key)) return;
+          const itemPath = `${path}/@${pathSegment(key)}`;
+          if (mapA.has(key) && mapB.has(key)) {
+            kept.set(key, walk(mapA.get(key), mapB.get(key), itemPath, clockA, clockB));
+            return;
+          }
+          const inA = mapA.has(key);
+          const ownSide = inA ? a : b;
+          const other = inA ? b : a;
+          const deletedAt = Number(other.meta.d?.[itemPath]) || 0;
+          if (deletedAt) {
+            const lastEdit = Math.max(
+              own(ownSide.meta, itemPath, inA ? clockA : clockB),
+              partSubtreeClock(ownSide.meta, itemPath)
+            );
+            if (deletedAt >= lastEdit) {
+              dropped = true;
+              kept.set(key, undefined);
+              return;
+            }
+          }
+          kept.set(key, copy((inA ? mapA : mapB).get(key)));
+        };
+        mapA.forEach((_item, key) => consider(key));
+        mapB.forEach((_item, key) => consider(key));
+        const orderA = own(a.meta, `${path}/#`, clockA);
+        const orderB = own(b.meta, `${path}/#`, clockB);
+        const aLeads = orderA !== orderB ? orderA > orderB : a.rank >= b.rank;
+        const [lead, follow] = aLeads ? [va, vb] : [vb, va];
+        const result = [];
+        const placed = new Set();
+        lead.forEach((item) => {
+          const key = partItemKey(item);
+          const value = kept.get(key);
+          if (value !== undefined && !placed.has(key)) {
+            result.push(value);
+            placed.add(key);
+          }
+        });
+        // 다른 쪽에서만 새로 생긴 항목은 그쪽에서 바로 앞에 있던 항목 뒤에 끼웁니다.
+        let anchor = -1;
+        follow.forEach((item) => {
+          const key = partItemKey(item);
+          const value = kept.get(key);
+          if (value === undefined) return;
+          if (placed.has(key)) {
+            anchor = result.findIndex((entry) => partItemKey(entry) === key);
+            return;
+          }
+          result.splice(anchor + 1, 0, value);
+          anchor += 1;
+          placed.add(key);
+        });
+        return result;
+      }
+      if (clockA !== clockB) return copy(clockA > clockB ? va : vb);
+      return copy(a.rank >= b.rank ? va : vb);
+    };
+    const content = walk(payloadContent(a.payload), payloadContent(b.payload), "", 0, 0);
+    const c = { ...a.meta.c };
+    for (const [key, value] of Object.entries(b.meta.c)) {
+      if (!(key in c) || Number(value) > Number(c[key])) c[key] = Number(value);
+    }
+    const d = { ...(a.meta.d || {}) };
+    for (const [key, value] of Object.entries(b.meta.d || {})) {
+      if (!(key in d) || Number(value) > Number(d[key])) d[key] = Number(value);
+    }
+    // 이번 병합에서 항목이 빠졌을 때만 그 아래 시각을 정리합니다.
+    return { content, meta: { c, d, removed: dropped } };
+  }
+
+  // 이 기기의 편집(next)을 기준 사본(base)과 비교해 부분별 시각을 붙인 기록을 만듭니다.
+  // additive 면 기준 사본의 내용을 지키고 스냅샷의 채우기·추가만 얹습니다.
+  function clockLocalEdit(base, next, now, additive = false) {
+    const baseActive = base && !base.deleted_at && base.payload != null;
+    if (!baseActive) {
+      return withPartMeta(next, payloadContent(next.payload), { c: { "": now }, d: {} });
+    }
+    const meta = partMetaOrBase(base);
+    diffPartsInto(meta, payloadContent(base.payload), payloadContent(next.payload), "", now, additive);
+    if (!additive) return withPartMeta(next, payloadContent(next.payload), meta);
+    const merged = mergePartContents(
+      { payload: base.payload, meta: partMetaOrBase(base), rank: 1 },
+      { payload: next.payload, meta, rank: 0 }
+    );
+    return withPartMeta(next, merged.content, merged.meta);
+  }
+
   // options.honorClears: 기본은 최신 쪽의 의도 표식을 따릅니다. 재접속 때 전역 편집
   // 시각만으로 채택하는 추정 경로는 false 를 넘겨 빈칸이 내용을 지우지 못하게 합니다.
   function contentAwareRecord(left, right, options = {}) {
@@ -354,12 +772,7 @@
     const preferredActive = !preferred.deleted_at && preferred.payload != null;
     const olderActive = !older.deleted_at && older.payload != null;
 
-    if (
-      preferred.deleted_at &&
-      String(preferred.client_id || "").startsWith(
-        DELETE_INTENT_CLIENT_PREFIX
-      )
-    ) {
+    if (preferred.deleted_at && startsWithAny(preferred.client_id, DELETE_INTENT_PREFIXES)) {
       return clone(preferred);
     }
     // A newer tombstone wins even if the client_id prefix was stripped by the
@@ -377,6 +790,22 @@
     ) {
       return { ...clone(preferred), payload: clone(older.payload), deleted_at: null };
     }
+    if (partMetaOf(preferred) || partMetaOf(older)) {
+      // 한쪽이라도 부분별 시각이 있으면 부분마다 최신이 이깁니다. 옛 형식 기록은
+      // 모든 부분이 그 기록의 실제 저장 시각에 바뀐 것으로 봅니다. (예전엔 여기서
+      // 부분별 시각을 버리고 기본 시각을 방금 다시 찍은 시각으로 두어, 손대지 않은
+      // 부분까지 실제 편집보다 새것처럼 보였습니다 — 옛 형식에서 넘어오는 첫 전환에서
+      // 먼저 쓴 쪽이 이기던 원인.)
+      const merged = mergePartContents(
+        { payload: preferred.payload, meta: partMetaOrBase(preferred), rank: 1 },
+        { payload: older.payload, meta: partMetaOrBase(older), rank: 0 }
+      );
+      return {
+        ...withPartMeta(preferred, merged.content, merged.meta),
+        deleted_at: null,
+      };
+    }
+    // 둘 다 옛 형식이면 예전 방식 그대로 합칩니다.
     return {
       ...clone(preferred),
       payload: mergeContentValues(
@@ -394,7 +823,7 @@
   // 그 차이를 "사용자가 고쳤다"로 읽으면 낡은 스냅샷이 최신 내용을 덮어씁니다.
   const DERIVED_PAYLOAD_KEYS = ["item_order", "order"];
   const userContentValue = (record) => {
-    const payload = record?.payload;
+    const payload = payloadContent(record?.payload);
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
       return payload ?? null;
     }
@@ -411,11 +840,13 @@
         fingerprintValue(userContentValue(left)) ===
           fingerprintValue(userContentValue(right))));
 
+  // 부분별 시각표(__sync)는 비교에서 뺍니다: 내용이 같으면 같은 기록입니다.
   const sameRecordContent = (left, right) =>
     Boolean(left) === Boolean(right) &&
     (!left ||
       (Boolean(left.deleted_at) === Boolean(right.deleted_at) &&
-        fingerprintValue(left.payload) === fingerprintValue(right.payload)));
+        fingerprintValue(payloadContent(left.payload) ?? null) ===
+          fingerprintValue(payloadContent(right.payload) ?? null)));
 
   function expandedRecords(record) {
     if (
@@ -459,10 +890,8 @@
 
   const isIntentRecord = (record) =>
     record?.local_intent === true ||
-    String(record?.client_id || "").startsWith(INTENT_CLIENT_PREFIX) ||
-    String(record?.client_id || "").startsWith(
-      DELETE_INTENT_CLIENT_PREFIX
-    );
+    startsWithAny(record?.client_id, INTENT_PREFIXES) ||
+    startsWithAny(record?.client_id, DELETE_INTENT_PREFIXES);
 
   const isOwnRecord = (record) =>
     record?.client_id === clientId ||
@@ -703,7 +1132,7 @@
   function recordsToStore(records, fallbackStore = {}) {
     const rootRecord = records.get("root::main");
     const rootPayload =
-      rootRecord && !rootRecord.deleted_at ? clone(rootRecord.payload) : {};
+      rootRecord && !rootRecord.deleted_at ? clone(payloadContent(rootRecord.payload)) : {};
     // Older cloud rows still carry activeProjectId; ignore it so the project
     // this device has open survives every merge.
     const { activeProjectId: syncedActiveProjectId, ...root } = rootPayload;
@@ -717,7 +1146,7 @@
     const childOrder = new Map();
     const protocolOrder = new Map();
     activeRecordsOfType(records, "project").forEach((record) => {
-      const payload = clone(record.payload) || {};
+      const payload = clone(payloadContent(record.payload)) || {};
       const project = {
         ...payload,
         id: payload.id || record.entity_id,
@@ -1060,12 +1489,20 @@
         Boolean(localTouchedAt) && timestampOf(baseRec) < localTouchedAt;
       if (!editedSinceCache && !editedByClock) return;
       const mine = stamp(local);
-      // 같은 부분을 양쪽에서 고쳤으면 최신 시각을 기준으로 덮어씁니다.
-      // 비운 칸을 지운 것으로 볼지는 근거에 따라 다릅니다. 이 행이 지난번 캐시와
-      // 다르면(editedSinceCache) 이 기기가 그 행을 직접 고친 것이라 비운 것도
-      // 반영합니다. 전역 편집 시각만 근거라면(이 행을 캐시한 적 없음) 추정이므로,
+      // 이 기기의 오프라인 편집을 부분별 시각으로 표시한 뒤 클라우드와 부분별로
+      // 합칩니다: 이 기기가 고친 부분은 그 시각으로, 다른 기기가 나중에 고친
+      // 부분은 그쪽 시각으로 겨룹니다. 기준은 이 기기가 편집을 시작했던 사본
+      // (캐시)이고, 시각은 이 기기의 마지막 사용자 편집 시각입니다.
+      // 행 단위 근거가 없으면(캐시한 적 없음) 추정이므로 채우기·추가만 인정하고,
       // 빈칸이 클라우드 내용을 지우지 못하게 막습니다.
-      const merged = contentAwareRecord(baseRec, mine, {
+      const editBase = cachedRec && !cachedRec.deleted_at ? cachedRec : baseRec;
+      const mineClocked = clockLocalEdit(
+        editBase,
+        mine,
+        localTouchedAt || timestampOf(mine),
+        !editedSinceCache
+      );
+      const merged = contentAwareRecord(baseRec, mineClocked, {
         honorClears: editedSinceCache,
       });
       if (!sameRecordContent(merged, baseRec)) {
@@ -1112,6 +1549,13 @@
     overlays.forEach((record, key) => {
       const remoteRec = remote?.get(key);
       const cachedRec = cached?.get(key);
+      // 양쪽 다 부분별 시각이 있으면 버리지 않고 합칩니다. 옛 사본의 부분은 시각이
+      // 오래되어 어차피 지고, 이 기기가 실제로 고친 부분만 이깁니다. 버리면, 오프라인에서
+      // 고친 기기가 다른 기기보다 늦게 연결될 때 자기 편집을 통째로 잃었습니다.
+      if (partMetaOf(record) && remoteRec && partMetaOf(remoteRec)) {
+        next.set(key, record);
+        return;
+      }
       if (
         remoteRec &&
         cachedRec &&
@@ -2608,7 +3052,8 @@
       const unchanged =
         existing &&
         !existing.deleted_at &&
-        fingerprintValue(existing.payload) === fingerprintValue(candidate.payload);
+        fingerprintValue(payloadContent(existing.payload)) ===
+          fingerprintValue(payloadContent(candidate.payload));
       if (unchanged) return;
       // An uncertain snapshot must not bring a deleted item back to life.
       if (additiveOnly && existing?.deleted_at) return;
@@ -2619,7 +3064,8 @@
         const baseline = connectBaselineRecords.get(key);
         if (
           baseline &&
-          fingerprintValue(baseline.payload) === fingerprintValue(candidate.payload)
+          fingerprintValue(payloadContent(baseline.payload)) ===
+            fingerprintValue(payloadContent(candidate.payload))
         ) {
           return;
         }
@@ -2634,16 +3080,22 @@
       };
       const existingActive =
         existing && !existing.deleted_at && existing.payload != null;
-      const mergedCandidate = additiveOnly
-        ? {
-            ...localCandidate,
-            // Union merge: keeps this snapshot's new content while retaining
-            // list entries only the cloud copy has.
-            payload: existingActive
-              ? mergeContentValues(existing.payload, localCandidate.payload, false)
-              : localCandidate.payload,
-          }
-        : contentAwareRecord(existing, localCandidate);
+      // 통째로 빈 스냅샷은 편집으로 보지 않습니다 (덜 불러온 화면이 내용을 지우지 않게).
+      if (
+        existingActive &&
+        !hasMeaningfulValue(candidate.payload) &&
+        hasMeaningfulValue(existing.payload)
+      ) {
+        return;
+      }
+      // 이 기기에서 바뀐 부분에만 지금 시각을 적습니다. 불확실한 스냅샷(additive)은
+      // 채우기·추가만 인정하고 기존 내용을 지킵니다.
+      const mergedCandidate = clockLocalEdit(
+        existingActive ? existing : null,
+        localCandidate,
+        now + sequence,
+        additiveOnly
+      );
       if (!sameRecordContent(existing, mergedCandidate)) {
         changed.push(mergedCandidate);
       }
@@ -3848,6 +4300,16 @@
       // what the rebuilt store really contains, not what the map holds.
       renderedKeys(records) {
         return [...storeToRecords(recordsToStore(records, {})).keys()];
+      },
+      // 부분별 시각 (v4.5) — 병합 성질 검사용.
+      partEdit(base, next, now, additive = false) {
+        return clockLocalEdit(base, next, now, additive);
+      },
+      partMerge(left, right) {
+        return contentAwareRecord(left, right);
+      },
+      partMeta(record) {
+        return partMetaOf(record);
       },
       // 레코드를 앱에 밀어 넣는 스토어로 되돌립니다 (렌더 왕복 재현용).
       storeOf(records, fallbackStore = {}) {

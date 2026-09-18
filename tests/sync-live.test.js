@@ -321,7 +321,7 @@ function makeElement() {
   return element;
 }
 
-function makeDevice(name, { seedStore = null } = {}) {
+function makeDevice(name, { seedStore = null, source = SOURCE } = {}) {
   const storage = new Map();
   const localStorage = {
     getItem: (key) => (storage.has(key) ? storage.get(key) : null),
@@ -396,7 +396,11 @@ function makeDevice(name, { seedStore = null } = {}) {
     removeEventListener: removeFrom(winListeners),
     ...scheduler,
     supabase: { createClient: () => makeClient(name) },
-    fetch: async () => ({ ok: true, json: async () => ({ version: APP_VERSION }) }),
+    // 기기가 돌리는 코드의 버전을 알려 줍니다 (옛 버전 기기가 "아직 업데이트 전"인 상태를 흉내).
+    fetch: async () => ({
+      ok: true,
+      json: async () => ({ version: (source.match(/const APP_VERSION = "([^"]+)"/) || [])[1] || APP_VERSION }),
+    }),
     crypto: { randomUUID: () => nodeCrypto.randomUUID() },
     indexedDB: makeIndexedDB(),
     Date: FakeDate,
@@ -409,7 +413,7 @@ function makeDevice(name, { seedStore = null } = {}) {
   windowObject.globalThis = windowObject;
   windowObject.self = windowObject;
   vm.createContext(windowObject);
-  vm.runInContext(SOURCE, windowObject);
+  vm.runInContext(source, windowObject);
 
   const device = {
     name,
@@ -456,6 +460,17 @@ function makeDevice(name, { seedStore = null } = {}) {
       fire(docListeners, "visibilitychange");
       fire(winListeners, "pageshow");
       fire(winListeners, "focus");
+    },
+    goOffline() {
+      windowObject.navigator.onLine = false;
+      server.offline.add(name);
+      for (const channel of server.channels) if (channel.device === name) channel.dead = true;
+      fire(winListeners, "offline");
+    },
+    goOnline() {
+      windowObject.navigator.onLine = true;
+      server.offline.delete(name);
+      fire(winListeners, "online");
     },
     killRealtimeSilently() {
       for (const channel of server.channels) if (channel.device === name) channel.dead = true;
@@ -820,18 +835,267 @@ scenario("프로토콜이 든 기존 실험을 지우면 '새 실험'으로 되�
   assert.ok(serverProtocol() === undefined || server.rows.get("experiment_protocol::p1:e1:pr1").deleted_at, "프로토콜도 삭제");
 });
 
+// --- concurrent edits of different parts of one record -----------------------
+const stepsOf = (store) => protocolOf(store)?.draftVersion?.stepGroups || [];
+const stepTitle = (store, id) => stepsOf(store).find((g) => g.id === id)?.title;
+const stepIds = (store) => stepsOf(store).map((g) => g.id).join(",");
+const setStepTitle = (id, title) => editProtocol((pr) => {
+  pr.draftVersion.stepGroups = pr.draftVersion.stepGroups.map((g) => (g.id === id ? { ...g, title } : g));
+});
+const removeStep = (id) => editProtocol((pr) => {
+  pr.draftVersion.stepGroups = pr.draftVersion.stepGroups.filter((g) => g.id !== id);
+});
+const reagentRows = (store) =>
+  stepsOf(store)[0]?.panelRows?.[0]?.panels?.[0]?.rows || [];
+const noteOf = (store) => store?.projects?.[0]?.notes?.[0];
+const editNote = (fn) => (store) => {
+  fn(store.projects[0].notes[0]);
+  return store;
+};
+const allThree = (desktop, phone, pick) => [
+  pick(desktop.app.store),
+  pick(phone.app.store),
+  pick({ projects: [{ experiments: [{ protocols: [serverProtocol()] }], notes: [server.rows.get("project_note::p1:n1")?.payload?.item] }] }),
+];
+
+scenario("같은 프로토콜: 폰이 1단계를 치는 동안 컴퓨터가 3단계를 지워도 둘 다 남는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  phone.focus();
+  for (let i = 1; i <= 3; i += 1) {
+    phone.edit(setStepTitle("s1", `폰에서 친 제목 ${i}`));
+    await advance(1000);
+  }
+  desktop.edit(removeStep("s3"));
+  await advance(500);
+  for (let i = 4; i <= 8; i += 1) {
+    phone.edit(setStepTitle("s1", `폰에서 친 제목 ${i}`));
+    await advance(1000);
+  }
+  await advance(20000);
+  for (const [where, ids] of allThree(desktop, phone, stepIds).entries()) {
+    assert.strictEqual(ids, "s1,s2", `3단계 삭제 유지 (${["컴퓨터", "폰", "서버"][where]})`);
+  }
+  for (const [where, title] of allThree(desktop, phone, (st) => stepTitle(st, "s1")).entries()) {
+    assert.strictEqual(title, "폰에서 친 제목 8", `폰의 1단계 편집 유지 (${["컴퓨터", "폰", "서버"][where]})`);
+  }
+});
+
+scenario("같은 프로토콜: 폰이 1단계를 고친 직후 컴퓨터가 3단계를 지워도 폰 편집이 덮이지 않는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  phone.edit(setStepTitle("s1", "폰에서 마지막으로 고친 제목"));
+  await advance(200); // 컴퓨터는 아직 이 편집을 못 받았다
+  desktop.edit(removeStep("s3"));
+  await advance(20000);
+  for (const pick of [stepIds]) {
+    assert.deepStrictEqual(allThree(desktop, phone, pick), ["s1,s2", "s1,s2", "s1,s2"]);
+  }
+  assert.deepStrictEqual(
+    allThree(desktop, phone, (st) => stepTitle(st, "s1")),
+    ["폰에서 마지막으로 고친 제목", "폰에서 마지막으로 고친 제목", "폰에서 마지막으로 고친 제목"]
+  );
+});
+
+scenario("같은 프로토콜의 서로 다른 시약 행을 두 기기가 동시에 고치면 둘 다 남는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(editProtocol((pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels[0].rows[0].volume = "120"; }));
+  phone.edit(editProtocol((pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels[0].rows[1].volume = "75"; }));
+  await advance(2000);
+  desktop.goOnline();
+  phone.goOnline();
+  await advance(30000);
+  const volumes = (st) => reagentRows(st).map((r) => `${r.id}=${r.volume}`).join(",");
+  assert.deepStrictEqual(allThree(desktop, phone, volumes), ["rg1=120,rg2=75", "rg1=120,rg2=75", "rg1=120,rg2=75"]);
+});
+
+scenario("오프라인에서 한쪽은 시약 행을 지우고 다른 쪽은 다른 행을 고쳐도 둘 다 반영된다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(editProtocol((pr) => {
+    const panel = pr.draftVersion.stepGroups[0].panelRows[0].panels[0];
+    panel.rows = panel.rows.filter((r) => r.id !== "rg2");
+  }));
+  await advance(1000);
+  phone.edit(editProtocol((pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels[0].rows[0].volume = "300"; }));
+  await advance(2000);
+  phone.goOnline();
+  await advance(10000);
+  desktop.goOnline();
+  await advance(30000);
+  const rows = (st) => reagentRows(st).map((r) => `${r.id}=${r.volume}`).join(",");
+  assert.deepStrictEqual(allThree(desktop, phone, rows), ["rg1=300", "rg1=300", "rg1=300"]);
+});
+
+scenario("같은 칸을 양쪽에서 고치면 나중 것이 이긴다 (프로토콜 안에서도)", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(setStepTitle("s2", "컴퓨터가 먼저 고침"));
+  await advance(3000);
+  phone.edit(setStepTitle("s2", "폰이 나중에 고침"));
+  await advance(1000);
+  desktop.goOnline();
+  phone.goOnline();
+  await advance(30000);
+  assert.deepStrictEqual(
+    allThree(desktop, phone, (st) => stepTitle(st, "s2")),
+    ["폰이 나중에 고침", "폰이 나중에 고침", "폰이 나중에 고침"]
+  );
+});
+
+scenario("실험 노트: 한쪽은 목적, 다른 쪽은 결과 요약을 동시에 고치면 둘 다 남는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(editNote((n) => { n.purpose = "컴퓨터가 쓴 목적"; }));
+  phone.edit(editNote((n) => { n.resultSummary = "폰이 쓴 결과"; }));
+  await advance(2000);
+  desktop.goOnline();
+  phone.goOnline();
+  await advance(30000);
+  const pick = (st) => `${noteOf(st)?.purpose} / ${noteOf(st)?.resultSummary}`;
+  const expected = "컴퓨터가 쓴 목적 / 폰이 쓴 결과";
+  assert.strictEqual(pick(desktop.app.store), expected, "컴퓨터");
+  assert.strictEqual(pick(phone.app.store), expected, "폰");
+  const serverNote = server.rows.get("project_note::p1:n1")?.payload?.item;
+  assert.strictEqual(`${serverNote?.purpose} / ${serverNote?.resultSummary}`, expected, "서버");
+});
+
+scenario("실험 노트 실행 기록: 두 기기가 다른 단계를 기록해도 둘 다 남고 같은 단계가 중복되지 않는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.edit(editNote((n) => {
+    n.execution = { mode: "fromProtocol", stepGroups: [], stepRuns: [{ stepGroupId: "s1", status: "pending", actual: "" }, { stepGroupId: "s2", status: "pending", actual: "" }] };
+  }));
+  await advance(10000);
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(editNote((n) => { n.execution.stepRuns = n.execution.stepRuns.map((r) => (r.stepGroupId === "s1" ? { ...r, status: "done", actual: "컴퓨터 기록" } : r)); }));
+  phone.edit(editNote((n) => { n.execution.stepRuns = n.execution.stepRuns.map((r) => (r.stepGroupId === "s2" ? { ...r, status: "done", actual: "폰 기록" } : r)); }));
+  await advance(2000);
+  desktop.goOnline();
+  phone.goOnline();
+  await advance(30000);
+  const runs = (st) => (noteOf(st)?.execution?.stepRuns || []).map((r) => `${r.stepGroupId}:${r.status}:${r.actual}`).join(" | ");
+  const expected = "s1:done:컴퓨터 기록 | s2:done:폰 기록";
+  assert.strictEqual(runs(desktop.app.store), expected, "컴퓨터");
+  assert.strictEqual(runs(phone.app.store), expected, "폰");
+});
+
+scenario("옛 형식 기록(부분 시각 없음)에서 시작해도 이후 동시 편집이 부분별로 합쳐진다", async () => {
+  resetClock();
+  resetServer();
+  // 서버에 옛 버전이 쓴 기록을 직접 넣는다 (__sync 없음).
+  const seedDevice = makeDevice("seed", { seedStore: PROTOCOL_SEED });
+  await seedDevice.ready();
+  await advance(3000);
+  for (const row of server.rows.values()) {
+    if (row.payload && typeof row.payload === "object") delete row.payload.__sync;
+  }
+  const desktop = makeDevice("desktop");
+  await desktop.ready();
+  const phone = makeDevice("phone");
+  await phone.ready();
+  await advance(5000);
+  assert.ok(protocolOf(desktop.app.store) && protocolOf(phone.app.store), "setup");
+  // 첫 편집: 옛 기록을 새 형식으로 옮긴다.
+  desktop.edit(setStepTitle("s2", "첫 편집"));
+  await advance(10000);
+  // 이후 동시 편집: 다른 부분.
+  desktop.goOffline();
+  phone.goOffline();
+  desktop.edit(setStepTitle("s1", "컴퓨터 1단계"));
+  phone.edit(removeStep("s3"));
+  await advance(2000);
+  desktop.goOnline();
+  phone.goOnline();
+  await advance(30000);
+  const pick = (st) => `${stepIds(st)} | ${stepTitle(st, "s1")} | ${stepTitle(st, "s2")}`;
+  const expected = "s1,s2 | 컴퓨터 1단계 | 첫 편집";
+  assert.strictEqual(pick(desktop.app.store), expected, "컴퓨터");
+  assert.strictEqual(pick(phone.app.store), expected, "폰");
+});
+
+// --- transition: a device still on the previous release ---------------------
+// 4.4.8 (the last release before per-part clocks) is read from git history. The
+// previous release must keep working with the new one until it updates itself.
+let PREVIOUS_RELEASE = null;
+try {
+  PREVIOUS_RELEASE = require("child_process").execSync("git show 342442b:sync-app.js", {
+    cwd: path.join(__dirname, ".."),
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    maxBuffer: 16 * 1024 * 1024,
+  });
+} catch {
+  PREVIOUS_RELEASE = null; // no git checkout: these scenarios are skipped
+}
+async function newDesktopOldPhone() {
+  resetClock();
+  resetServer();
+  const desktop = makeDevice("desktop", { seedStore: PROTOCOL_SEED });
+  await desktop.ready();
+  await advance(3000);
+  const phone = makeDevice("phone", { source: PREVIOUS_RELEASE });
+  await phone.ready();
+  await advance(3000);
+  return { desktop, phone };
+}
+const everywhere = (desktop, phone, pick) => [
+  pick(desktop.app.store),
+  pick(phone.app.store),
+  pick({ projects: [{ experiments: [{ protocols: [serverProtocol()] }] }] }),
+];
+const TRANSITION = [
+  ["새 버전이 지운 단계가 옛 버전 기기에서 되살아나지 않는다", async ({ desktop }) => {
+    desktop.edit(removeStep("s3"));
+    await advance(20000);
+  }, stepIds, "s1,s2"],
+  ["새 버전이 비운 시약 표가 옛 버전 기기에서 되살아나지 않는다", async ({ desktop }) => {
+    desktop.edit(editProtocol((pr) => { pr.draftVersion.stepGroups[0].panelRows[0].panels[0].rows = []; }));
+    await advance(20000);
+  }, (st) => reagentRows(st).length, 0],
+  ["옛 버전 기기의 편집이 새 버전에 반영된다", async ({ phone }) => {
+    phone.edit(setStepTitle("s1", "옛 버전이 고침"));
+    await advance(20000);
+  }, (st) => stepTitle(st, "s1"), "옛 버전이 고침"],
+  ["새 버전과 옛 버전이 번갈아 다른 단계를 고치면 둘 다 남는다", async ({ desktop, phone }) => {
+    desktop.edit(setStepTitle("s2", "새 버전 2단계"));
+    await advance(15000);
+    phone.edit(setStepTitle("s1", "옛 버전 1단계"));
+    await advance(20000);
+  }, (st) => `${stepTitle(st, "s1")} / ${stepTitle(st, "s2")}`, "옛 버전 1단계 / 새 버전 2단계"],
+  ["새 버전의 삭제 뒤 옛 버전이 다른 단계를 고쳐도 삭제가 유지된다", async ({ desktop, phone }) => {
+    desktop.edit(removeStep("s3"));
+    await advance(20000);
+    phone.edit(setStepTitle("s1", "옛 버전이 나중에 고침"));
+    await advance(30000);
+  }, (st) => `${stepIds(st)} / ${stepTitle(st, "s1")}`, "s1,s2 / 옛 버전이 나중에 고침"],
+];
+for (const [label, act, pick, expected] of TRANSITION) {
+  scenario(`전환 기간(한쪽이 4.4.8): ${label}`, async () => {
+    if (!PREVIOUS_RELEASE) return; // skipped without git history
+    const devices = await newDesktopOldPhone();
+    await act(devices);
+    assert.deepStrictEqual(everywhere(devices.desktop, devices.phone, pick), [expected, expected, expected]);
+  });
+}
+
 // --- run -------------------------------------------------------------------
 (async () => {
   let failed = 0;
-  for (const { name, fn } of scenarios) {
+  const only = process.env.ONLY;
+  for (const { name, fn } of scenarios.filter((item) => !only || item.name.includes(only))) {
     try {
       await fn();
       console.log(`  PASS  ${name}`);
     } catch (error) {
       failed += 1;
-      console.log(`  FAIL  ${name}\n        ${error.message.split("\n")[0]}`);
+      console.log(`  FAIL  ${name}\n        ${process.env.FULL ? error.message : error.message.split("\n")[0]}`);
     }
   }
-  console.log(`\n${scenarios.length - failed}/${scenarios.length} passed`);
+  const ran = scenarios.filter((item) => !only || item.name.includes(only)).length;
+  console.log(`\n${ran - failed}/${ran} passed`);
   process.exit(failed ? 1 : 0);
 })();
