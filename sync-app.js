@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.5 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.6 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.5";
+  const APP_VERSION = "4.4.6";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -105,6 +105,18 @@
   let deferredAckRaw = "";
   let appEditing = false;
   let appEditingSince = 0;
+  /** 앱이 마지막으로 실제 내용 변경(타자)을 보낸 시각 */
+  let lastLocalEditAt = 0;
+  let idleFlushTimer = null;
+  // 커서가 입력칸에 있어도 이만큼 아무것도 치지 않았으면 "입력 중"이 아닙니다.
+  const TYPING_IDLE_MS = 3000;
+  // 실시간 연결이 조용히 끊겨도 이 주기로 서버에서 놓친 변경을 가져옵니다.
+  const CATCH_UP_INTERVAL_MS = 30000;
+  const WATERMARK_OVERLAP_MS = 2000;
+  let personalWatermark = "";
+  let sharedWatermark = "";
+  let catchUpRunning = false;
+  let catchUpTimer = null;
   let uploadAfterEditing = false;
   let reconnectAfterEditing = false;
   /** 편집 중에 보류가 생겨 화면 재적용을 미룬 상태 */
@@ -1625,7 +1637,7 @@
       return;
     }
     setUpdateBanner(latest);
-    if (!auto || appEditing) return;
+    if (!auto || isActivelyTyping()) return;
     // 한 버전에 한 번만 자동 갱신합니다 (새로고침 반복 방지).
     let tried = "";
     try {
@@ -1816,8 +1828,10 @@
     }
     await deleteReviewItem(userId, item);
     await refreshReview();
-    if (appEditing) reapplyAfterEditing = true;
-    else applyRecordsToApp(currentRecords, "검토 결과를 반영했습니다");
+    if (isActivelyTyping()) {
+      reapplyAfterEditing = true;
+      scheduleIdleFlush();
+    } else applyRecordsToApp(currentRecords, "검토 결과를 반영했습니다");
   }
 
   const postStoreToApp = (store) => {
@@ -1919,19 +1933,29 @@
     }
   }
 
+  const maxIso = (left, right) =>
+    String(left || "") > String(right || "") ? left : right;
+
   async function fetchRemoteRecords(userId) {
     const rows = await fetchAllRows(() =>
       client
         .from("exp_note_records")
         .select(
-          "entity_type,entity_id,payload,updated_at,deleted_at,client_id"
+          "entity_type,entity_id,payload,updated_at,deleted_at,client_id,server_received_at"
         )
         .eq("user_id", userId)
         .order("entity_type", { ascending: true })
         .order("entity_id", { ascending: true })
     );
     const records = new Map();
-    rows.forEach((record) => records.set(recordKey(record), record));
+    let watermark = "";
+    rows.forEach((row) => {
+      const { server_received_at: receivedAt, ...record } = row;
+      watermark = maxIso(watermark, receivedAt);
+      records.set(recordKey(record), record);
+    });
+    // 이후 따라잡기(catchUpRemote)는 이 시각 이후에 서버가 받은 행만 가져옵니다.
+    personalWatermark = watermark;
     return records;
   }
 
@@ -1978,7 +2002,7 @@
       client
         .from("exp_note_shared_records")
         .select(
-          "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id"
+          "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id,server_received_at"
         )
         .in("project_id", projectIds)
         .order("project_id", { ascending: true })
@@ -1986,7 +2010,9 @@
         .order("entity_id", { ascending: true })
     );
     const records = new Map();
+    let watermark = "";
     rows.forEach((row) => {
+      watermark = maxIso(watermark, row.server_received_at);
       const record = {
         entity_type: row.entity_type,
         entity_id: row.entity_id,
@@ -1998,6 +2024,7 @@
       };
       records.set(recordKey(record), record);
     });
+    sharedWatermark = watermark;
     return records;
   }
 
@@ -2632,8 +2659,10 @@
       await refreshReview();
       // Put the held rows back on screen so nothing silently disappears;
       // the review list decides whether they go for good.
-      if (appEditing) reapplyAfterEditing = true;
-      else applyRecordsToApp(currentRecords, `삭제 보류 ${holds.length}건 · 검토 필요`);
+      if (isActivelyTyping()) {
+        reapplyAfterEditing = true;
+        scheduleIdleFlush();
+      } else applyRecordsToApp(currentRecords, `삭제 보류 ${holds.length}건 · 검토 필요`);
     }
   }
 
@@ -2708,6 +2737,66 @@
       return;
     }
     queueLocalCapture(raw, true);
+  }
+
+  // "입력 중"은 커서가 입력칸에 있다는 뜻이 아니라 방금 타자를 쳤다는 뜻이어야
+  // 합니다. 예전에는 포커스만으로 판단해서, 커서를 노트에 올려 둔 채 두거나 앱
+  // 복귀 때 브라우저가 커서를 되돌려 놓으면 다른 기기의 변경·재접속·복귀 동기화가
+  // 모두 무기한 보류됐습니다. 새로고침해야만 동기화되던 원인입니다.
+  function isActivelyTyping() {
+    return appEditing && Date.now() - lastLocalEditAt < TYPING_IDLE_MS;
+  }
+
+  const hasDeferredWork = () =>
+    deferredRemoteRecords.size > 0 ||
+    reconnectAfterEditing ||
+    uploadAfterEditing ||
+    reapplyAfterEditing;
+
+  // 보류한 일은 타자가 멈추면 (커서가 그대로 있어도) 자동으로 처리합니다.
+  function scheduleIdleFlush() {
+    if (idleFlushTimer) window.clearTimeout(idleFlushTimer);
+    const wait = Math.max(100, lastLocalEditAt + TYPING_IDLE_MS - Date.now() + 50);
+    idleFlushTimer = window.setTimeout(() => {
+      idleFlushTimer = null;
+      if (isActivelyTyping()) {
+        scheduleIdleFlush();
+        return;
+      }
+      if (hasDeferredWork()) void flushDeferredRemote("");
+    }, wait);
+  }
+
+  // 실시간은 행마다 따로 도착합니다. 행마다 화면 전체를 다시 그리면, 폰에서
+  // 프로토콜을 한 번 저장(행 수십 개)할 때 컴퓨터 화면이 수십 번 연달아 다시
+  // 그려져 커서가 튈 수 있습니다. 짧게 모아서 한 번에 병합합니다.
+  const REALTIME_BATCH_MS = 150;
+  let realtimeBatch = [];
+  let realtimeBatchMessage = "";
+  let realtimeBatchTimer = null;
+  function enqueueRealtimeRecord(userId, record, message) {
+    realtimeBatch.push(record);
+    realtimeBatchMessage = message;
+    if (realtimeBatchTimer) return;
+    realtimeBatchTimer = window.setTimeout(async () => {
+      realtimeBatchTimer = null;
+      const batch = realtimeBatch;
+      const batchMessage = realtimeBatchMessage;
+      realtimeBatch = [];
+      realtimeBatchMessage = "";
+      // 재접속 중이면 버립니다: 재접속의 전체 조회에 같은 행이 들어 있습니다.
+      if (!batch.length || userId !== initializedUserId) return;
+      await localCaptureChain.catch(() => undefined);
+      if (isActivelyTyping()) {
+        batch.forEach((item) =>
+          deferRemoteRecord(item, "입력 중 받은 다른 기기의 변경사항을 병합했습니다")
+        );
+        setStatus("입력 완료 후 다른 기기 변경사항 병합");
+        scheduleIdleFlush();
+        return;
+      }
+      await mergeIncomingRecords(userId, batch, batchMessage);
+    }, REALTIME_BATCH_MS);
   }
 
   const deferRemoteRecord = (record, message = "") => {
@@ -2796,6 +2885,109 @@
     );
   }
 
+  // --- 따라잡기: 실시간이 조용히 끊겨도 놓친 변경을 가져온다 ---------------
+  // 모바일 브라우저는 백그라운드에서 실시간 소켓을 끊고도 CLOSED 를 알리지 않는
+  // 경우가 있습니다. 그러면 다음 새로고침 전까지 다른 기기의 변경이 들어오지
+  // 않았습니다. 서버가 행을 받은 시각(server_received_at)으로 증분 조회하므로
+  // 기기 시계가 틀려도 빠뜨리지 않고, 이미 가진 행은 걸러 화면을 괜히 다시
+  // 그리지 않습니다. 실시간이 놓친 행을 찾으면 연결 자체를 다시 맺습니다.
+  const minusOverlap = (iso) => {
+    const time = Date.parse(iso || "");
+    return time ? new Date(time - WATERMARK_OVERLAP_MS).toISOString() : "";
+  };
+  const alreadyHave = (record) => {
+    const existing = currentRecords.get(recordKey(record));
+    return Boolean(
+      existing &&
+        timestampOf(existing) === timestampOf(record) &&
+        sameRecordContent(existing, record)
+    );
+  };
+
+  async function catchUpRemote() {
+    if (catchUpRunning || !initializedUserId || !currentSession?.user) return;
+    if (navigator.onLine === false || document.visibilityState === "hidden") return;
+    catchUpRunning = true;
+    const userId = initializedUserId;
+    const generation = syncGeneration;
+    try {
+      const personalSince = minusOverlap(personalWatermark);
+      const rows = await fetchAllRows(() => {
+        let query = client
+          .from("exp_note_records")
+          .select(
+            "entity_type,entity_id,payload,updated_at,deleted_at,client_id,server_received_at"
+          )
+          .eq("user_id", userId);
+        if (personalSince) query = query.gt("server_received_at", personalSince);
+        return query.order("server_received_at", { ascending: true });
+      });
+      let sharedRows = [];
+      const projectIds = [...sharedMemberships.keys()];
+      if (projectIds.length) {
+        const sharedSince = minusOverlap(sharedWatermark);
+        sharedRows = await fetchAllRows(() => {
+          let query = client
+            .from("exp_note_shared_records")
+            .select(
+              "project_id,entity_type,entity_id,payload,updated_at,deleted_at,client_id,server_received_at"
+            )
+            .in("project_id", projectIds);
+          if (sharedSince) query = query.gt("server_received_at", sharedSince);
+          return query.order("server_received_at", { ascending: true });
+        }).catch(() => []);
+      }
+      if (generation !== syncGeneration || userId !== initializedUserId) return;
+
+      const missed = [];
+      rows.forEach((row) => {
+        personalWatermark = maxIso(personalWatermark, row.server_received_at);
+        const { server_received_at: _receivedAt, ...record } = row;
+        if (isOwnRecord(record) || alreadyHave(record)) return;
+        missed.push(record);
+      });
+      sharedRows.forEach((row) => {
+        sharedWatermark = maxIso(sharedWatermark, row.server_received_at);
+        const record = {
+          entity_type: row.entity_type,
+          entity_id: row.entity_id,
+          payload: row.payload,
+          updated_at: row.updated_at,
+          deleted_at: row.deleted_at,
+          client_id: row.client_id,
+          __projectId: String(row.project_id),
+        };
+        if (isOwnRecord(record) || alreadyHave(record)) return;
+        missed.push(record);
+      });
+      if (!missed.length) return;
+
+      if (isActivelyTyping()) {
+        missed.forEach((record) =>
+          deferRemoteRecord(record, "놓친 다른 기기의 변경사항을 병합했습니다")
+        );
+        scheduleIdleFlush();
+      } else {
+        await mergeIncomingRecords(
+          userId,
+          missed,
+          "놓친 다른 기기의 변경사항을 받았습니다"
+        );
+      }
+      // 실시간이 전해 줬어야 할 행을 우리가 직접 찾았다 = 연결이 죽어 있다.
+      scheduleReconnect();
+    } catch {
+      // 다음 주기에 다시 시도합니다.
+    } finally {
+      catchUpRunning = false;
+    }
+  }
+
+  function scheduleCatchUp() {
+    if (catchUpTimer) return;
+    catchUpTimer = window.setInterval(() => void catchUpRemote(), CATCH_UP_INTERVAL_MS);
+  }
+
   async function flushDeferredRemote(raw = "") {
     if (raw) await queueLocalCapture(raw);
     else await localCaptureChain.catch(() => undefined);
@@ -2837,7 +3029,7 @@
       return;
     }
     await localCaptureChain.catch(() => undefined);
-    if (appEditing) {
+    if (isActivelyTyping()) {
       message.records.forEach((record) =>
         deferRemoteRecord(
           record,
@@ -2845,6 +3037,7 @@
         )
       );
       setStatus("입력 완료 후 다른 창 변경사항 병합");
+      scheduleIdleFlush();
       return;
     }
     await mergeIncomingRecords(
@@ -2888,20 +3081,7 @@
             client_id: payload.new.client_id,
           };
           if (isOwnRecord(incoming)) return;
-          await localCaptureChain.catch(() => undefined);
-          if (appEditing) {
-            deferRemoteRecord(
-              incoming,
-              "입력 중 받은 다른 기기의 변경사항을 병합했습니다"
-            );
-            setStatus("입력 완료 후 다른 기기 변경사항 병합");
-            return;
-          }
-          await mergeIncomingRecords(
-            userId,
-            [incoming],
-            "다른 기기의 변경사항을 받았습니다"
-          );
+          enqueueRealtimeRecord(userId, incoming, "다른 기기의 변경사항을 받았습니다");
         }
       )
       .subscribe((state) => {
@@ -2961,20 +3141,7 @@
             __projectId: String(payload.new.project_id),
           };
           if (isOwnRecord(incoming)) return;
-          await localCaptureChain.catch(() => undefined);
-          if (appEditing) {
-            deferRemoteRecord(
-              incoming,
-              "입력 중 받은 공유 프로젝트 변경사항을 병합했습니다"
-            );
-            setStatus("입력 완료 후 공유 프로젝트 변경사항 병합");
-            return;
-          }
-          await mergeIncomingRecords(
-            userId,
-            [incoming],
-            "공유 프로젝트의 변경사항을 받았습니다"
-          );
+          enqueueRealtimeRecord(userId, incoming, "공유 프로젝트의 변경사항을 받았습니다");
         }
       )
       .subscribe();
@@ -2985,8 +3152,9 @@
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
       if (!currentSession?.user) return;
-      if (appEditing) {
+      if (isActivelyTyping()) {
         reconnectAfterEditing = true;
+        scheduleIdleFlush();
         return;
       }
       connectSync();
@@ -2994,9 +3162,10 @@
   };
 
   async function connectSync() {
-    if (appEditing) {
+    if (isActivelyTyping()) {
       reconnectAfterEditing = true;
       setStatus("입력 완료 후 클라우드 연결 재개");
+      scheduleIdleFlush();
       return;
     }
     await localCaptureChain.catch(() => undefined);
@@ -3243,6 +3412,7 @@
       await fetchIncomingProjectInvites();
       scheduleIncomingInviteCheck();
       scheduleSharedProjectsRefresh();
+      scheduleCatchUp();
     }
   }
 
@@ -3287,6 +3457,15 @@
       incomingInviteTimer = null;
       if (sharedRefreshTimer) window.clearInterval(sharedRefreshTimer);
       sharedRefreshTimer = null;
+      if (catchUpTimer) window.clearInterval(catchUpTimer);
+      catchUpTimer = null;
+      if (realtimeBatchTimer) window.clearTimeout(realtimeBatchTimer);
+      realtimeBatchTimer = null;
+      realtimeBatch = [];
+      if (idleFlushTimer) window.clearTimeout(idleFlushTimer);
+      idleFlushTimer = null;
+      personalWatermark = "";
+      sharedWatermark = "";
       sharedMemberships = new Map();
       await disconnectRealtime();
       await disconnectSharedRealtime();
@@ -3429,7 +3608,10 @@
       event.data?.type === "exp-note-local-store" &&
       typeof event.data.raw === "string"
     ) {
+      // 앱은 내용이 실제로 바뀔 때만 이 메시지를 보냅니다 (클라우드 적용 직후 제외).
+      lastLocalEditAt = Date.now();
       queueLocalCapture(event.data.raw);
+      if (hasDeferredWork()) scheduleIdleFlush();
       return;
     }
     if (event.data?.type === "exp-note-editing") {
@@ -3466,9 +3648,10 @@
   });
   window.addEventListener("online", () => {
     setStatus("연결됨 · 변경사항 병합 중…");
-    if (appEditing) {
+    if (isActivelyTyping()) {
       reconnectAfterEditing = true;
       setStatus("입력 완료 후 변경사항 병합");
+      scheduleIdleFlush();
       return;
     }
     connectSync();
@@ -3480,9 +3663,10 @@
     resumeSyncTimer = window.setTimeout(() => {
       resumeSyncTimer = null;
       if (!currentSession?.user || navigator.onLine === false) return;
-      if (appEditing) {
+      if (isActivelyTyping()) {
         reconnectAfterEditing = true;
         setStatus("입력 완료 후 최신 변경사항 확인");
+        scheduleIdleFlush();
         return;
       }
       setStatus("앱 복귀 · 최신 변경사항 확인 중…");
