@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.5.0 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.5.1 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.5.0";
+  const APP_VERSION = "4.5.1";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -2089,7 +2089,34 @@
     window.location.replace(url.toString());
   }
 
-  async function checkAppVersion(auto = true) {
+  // 새 버전을 자동으로 적용해도 되는 순간인지. 쓰는 도중에 페이지를 새로고침하면
+  // 열려 있던 편집 화면이 닫혀 "쓰던 것이 사라진" 것처럼 보였습니다(4.5.0 배포 직후 실제 발생).
+  // 자동 적용은 앱을 막 열었을 때, 또는 5분 이상 떠나 있다가 입력칸 밖에서 돌아왔을 때만 합니다.
+  // 그 밖에는 배너만 띄우고 사용자가 누를 때 적용합니다.
+  const LONG_AWAY_MS = 5 * 60 * 1000;
+  let hiddenAt = 0;
+  const safeToAutoUpdate = (trigger) =>
+    trigger === "load" || (trigger === "resume-long" && !appEditing);
+
+  // 새로고침 전에, 아직 올리지 못한 편집을 먼저 기기에 담고 올려 봅니다.
+  async function flushBeforeReload() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      if (raw && initializedUserId) queueLocalCapture(raw);
+      await Promise.race([
+        (async () => {
+          await localCaptureChain.catch(() => undefined);
+          await uploadAll();
+        })(),
+        new Promise((resolve) => window.setTimeout(resolve, 3000)),
+      ]);
+    } catch {
+      // 실패해도 편집은 기기(localStorage·대기열)에 남아 있습니다.
+    }
+  }
+
+  async function checkAppVersion(trigger = "interval") {
+    const auto = trigger !== "manual";
     let latest = "";
     try {
       const response = await fetch(`./version.json?cb=${Date.now()}`, {
@@ -2106,7 +2133,7 @@
       return;
     }
     setUpdateBanner(latest);
-    if (!auto || isActivelyTyping()) return;
+    if (!auto || !safeToAutoUpdate(trigger)) return;
     // 한 버전에 한 번만 자동 갱신합니다 (새로고침 반복 방지).
     let tried = "";
     try {
@@ -2120,16 +2147,17 @@
     } catch {
       // 저장 못 해도 아래 갱신은 진행 (다음 로드에서 배너로 안내)
     }
+    await flushBeforeReload();
     await hardUpdate();
   }
 
   updateButton?.addEventListener("click", () => {
     updateButton.disabled = true;
-    void hardUpdate();
+    void flushBeforeReload().then(hardUpdate);
   });
   forceButton?.addEventListener("click", () => {
     forceButton.disabled = true;
-    void hardUpdate();
+    void flushBeforeReload().then(hardUpdate);
   });
 
   // --- 검토 패널 -----------------------------------------------------------
@@ -4682,9 +4710,15 @@
       .catch(() => undefined);
   }
 
-  void checkAppVersion();
+  void checkAppVersion("load");
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") void checkAppVersion();
+    if (document.visibilityState === "hidden") {
+      hiddenAt = Date.now();
+      return;
+    }
+    const away = hiddenAt ? Date.now() - hiddenAt : 0;
+    hiddenAt = 0;
+    void checkAppVersion(away >= LONG_AWAY_MS ? "resume-long" : "resume");
   });
-  window.setInterval(() => void checkAppVersion(), 10 * 60_000);
+  window.setInterval(() => void checkAppVersion("interval"), 10 * 60_000);
 })();

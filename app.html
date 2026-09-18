@@ -104,6 +104,23 @@
       const APP_BUILD = (() => { try { return new URLSearchParams(window.location.search).get("v") || "?"; } catch { return "?"; } })();
       const PENDING_SYNC_KEY = "hamin-exp-note-v1-pending-sync";
       const VIEW_STORAGE_KEY = "exp-note-current-view";
+      // 열어 둔 실험·프로토콜·노트. 새로고침(버전 업데이트 포함)해도 같은 편집 화면으로
+      // 돌아오게 합니다. 예전엔 목록으로 돌아가 "쓰던 것이 사라진" 것처럼 보였습니다.
+      const SELECTION_STORAGE_KEY = "exp-note-open-selection";
+      const readSelection = (projectId, scope) => {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(SELECTION_STORAGE_KEY) || "null");
+          return saved && saved.projectId === projectId ? saved[scope] || null : null;
+        } catch { return null; }
+      };
+      const writeSelection = (projectId, scope, value) => {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(SELECTION_STORAGE_KEY) || "null") || {};
+          const next = saved.projectId === projectId ? saved : { projectId };
+          next[scope] = value;
+          sessionStorage.setItem(SELECTION_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+      };
       const VALID_VIEWS = ["protocol", "notes", "memo", "inventory"];
       const COLORS = ["#5b7cfa", "#4caf7d", "#f5a623", "#e85d5d", "#9b59b6", "#1abc9c", "#e67e22", "#34495e"];
       const INVENTORY_LEVELS = ["전부 소진", "당장 주문", "살짝 위험", "괜찮음", "넉넉함"];
@@ -1410,10 +1427,16 @@
       }
 
       function ProtocolView({ project, setStore, toast, readOnly = false }) {
-        const [selExp, setSelExp] = useState(null);
-        const [selProto, setSelProto] = useState(null);
-
-        useEffect(() => { setSelExp(null); setSelProto(null); }, [project.id]);
+        const [selExp, setSelExp] = useState(() => readSelection(project.id, "protocol")?.exp || null);
+        const [selProto, setSelProto] = useState(() => readSelection(project.id, "protocol")?.proto || null);
+        // 프로젝트가 실제로 바뀔 때만 선택을 풉니다 (처음 화면이 뜰 때는 기억한 선택 유지).
+        const protocolProjectRef = useRef(project.id);
+        useEffect(() => {
+          if (protocolProjectRef.current === project.id) return;
+          protocolProjectRef.current = project.id;
+          setSelExp(null); setSelProto(null);
+        }, [project.id]);
+        useEffect(() => { writeSelection(project.id, "protocol", { exp: selExp, proto: selProto }); }, [project.id, selExp, selProto]);
         useEffect(() => {
           window.__navBack = () => { setSelProto(null); setSelExp(null); };
           return () => { delete window.__navBack; };
@@ -1862,8 +1885,14 @@
       }
 
       function NotesView({ project, setStore, toast, readOnly = false }) {
-        const [selNote, setSelNote] = useState(null);
-        useEffect(() => { setSelNote(null); }, [project.id]);
+        const [selNote, setSelNote] = useState(() => readSelection(project.id, "note") || null);
+        const noteProjectRef = useRef(project.id);
+        useEffect(() => {
+          if (noteProjectRef.current === project.id) return;
+          noteProjectRef.current = project.id;
+          setSelNote(null);
+        }, [project.id]);
+        useEffect(() => { writeSelection(project.id, "note", selNote); }, [project.id, selNote]);
         useEffect(() => { window.__noteBack = () => setSelNote(null); return () => delete window.__noteBack; }, []);
         if (selNote) {
           const note = project.notes.find(n => n.id === selNote);

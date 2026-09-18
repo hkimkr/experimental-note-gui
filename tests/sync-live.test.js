@@ -60,6 +60,8 @@ async function settle(rounds = 80) {
 }
 async function advance(ms) {
   const target = clock.now + ms;
+  // 지금 시각에 이미 도착한 메시지·작업부터 처리합니다 (실제 브라우저와 같은 순서).
+  await settle();
   for (;;) {
     let nextId = null;
     let next = null;
@@ -143,7 +145,10 @@ function makeIndexedDB() {
 
 // --- fake Supabase server --------------------------------------------------
 let server;
+// version.json 이 알리는 버전. null 이면 각 기기가 자기 버전을 봅니다(업데이트 없음).
+let announcedVersion = null;
 function resetServer() {
+  announcedVersion = null;
   server = {
     rows: new Map(),
     channels: new Set(),
@@ -269,6 +274,7 @@ function makeClient(deviceName) {
       ),
     channel: () => {
       const channel = {
+        owner: null,
         device: deviceName,
         cb: null,
         dead: false,
@@ -321,14 +327,19 @@ function makeElement() {
   return element;
 }
 
-function makeDevice(name, { seedStore = null, source = SOURCE } = {}) {
-  const storage = new Map();
+function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } = {}) {
+  // persist: 같은 기기를 다시 켤 때 이어받는 저장소 (localStorage · IndexedDB).
+  const storage = persist?.storage || new Map();
+  const sharedIdb = persist?.idb || makeIndexedDB();
+  let alive = true;
+  const instanceTimers = new Set();
+  const never = () => new Promise(() => {});
   const localStorage = {
     getItem: (key) => (storage.has(key) ? storage.get(key) : null),
     setItem: (key, value) => storage.set(key, String(value)),
     removeItem: (key) => storage.delete(key),
   };
-  const sessionMap = new Map();
+  const sessionMap = persist?.sessionMap || new Map();
   const sessionStorage = {
     getItem: (key) => (sessionMap.has(key) ? sessionMap.get(key) : null),
     setItem: (key, value) => sessionMap.set(key, String(value)),
@@ -378,6 +389,9 @@ function makeDevice(name, { seedStore = null, source = SOURCE } = {}) {
   };
   elements.set("exp-note-frame", Object.assign(makeElement(), { contentWindow: frameWindow }));
 
+  if (persist && storage.has(STORAGE_KEY)) {
+    app.store = JSON.parse(storage.get(STORAGE_KEY));
+  }
   if (seedStore) {
     const raw = JSON.stringify(seedStore);
     localStorage.setItem(STORAGE_KEY, raw);
@@ -386,23 +400,65 @@ function makeDevice(name, { seedStore = null, source = SOURCE } = {}) {
     app.store = clone(seedStore);
   }
 
+  const track = (id) => {
+    instanceTimers.add(id);
+    return id;
+  };
+  const instanceScheduler = {
+    setTimeout: (fn, ms) => (alive ? track(scheduler.setTimeout(() => alive && fn(), ms)) : 0),
+    setInterval: (fn, ms) => (alive ? track(scheduler.setInterval(() => alive && fn(), ms)) : 0),
+    clearTimeout: (id) => scheduler.clearTimeout(id),
+    clearInterval: (id) => scheduler.clearInterval(id),
+  };
+  // 떠난 페이지는 저장소·네트워크 작업이 끝나지 않습니다 (브라우저가 페이지를 없앰).
+  const idbProxy = { open: (...args) => (alive ? sharedIdb.open(...args) : {}) };
+  const baseClient = makeClient(name);
+  const clientProxy = {
+    ...baseClient,
+    from: (table) => (alive ? baseClient.from(table) : { select() { return this; }, eq() { return this; }, in() { return this; }, gt() { return this; }, order() { return this; }, range() { return this; }, then() {} }),
+    rpc: (...args) => (alive ? baseClient.rpc(...args) : never()),
+    channel: (...args) => {
+      const channel = baseClient.channel(...args);
+      channel.owner = windowObject;
+      return channel;
+    },
+  };
+  const navigate = () => {
+    hostImmediate(() => {
+      if (!alive) return;
+      // 브라우저는 페이지를 떠나며 pagehide 를 보내고, 그 뒤의 비동기 작업은 사라집니다.
+      fire(winListeners, "pagehide");
+      alive = false;
+      for (const id of instanceTimers) scheduler.clearTimeout(id);
+      for (const channel of [...server.channels]) if (channel.device === name && channel.owner === windowObject) server.channels.delete(channel);
+      device.navigated = true;
+    });
+  };
   const windowObject = {
-    location: { search: "", origin: ORIGIN, href: `${ORIGIN}/` },
+    location: {
+      search: "",
+      origin: ORIGIN,
+      href: `${ORIGIN}/`,
+      replace: navigate,
+      reload: navigate,
+    },
     localStorage,
     sessionStorage,
     document,
     navigator: { onLine: true },
     addEventListener: addTo(winListeners),
     removeEventListener: removeFrom(winListeners),
-    ...scheduler,
-    supabase: { createClient: () => makeClient(name) },
+    ...instanceScheduler,
+    supabase: { createClient: () => clientProxy },
     // 기기가 돌리는 코드의 버전을 알려 줍니다 (옛 버전 기기가 "아직 업데이트 전"인 상태를 흉내).
     fetch: async () => ({
       ok: true,
-      json: async () => ({ version: (source.match(/const APP_VERSION = "([^"]+)"/) || [])[1] || APP_VERSION }),
+      json: async () => ({
+        version: announcedVersion || (source.match(/const APP_VERSION = "([^"]+)"/) || [])[1] || APP_VERSION,
+      }),
     }),
     crypto: { randomUUID: () => nodeCrypto.randomUUID() },
-    indexedDB: makeIndexedDB(),
+    indexedDB: idbProxy,
     Date: FakeDate,
     URL,
     URLSearchParams,
@@ -419,6 +475,9 @@ function makeDevice(name, { seedStore = null, source = SOURCE } = {}) {
     name,
     app,
     localStorage,
+    navigated: false,
+    persist: { storage, idb: sharedIdb, sessionMap },
+    isAlive: () => alive,
     async ready() {
       await settle();
       toShell({ type: "exp-note-ready" });
@@ -1081,6 +1140,78 @@ for (const [label, act, pick, expected] of TRANSITION) {
     assert.deepStrictEqual(everywhere(devices.desktop, devices.phone, pick), [expected, expected, expected]);
   });
 }
+
+// --- app updates never interrupt writing ------------------------------------
+const writeNewProtocol = (step) => (store) => {
+  const experiment = store.projects[0].experiments[0];
+  let pr = experiment.protocols.find((item) => item.id === "prNew");
+  if (!pr) {
+    pr = { id: "prNew", name: "새 프로토콜", draftVersion: { id: "vN", stepGroups: [] }, versions: [] };
+    experiment.protocols.push(pr);
+  }
+  pr.name = "쓰는 중인 프로토콜";
+  pr.draftVersion.stepGroups = Array.from({ length: Math.ceil(step / 3) }, (_, k) => ({
+    id: `w${k + 1}`,
+    title: `${k + 1}단계 ${"내용".repeat(Math.min(step, 5))}`,
+  }));
+  return store;
+};
+const writtenTitles = (store) =>
+  (store?.projects?.[0]?.experiments?.[0]?.protocols?.find((item) => item.id === "prNew")?.draftVersion?.stepGroups || [])
+    .map((group) => group.title)
+    .join(" · ");
+
+scenario("쓰는 도중 새 버전이 나와도 새로고침하지 않는다 (창 전환·10분 주기 포함)", async () => {
+  const { desktop } = await twoDevicesWithProtocol();
+  desktop.focus();
+  for (let step = 1; step <= 6; step += 1) {
+    desktop.edit(writeNewProtocol(step));
+    await advance(step === 3 ? 4000 : 1200);
+    if (step === 3) {
+      announcedVersion = "9.9.9";
+      desktop.background();
+      await advance(2000);
+      desktop.foreground(); // 잠깐 다른 창에 다녀옴
+      await advance(3000);
+    }
+  }
+  await advance(11 * 60 * 1000); // 10분 주기 확인도 지나감 (커서는 입력칸에)
+  assert.strictEqual(desktop.navigated, false, "쓰는 중에는 새로고침하면 안 됨");
+  assert.strictEqual(writtenTitles(desktop.app.store), writtenTitles(writeNewProtocol(6)(clone(PROTOCOL_SEED))));
+});
+
+scenario("오래 떠나 있다 돌아오면 새 버전을 적용하고, 쓰던 것은 그대로 남는다", async () => {
+  let { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.focus();
+  for (let step = 1; step <= 6; step += 1) {
+    desktop.edit(writeNewProtocol(step));
+    await advance(1200);
+  }
+  desktop.blur();
+  announcedVersion = "9.9.9";
+  desktop.background();
+  await advance(6 * 60 * 1000);
+  desktop.foreground();
+  await advance(8000);
+  assert.strictEqual(desktop.navigated, true, "오래 떠나 있다 돌아오면 적용");
+  desktop = makeDevice("desktop", { persist: desktop.persist });
+  await desktop.ready();
+  await advance(10000);
+  const expected = writtenTitles(writeNewProtocol(6)(clone(PROTOCOL_SEED)));
+  assert.strictEqual(writtenTitles(desktop.app.store), expected, "새로고침 뒤 화면");
+  assert.strictEqual(writtenTitles({ projects: [{ experiments: [{ protocols: [server.rows.get("experiment_protocol::p1:e1:prNew")?.payload?.item] }] }] }), expected, "서버");
+  assert.strictEqual(writtenTitles(phone.app.store), expected, "다른 기기");
+});
+
+scenario("앱을 막 열 때 새 버전이 있으면 바로 적용한다", async () => {
+  resetClock();
+  resetServer();
+  announcedVersion = "9.9.9";
+  const desktop = makeDevice("desktop", { seedStore: PROTOCOL_SEED });
+  await desktop.ready();
+  await advance(8000);
+  assert.strictEqual(desktop.navigated, true);
+});
 
 // --- run -------------------------------------------------------------------
 (async () => {
