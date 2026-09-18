@@ -424,6 +424,10 @@ function makeDevice(name, { seedStore = null } = {}) {
     focus() {
       toShell({ type: "exp-note-editing", editing: true, raw: "" });
     },
+    // What app.html's signalDeleteItem posts right before removing an item.
+    signalDelete(entityType, projectId, itemId, experimentId = null) {
+      toShell({ type: "exp-note-delete-item", entityType, projectId, itemId, experimentId });
+    },
     // Cursor leaves every text field.
     blur() {
       toShell({ type: "exp-note-editing", editing: false, raw: JSON.stringify(app.store) });
@@ -773,6 +777,48 @@ for (const [label, mutate, pick, expected] of DELETIONS) {
     assert.strictEqual(pick(protocolOf(phone.app.store)), expected, "폰");
   });
 }
+
+// --- deleting experiments ----------------------------------------------------
+const experimentIds = (store) => (store?.projects?.[0]?.experiments || []).map((e) => e.id);
+const serverExperiment = (id) => server.rows.get(`project_experiment::p1:${id}`);
+const deleteExperiment = (device, id) => {
+  device.signalDelete("experiment", "p1", id);
+  device.edit((store) => {
+    store.projects[0].experiments = store.projects[0].experiments.filter((e) => e.id !== id);
+    return store;
+  });
+};
+const EXPERIMENT_DELETIONS = [
+  ["빈 새 실험", { id: "eNew", name: "새 실험", memo: "", protocols: [] }, "desktop", 5000],
+  ["프로토콜이 든 새 실험", { id: "eNew", name: "새 실험", memo: "", protocols: [{ id: "prN", name: "새 프로토콜", versions: [], draftVersion: { id: "v1", stepGroups: [{ id: "x1", title: "단계" }] } }] }, "desktop", 5000],
+  ["다른 기기가 만든 새 실험", { id: "eNew", name: "새 실험", memo: "", protocols: [] }, "phone", 8000],
+  ["만들자마자 (업로드 전) 지운 새 실험", { id: "eNew", name: "새 실험", memo: "", protocols: [] }, "desktop", 100],
+];
+for (const [label, experiment, deleter, wait] of EXPERIMENT_DELETIONS) {
+  scenario(`실험을 지우면 지워진 채로 남는다: ${label}`, async () => {
+    const { desktop, phone } = await twoDevicesWithProtocol();
+    desktop.edit((store) => {
+      store.projects[0].experiments.push(clone(experiment));
+      return store;
+    });
+    await advance(wait);
+    deleteExperiment(deleter === "phone" ? phone : desktop, "eNew");
+    await stirAfterDelete(desktop, phone);
+    assert.deepStrictEqual(experimentIds(desktop.app.store), ["e1"], "컴퓨터");
+    assert.deepStrictEqual(experimentIds(phone.app.store), ["e1"], "폰");
+    const row = serverExperiment("eNew");
+    assert.ok(!row || row.deleted_at, "서버");
+  });
+}
+scenario("프로토콜이 든 기존 실험을 지우면 '새 실험'으로 되살아나지 않는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  deleteExperiment(desktop, "e1");
+  await stirAfterDelete(desktop, phone);
+  assert.deepStrictEqual(experimentIds(desktop.app.store), [], "컴퓨터");
+  assert.deepStrictEqual(experimentIds(phone.app.store), [], "폰");
+  assert.ok(serverExperiment("e1")?.deleted_at, "서버 실험 행이 삭제되어야 함");
+  assert.ok(serverProtocol() === undefined || server.rows.get("experiment_protocol::p1:e1:pr1").deleted_at, "프로토콜도 삭제");
+});
 
 // --- run -------------------------------------------------------------------
 (async () => {

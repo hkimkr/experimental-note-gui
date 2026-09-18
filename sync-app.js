@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.4.7 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.4.8 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.4.7";
+  const APP_VERSION = "4.4.8";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -806,7 +806,13 @@
         const parentId = String(payload.parent_id || parts[0] || "");
         const experimentId = String(payload.experiment_id || parts[1] || "");
         const project = ensureProject(parentId);
-        const experiment = ensureExperiment(project, experimentId);
+        // 임시 실험은 살아 있는 프로토콜을 싣기 위해서만 만듭니다. 삭제 표식에까지
+        // 만들면, 실험을 지울 때 함께 지워진 프로토콜의 표식 때문에 빈 "새 실험"이
+        // 화면을 그릴 때마다 다시 생기고 앱이 그걸 새 실험으로 올려서, 실험이
+        // 영영 지워지지 않았습니다 (v4.4.4~4.4.7).
+        const experiment = record.deleted_at
+          ? project?.experiments?.find((item) => String(item?.id || "") === experimentId) || null
+          : ensureExperiment(project, experimentId);
         if (!experiment) return;
         const protocolId = String(
           payload.item?.id || parts.slice(2).join(":")
