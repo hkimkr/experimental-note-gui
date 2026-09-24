@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.5.1 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.6.0 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,20 +27,24 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.5.1";
+  const APP_VERSION = "4.6.0";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
   const CLIENT_ID_KEY = "exp-note-sync-client-id";
   const TAB_CHANNEL_NAME = "exp-note-sync-tabs-v1";
   const DB_NAME = "exp-note-sync-v1";
-  const DB_VERSION = 3;
+  const DB_VERSION = 4;
   const RECORDS_STORE = "records";
   const OUTBOX_STORE = "outbox";
   const SHARED_RECORDS_STORE = "shared_records";
   const SHARED_OUTBOX_STORE = "shared_outbox";
   /** 검토 대기: 설명 없는 사라짐(hold) · 동시 편집/원격 삭제 충돌(conflict) */
   const REVIEW_STORE = "review";
+  /** 복원 지점: 화면이 바뀌기 직전의 내용 (실수로 사라졌을 때 되돌리기 위함) */
+  const RESTORE_STORE = "restore_points";
+  const RESTORE_KEEP = 15;
+  const RESTORE_MAX_BYTES = 20 * 1024 * 1024;
   // 편집·삭제 표식은 옛 버전과 같은 v3 를 씁니다. 전환 기간에 옛 버전 기기가 새 버전의
   // 기록을 받아도 "사용자의 실제 편집·삭제"로 알아보고 반영하게 하기 위해서입니다.
   const INTENT_CLIENT_PREFIX = "intent-v3:";
@@ -1719,6 +1723,9 @@
         if (!db.objectStoreNames.contains(REVIEW_STORE)) {
           db.createObjectStore(REVIEW_STORE, { keyPath: "review_key" });
         }
+        if (!db.objectStoreNames.contains(RESTORE_STORE)) {
+          db.createObjectStore(RESTORE_STORE, { keyPath: "at" });
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
@@ -1856,6 +1863,65 @@
       transaction.onerror = () => reject(transaction.error);
     });
     db.close();
+  }
+
+  // --- 동기화 기록 · 복원 지점 -------------------------------------------
+  // 화면에서 내용이 사라지는 일이 생기면, 무슨 일이 언제 있었는지와 직전 화면을
+  // 남겨 두어야 되돌리고 원인을 찾을 수 있습니다.
+  let lastRestorePointAt = 0;
+  const syncJournal = [];
+  function journal(event, detail = "") {
+    syncJournal.push({ at: Date.now(), event, detail: String(detail).slice(0, 300) });
+    if (syncJournal.length > 300) syncJournal.splice(0, syncJournal.length - 300);
+  }
+
+  async function saveRestorePoint(reason, raw) {
+    if (!raw || !initializedUserId) return;
+    try {
+      const db = await openSyncDb();
+      const existing = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(RESTORE_STORE, "readonly");
+        const request = transaction.objectStore(RESTORE_STORE).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(RESTORE_STORE, "readwrite");
+        const objectStore = transaction.objectStore(RESTORE_STORE);
+        objectStore.put({ at: Date.now(), user_id: initializedUserId, reason, raw });
+        // 개수와 총 용량 둘 다 제한합니다 (큰 실험노트는 한 시점이 수 MB 일 수 있음).
+        let budget = RESTORE_MAX_BYTES - raw.length;
+        existing
+          .filter((entry) => entry.user_id === initializedUserId)
+          .sort((a, b) => b.at - a.at)
+          .forEach((entry, index) => {
+            budget -= (entry.raw || "").length;
+            if (index >= RESTORE_KEEP - 1 || budget < 0) objectStore.delete(entry.at);
+          });
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+      });
+      db.close();
+    } catch {
+      // 복원 지점을 못 남겨도 동기화는 계속합니다.
+    }
+  }
+
+  async function listRestorePoints() {
+    if (!initializedUserId) return [];
+    try {
+      const db = await openSyncDb();
+      const rows = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(RESTORE_STORE, "readonly");
+        const request = transaction.objectStore(RESTORE_STORE).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => db.close();
+      });
+      return rows.filter((row) => row.user_id === initializedUserId).sort((a, b) => b.at - a.at);
+    } catch {
+      return [];
+    }
   }
 
   async function replaceStoredRecords(storeName, userId, records) {
@@ -2165,6 +2231,10 @@
   const reviewList = document.getElementById("cloud-review-list");
   const reviewCountBox = document.getElementById("cloud-review-count");
   const reviewKeepAll = document.getElementById("cloud-review-keep-all");
+  const restoreBox = document.getElementById("cloud-restore");
+  const restoreList = document.getElementById("cloud-restore-list");
+  const restoreCountBox = document.getElementById("cloud-restore-count");
+  const journalButton = document.getElementById("cloud-journal");
   const ENTITY_LABEL = {
     project: "프로젝트",
     project_experiment: "실험",
@@ -2267,6 +2337,91 @@
     });
   }
 
+  // --- 되돌리기 목록 -------------------------------------------------------
+  const storeSummary = (raw) => {
+    try {
+      const store = JSON.parse(raw);
+      const projects = store.projects || [];
+      const protocols = projects.reduce(
+        (sum, project) => sum + (project.experiments || []).reduce((n, e) => n + (e.protocols || []).length, 0),
+        0
+      );
+      const notes = projects.reduce((sum, project) => sum + (project.notes || []).length, 0);
+      return `프로젝트 ${projects.length} · 프로토콜 ${protocols} · 노트 ${notes} · ${Math.round(raw.length / 1024)}KB`;
+    } catch {
+      return `${Math.round((raw || "").length / 1024)}KB`;
+    }
+  };
+
+  async function restoreFromPoint(point) {
+    // 되돌리기 직전 화면도 남겨 두어 다시 앞으로 올 수 있게 합니다.
+    await saveRestorePoint("되돌리기 직전", localStorage.getItem(STORAGE_KEY) || "");
+    journal("되돌리기", new Date(point.at).toISOString());
+    localStorage.setItem(STORAGE_KEY, point.raw);
+    // 추가 전용으로 담습니다: 되돌려도 그 사이 다른 기기가 쓴 내용을 지우지 않습니다.
+    await captureLocalChanges(point.raw, true).catch(() => undefined);
+    applyRecordsToApp(currentRecords, "복원 지점으로 되돌렸습니다", true);
+    scheduleUpload(0);
+    await refreshRestorePoints();
+  }
+
+  async function refreshRestorePoints() {
+    const points = await listRestorePoints();
+    if (restoreCountBox) restoreCountBox.textContent = points.length ? String(points.length) : "";
+    if (restoreBox) restoreBox.hidden = points.length === 0;
+    if (!restoreList) return;
+    restoreList.innerHTML = "";
+    points.slice(0, 8).forEach((point) => {
+      const item = document.createElement("li");
+      item.className = "cloud-review-item";
+      const title = document.createElement("div");
+      title.className = "cloud-review-title";
+      title.textContent = `${fmtTime(new Date(point.at).toISOString())} · ${point.reason}`;
+      const desc = document.createElement("div");
+      desc.className = "cloud-review-desc";
+      desc.textContent = storeSummary(point.raw);
+      const actions = document.createElement("div");
+      actions.className = "cloud-review-actions";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "cloud-review-button primary";
+      button.textContent = "이 시점으로 되돌리기";
+      button.addEventListener("click", () => {
+        button.disabled = true;
+        void restoreFromPoint(point).catch((error) => {
+          errorBox.textContent = `되돌리기 실패: ${error?.message || error}`;
+          button.disabled = false;
+        });
+      });
+      actions.appendChild(button);
+      item.appendChild(title);
+      item.appendChild(desc);
+      item.appendChild(actions);
+      restoreList.appendChild(item);
+    });
+  }
+
+  journalButton?.addEventListener("click", () => {
+    const lines = syncJournal.map(
+      (entry) => `${new Date(entry.at).toISOString()}\t${entry.event}\t${entry.detail}`
+    );
+    const header = [
+      `버전 ${APP_VERSION}`,
+      `기기 ${deviceId}`,
+      `시각 ${new Date().toISOString()}`,
+      "",
+    ];
+    const blob = new Blob([header.concat(lines).join("\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `exp-note-sync-log-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+  });
+
   async function refreshReview() {
     if (!initializedUserId) {
       renderReview([]);
@@ -2346,7 +2501,94 @@
     );
   };
 
-  function applyRecordsToApp(records, message = "") {
+  // 화면에 보이는 내용 중, 새로 그릴 내용에서 설명 없이(삭제 기록 없이) 사라지는 것들.
+  // 동기화의 어떤 단계에서 무엇이 어긋나든, 쓰던 내용이 화면에서 조용히 지워지는 일은
+  // 없어야 합니다. 그런 갱신은 막고 화면 내용을 먼저 기록·업로드한 뒤 다시 그립니다.
+  // 한 기록 안에서 화면에 있던 부분이 새 내용에서 사라졌는지 봅니다.
+  //  - 목록 항목이 없어졌는데 삭제 표식이 없으면 설명 없는 손실
+  //  - 글이 있던 칸이 비었는데 그 칸을 누가 고쳤다는 시각이 없으면 설명 없는 손실
+  function lostParts(screenValue, nextValue, path, meta, out) {
+    if (out.length > 5) return out;
+    if (isPlainObject(screenValue)) {
+      if (!isPlainObject(nextValue)) {
+        if (hasMeaningfulValue(screenValue)) out.push(path || "/");
+        return out;
+      }
+      for (const key of Object.keys(screenValue)) {
+        if (key === SYNC_META_KEY) continue;
+        lostParts(screenValue[key], nextValue[key], `${path}/${pathSegment(key)}`, meta, out);
+      }
+      return out;
+    }
+    if (isKeyedList(screenValue) && (Array.isArray(nextValue) || nextValue == null)) {
+      const nextMap = new Map((nextValue || []).map((item) => [partItemKey(item), item]));
+      for (const item of screenValue) {
+        const key = partItemKey(item);
+        const itemPath = `${path}/@${pathSegment(key)}`;
+        if (nextMap.has(key)) {
+          lostParts(item, nextMap.get(key), itemPath, meta, out);
+        } else if (hasMeaningfulValue(item) && !(meta && meta.d && meta.d[itemPath])) {
+          out.push(itemPath);
+        }
+      }
+      return out;
+    }
+    if (hasMeaningfulValue(screenValue) && !hasMeaningfulValue(nextValue)) {
+      // 누군가 이 칸을 고쳤다는 시각이 있으면 설명이 됩니다.
+      const changed = meta && Object.prototype.hasOwnProperty.call(meta.c, path);
+      if (!changed) out.push(path);
+    }
+    return out;
+  }
+
+  function contentLostFromScreen(nextStore) {
+    let screenStore = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      screenStore = raw ? JSON.parse(raw) : null;
+    } catch {
+      screenStore = null;
+    }
+    if (!screenStore || !Array.isArray(screenStore.projects)) return [];
+    const before = storeToRecords(screenStore);
+    const after = storeToRecords(nextStore);
+    const lost = [];
+    before.forEach((record, key) => {
+      const known = currentRecords.get(key);
+      if (known?.deleted_at) return; // 삭제된 것은 설명이 있습니다
+      const next = after.get(key);
+      if (!next) {
+        if (hasMeaningfulValue(record.payload)) lost.push(key);
+        return;
+      }
+      const meta = known ? partMetaOf(known) : null;
+      const missing = lostParts(
+        payloadContent(record.payload),
+        payloadContent(next.payload),
+        "",
+        meta,
+        []
+      );
+      missing.forEach((part) => lost.push(`${key}${part}`));
+    });
+    return lost;
+  }
+
+  let rescuingScreen = false;
+  async function rescueScreenContent(lost, message) {
+    rescuingScreen = true;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      await saveRestorePoint(`화면 내용 보호 (${lost.length}건)`, raw);
+      // 추가 전용으로 담습니다: 화면에 있는 내용을 살리되 무엇도 지우지 않습니다.
+      await captureLocalChanges(raw, true).catch(() => undefined);
+    } finally {
+      rescuingScreen = false;
+    }
+    applyRecordsToApp(currentRecords, message, true);
+  }
+
+  function applyRecordsToApp(records, message = "", rescued = false) {
     const localRaw = localStorage.getItem(STORAGE_KEY) || "";
     let fallback = {};
     try {
@@ -2357,6 +2599,15 @@
     pushedOverFingerprint =
       lastObservedFingerprint || fingerprintRaw(localRaw);
     const store = recordsToStore(records, fallback);
+    if (!rescued && !rescuingScreen) {
+      const lost = contentLostFromScreen(store);
+      if (lost.length) {
+        journal("화면 내용 보호", lost.slice(0, 5).join(", "));
+        setStatus("화면에 있던 내용을 지키는 중…");
+        void rescueScreenContent(lost, message);
+        return;
+      }
+    }
     const raw = JSON.stringify(store);
     const appliedFp = fingerprintValue(store);
     lastObservedFingerprint = appliedFp;
@@ -2372,6 +2623,12 @@
     // Records what this device last received from the cloud, so a later
     // reconnect can tell an untouched snapshot from one with new local work.
     localStorage.setItem(LAST_APPLIED_KEY, appliedFp);
+    journal("화면 갱신", message || "");
+    // 화면이 실제로 바뀌는 순간마다 직전 내용을 남겨 둡니다 (너무 자주는 남기지 않음).
+    if (localRaw && raw !== localRaw && Date.now() - lastRestorePointAt > 20000) {
+      lastRestorePointAt = Date.now();
+      void saveRestorePoint(message || "화면 갱신 직전", localRaw).then(refreshRestorePoints);
+    }
     postStoreToApp(store);
     if (message) setStatus(message);
   }
@@ -3881,6 +4138,7 @@
     initializedUserId = userId;
     heldKeys.clear();
     await refreshReview();
+    await refreshRestorePoints();
     // On first boot, discard the iframe's default snapshot. During a reconnect,
     // keep edits that truly arrived while the remote fetch was in flight. They
     // are merged additively because they predate the cloud state just fetched.

@@ -495,6 +495,15 @@ function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } 
     blur() {
       toShell({ type: "exp-note-editing", editing: false, raw: JSON.stringify(app.store) });
     },
+    // 앱이 화면과 localStorage 에는 썼지만 셸이 그 알림을 놓친 경우 (캡처 유실).
+    editWithoutPosting(mutate) {
+      const next = mutate(clone(app.store));
+      const raw = JSON.stringify(next);
+      app.store = next;
+      localStorage.setItem(STORAGE_KEY, raw);
+      localStorage.setItem(LOCAL_UPDATED_KEY, String(clock.now));
+      localStorage.setItem(USER_EDITED_KEY, String(clock.now));
+    },
     // The user changes content: exactly what the app's save effect does.
     edit(mutate) {
       const next = mutate(clone(app.store));
@@ -1211,6 +1220,32 @@ scenario("앱을 막 열 때 새 버전이 있으면 바로 적용한다", async
   await desktop.ready();
   await advance(8000);
   assert.strictEqual(desktop.navigated, true);
+});
+
+scenario("셸이 편집 알림을 놓쳐도 다음 화면 갱신이 화면 내용을 지우지 않는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.focus();
+  desktop.edit(writeNewProtocol(3));
+  await advance(5000);
+  // 앱에는 더 썼는데 셸이 그 알림을 놓친 상태 (화면·localStorage 에만 있음)
+  desktop.editWithoutPosting((store) => {
+    const pr = store.projects[0].experiments[0].protocols.find((item) => item.id === "prNew");
+    pr.draftVersion.stepGroups.push({ id: "wLost", title: "셸이 못 받은 단계" });
+    return store;
+  });
+  const expected = writtenTitles(desktop.app.store);
+  // 다른 기기의 변경이 도착해 화면을 다시 그리게 됨
+  phone.edit((store) => {
+    store.projects[0].notes[0].purpose = "폰에서 고침";
+    return store;
+  });
+  await advance(20000);
+  assert.strictEqual(writtenTitles(desktop.app.store), expected, "화면에 있던 내용이 남아야 함");
+  assert.ok(
+    writtenTitles({ projects: [{ experiments: [{ protocols: [server.rows.get("experiment_protocol::p1:e1:prNew")?.payload?.item] }] }] }).includes("셸이 못 받은 단계"),
+    "살린 내용이 서버에도 올라가야 함"
+  );
+  assert.strictEqual(protocolOf(desktop.app.store) && noteOf(desktop.app.store).purpose, "폰에서 고침", "다른 기기 변경도 반영");
 });
 
 // --- run -------------------------------------------------------------------
