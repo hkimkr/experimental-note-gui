@@ -85,15 +85,19 @@ async function advance(ms) {
   clock.now = target;
   await settle();
 }
-class FakeDate extends Date {
-  constructor(...args) {
-    if (args.length === 0) super(clock.now);
-    else super(...args);
-  }
-  static now() {
-    return clock.now;
-  }
+// 기기마다 시계가 다를 수 있습니다 (폰이 몇 분 앞서 가는 흔한 상황).
+function makeFakeDate(offsetMs = 0) {
+  return class FakeDate extends Date {
+    constructor(...args) {
+      if (args.length === 0) super(clock.now + offsetMs);
+      else super(...args);
+    }
+    static now() {
+      return clock.now + offsetMs;
+    }
+  };
 }
+const FakeDate = makeFakeDate(0);
 
 // --- fake IndexedDB (only what sync-app.js uses) ---------------------------
 function makeIndexedDB() {
@@ -327,7 +331,7 @@ function makeElement() {
   return element;
 }
 
-function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } = {}) {
+function makeDevice(name, { seedStore = null, source = SOURCE, persist = null, clockOffsetMs = 0 } = {}) {
   // persist: 같은 기기를 다시 켤 때 이어받는 저장소 (localStorage · IndexedDB).
   const storage = persist?.storage || new Map();
   const sharedIdb = persist?.idb || makeIndexedDB();
@@ -473,7 +477,7 @@ function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } 
     }),
     crypto: { randomUUID: () => nodeCrypto.randomUUID() },
     indexedDB: idbProxy,
-    Date: FakeDate,
+    Date: makeFakeDate(clockOffsetMs),
     URL,
     URLSearchParams,
     structuredClone,
@@ -1345,6 +1349,41 @@ scenario("화면을 다시 그리는 동안 친 내용이 화면에서 사라지
   const server1 = server.rows.get("experiment_protocol::p1:e1:prNew");
   const kept = (server1?.payload?.item?.draftVersion?.stepGroups || []).map((g) => g.title);
   assert.ok(kept.includes("방금 쓴 단계 2"), `클라우드에도 없습니다: ${kept}`);
+});
+
+scenario("다른 기기 시계가 앞서 가도 내 편집이 서버에서 밀리지 않는다", async () => {
+  resetClock();
+  resetServer();
+  const desktop = makeDevice("desktop", { seedStore: PROTOCOL_SEED });
+  await desktop.ready();
+  await advance(3000);
+  // 폰 시계가 5분 앞서 갑니다 (자동 시각 맞춤이 꺼진 흔한 상황).
+  const phone = makeDevice("phone", { clockOffsetMs: 5 * 60 * 1000 });
+  await phone.ready();
+  await advance(5000);
+  assert.ok(protocolOf(phone.app.store), "준비: 폰도 프로토콜을 받아야 합니다");
+
+  // 같은 프로토콜을 폰이 먼저 고칩니다 (앞선 시각이 서버에 박힙니다).
+  phone.edit((store) => {
+    protocolOf(store).name = "폰이 먼저 고친 이름";
+    return store;
+  });
+  await advance(10000);
+
+  // 이제 컴퓨터에서 같은 프로토콜에 단계를 씁니다.
+  desktop.edit((store) => {
+    protocolOf(store).draftVersion.stepGroups.push({ id: "wA", title: "컴퓨터에서 쓴 단계" });
+    return store;
+  });
+  await advance(60000);
+
+  const onScreen = (protocolOf(desktop.app.store)?.draftVersion?.stepGroups || []).map((g) => g.title);
+  assert.ok(onScreen.includes("컴퓨터에서 쓴 단계"), `컴퓨터 화면에서 사라졌습니다: ${onScreen}`);
+  const row = server.rows.get("experiment_protocol::p1:e1:pr1");
+  const stored = (row?.payload?.item?.draftVersion?.stepGroups || []).map((g) => g.title);
+  assert.ok(stored.includes("컴퓨터에서 쓴 단계"), `서버에 올라가지 못했습니다: ${stored}`);
+  const onPhone = (protocolOf(phone.app.store)?.draftVersion?.stepGroups || []).map((g) => g.title);
+  assert.ok(onPhone.includes("컴퓨터에서 쓴 단계"), `폰에 닿지 않았습니다: ${onPhone}`);
 });
 
 // --- run -------------------------------------------------------------------

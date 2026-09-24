@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.6.1 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.6.2 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.6.1";
+  const APP_VERSION = "4.6.2";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -970,7 +970,42 @@
   const remoteSaysNothing = (records) =>
     !recordsContentScore(records) && !recordsAllDeleted(records);
 
-  const intentRecordsFromStore = (store, timestamp = Date.now()) => {
+  // 기기마다 시계가 다릅니다. 다른 기기가 우리보다 앞선 시각을 찍어 두면 서버의
+  // LWW(updated_at 비교)가 우리 편집을 말없이 거부하고, 그 행이 다시 내려오면서
+  // 방금 쓴 것이 화면에서 사라집니다. 그래서 도장은 "우리가 본 어떤 시각보다도
+  // 나중"으로 찍습니다. 본 만큼만 따라가고(상한 24시간), 기기를 껐다 켜도 잊지
+  // 않도록 저장해 둡니다.
+  const SEEN_AHEAD_KEY = "exp-note-sync-seen-ahead";
+  const MAX_SEEN_AHEAD_MS = 24 * 60 * 60 * 1000;
+  let seenAheadMs = 0;
+  try {
+    seenAheadMs = Math.min(
+      MAX_SEEN_AHEAD_MS,
+      Math.max(0, Number(localStorage.getItem(SEEN_AHEAD_KEY)) || 0)
+    );
+  } catch {
+    seenAheadMs = 0;
+  }
+  function noteRemoteTime(record) {
+    if (!record || isOwnRecord(record)) return;
+    const seen = Math.max(
+      Date.parse(record.updated_at || "") || 0,
+      Date.parse(record.deleted_at || "") || 0
+    );
+    if (!seen) return;
+    const ahead = seen - Date.now();
+    if (ahead <= seenAheadMs) return;
+    seenAheadMs = Math.min(MAX_SEEN_AHEAD_MS, ahead);
+    try {
+      localStorage.setItem(SEEN_AHEAD_KEY, String(seenAheadMs));
+    } catch {
+      // 저장 못 해도 이번 세션 동안은 유지됩니다.
+    }
+    if (typeof showVersionLabel === "function") showVersionLabel();
+  }
+  const localNow = () => Date.now() + seenAheadMs + (seenAheadMs > 0 ? 1 : 0);
+
+  const intentRecordsFromStore = (store, timestamp = localNow()) => {
     const base = storeToRecords(
       store,
       new Date(timestamp).toISOString(),
@@ -1357,7 +1392,7 @@
   function repairRecordsAgainstRemote(records, remoteRecords) {
     const repairs = new Map();
     let sequence = 0;
-    const now = Date.now();
+    const now = localNow();
     records.forEach((record, key) => {
       const remote = remoteRecords.get(key);
       if (
@@ -1415,7 +1450,7 @@
     const localTouchedAt = Number(localUpdatedAt) || 0;
 
     let sequence = 0;
-    const now = Date.now();
+    const now = localNow();
     const stamp = (record) => {
       sequence += 1;
       return {
@@ -2115,7 +2150,16 @@
   const updateBox = document.getElementById("cloud-update");
   const updateButton = document.getElementById("cloud-update-now");
   const forceButton = document.getElementById("cloud-force-refresh");
-  if (versionBox) versionBox.textContent = `버전 ${APP_VERSION}`;
+  // 시계 차이는 눈에 보이지 않으면서 동기화를 어긋나게 합니다. 크면 알려 줍니다.
+  function showVersionLabel() {
+    if (!versionBox) return;
+    const minutes = Math.round(seenAheadMs / 60000);
+    versionBox.textContent =
+      minutes >= 1
+        ? `버전 ${APP_VERSION} · 다른 기기 시계가 ${minutes}분 앞섬`
+        : `버전 ${APP_VERSION}`;
+  }
+  showVersionLabel();
 
   const setUpdateBanner = (latest) => {
     // 대화상자를 열지 않아도 보이도록 런처에도 표시합니다.
@@ -2413,6 +2457,7 @@
       `버전 ${APP_VERSION}`,
       `기기 ${deviceId}`,
       `시각 ${new Date().toISOString()}`,
+      `시계 보정 ${seenAheadMs}ms (다른 기기가 우리보다 앞서 간 만큼)`,
       "",
     ];
     const blob = new Blob([header.concat(lines).join("\n")], { type: "text/plain" });
@@ -2447,7 +2492,7 @@
     if (item.kind === "hold") {
       if (action === "delete") {
         const existing = currentRecords.get(key) || item.theirs;
-        const now = Date.now();
+        const now = localNow();
         const list = [tombstoneRecord(existing, key, now)];
         if (existing.entity_type === "project_experiment") {
           let n = 0;
@@ -2579,6 +2624,15 @@
     return lost;
   }
 
+  function screenStoreValue() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
   let rescuingScreen = false;
   async function rescueScreenContent(lost, message) {
     rescuingScreen = true;
@@ -2589,6 +2643,18 @@
       await captureLocalChanges(raw, true).catch(() => undefined);
     } finally {
       rescuingScreen = false;
+    }
+    // 정말 지켜졌는지 확인합니다. 예전에는 확인 없이 그려서, 담는 데 실패하면
+    // (예: 다른 기기 시각이 앞서 병합에서 밀리면) 화면만 조용히 비었습니다.
+    const screen = screenStoreValue();
+    const still = screen
+      ? contentLostFromScreen(recordsToStore(currentRecords, screen))
+      : [];
+    if (still.length) {
+      journal("화면 내용 보호 실패 · 화면 유지", still.slice(0, 5).join(", "));
+      setStatus("화면 내용을 지켰습니다 · 다시 올리는 중");
+      scheduleUpload(0);
+      return; // 화면은 그대로 둡니다. 비우느니 늦게 합치는 편이 낫습니다.
     }
     applyRecordsToApp(currentRecords, message, true);
   }
@@ -2764,6 +2830,7 @@
     rows.forEach((row) => {
       const { server_received_at: receivedAt, ...record } = row;
       watermark = maxIso(watermark, receivedAt);
+      noteRemoteTime(record);
       records.set(recordKey(record), record);
     });
     // 이후 따라잡기(catchUpRemote)는 이 시각 이후에 서버가 받은 행만 가져옵니다.
@@ -2834,6 +2901,7 @@
         client_id: row.client_id,
         __projectId: String(row.project_id),
       };
+      noteRemoteTime(record);
       records.set(recordKey(record), record);
     });
     sharedWatermark = watermark;
@@ -2858,7 +2926,7 @@
     const userId = currentSession?.user?.id;
     if (!userId) return;
     const prefix = `${projectId}:`;
-    const now = Date.now();
+    const now = localNow();
     let sequence = 0;
     const sharedPush = [];
     const personalTombstones = [];
@@ -3359,7 +3427,7 @@
   }
 
   /** 삭제 표식 행. parent/id 는 남겨 두어 payload 가 null 로 돌아와도 재구성 시 지울 수 있게 합니다. */
-  function tombstoneRecord(existing, key, when = Date.now()) {
+  function tombstoneRecord(existing, key, when = localNow()) {
     return {
       ...existing,
       payload: existing.payload
@@ -3387,7 +3455,7 @@
     if (!Array.isArray(store?.projects)) return;
     const desired = storeToRecords(store);
     const changed = [];
-    const now = Date.now();
+    const now = localNow();
     let sequence = 0;
 
     desired.forEach((candidate, key) => {
@@ -3641,11 +3709,12 @@
   };
 
   async function mergeIncomingRecords(userId, incomingRecords, message = "") {
+    incomingRecords.forEach?.((record) => noteRemoteTime(record));
     const updates = [];
     const repairs = [];
     const conflicts = [];
     let sequence = 0;
-    const now = Date.now();
+    const now = localNow();
     // Rows this device still has to upload. An incoming change to one of them
     // is a real concurrent edit (or a deletion of what is being edited here).
     let pendingOutbox = new Map();
@@ -3773,6 +3842,7 @@
       rows.forEach((row) => {
         personalWatermark = maxIso(personalWatermark, row.server_received_at);
         const { server_received_at: _receivedAt, ...record } = row;
+        noteRemoteTime(record);
         if (isOwnRecord(record) || alreadyHave(record)) return;
         missed.push(record);
       });
@@ -3787,6 +3857,7 @@
           client_id: row.client_id,
           __projectId: String(row.project_id),
         };
+        noteRemoteTime(record);
         if (isOwnRecord(record) || alreadyHave(record)) return;
         missed.push(record);
       });
@@ -3914,6 +3985,7 @@
             deleted_at: payload.new.deleted_at,
             client_id: payload.new.client_id,
           };
+          noteRemoteTime(incoming);
           if (isOwnRecord(incoming)) return;
           enqueueRealtimeRecord(userId, incoming, "다른 기기의 변경사항을 받았습니다");
         }
