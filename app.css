@@ -162,6 +162,10 @@ input {
 
 .cloud-auth-body {
   padding: 22px;
+  max-height: min(68vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cloud-auth-label {
@@ -328,6 +332,10 @@ input {
 }
 
 .cloud-review-list {
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: grid;
   gap: 8px;
   margin: 0;

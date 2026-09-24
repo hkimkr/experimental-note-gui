@@ -1,4 +1,4 @@
-// Experimental Note GUI v4.6.0 — nothing is deleted on a hunch: a row may be
+// Experimental Note GUI v4.6.1 — nothing is deleted on a hunch: a row may be
 // tombstoned only when the app explicitly said the user deleted it; any other
 // disappearance and every concurrent edit is parked for review in the shell.
 // (v4.3.5 — the cached copy is only evidence that the
@@ -27,7 +27,7 @@
   // cloud has not seen. Rule 5 needs that distinction and uses this key alone.
   const USER_EDITED_KEY = "hamin-exp-note-v1-user-edited-at";
   /** 이 파일의 빌드 버전. version.json 과 다르면 낡은 캐시가 돌고 있는 것입니다. */
-  const APP_VERSION = "4.6.0";
+  const APP_VERSION = "4.6.1";
   const UPDATE_GUARD_KEY = "exp-note-update-attempt";
   const LEGACY_PENDING_KEY = "hamin-exp-note-v1-pending-sync";
   const LAST_APPLIED_KEY = "hamin-exp-note-v1-last-applied-fp";
@@ -112,7 +112,11 @@
   let appliedFingerprint = "";
   let pendingAppStore = null;
   let pendingAppFingerprint = "";
-  let deferredAckRaw = "";
+  // 보류 칸은 줄이어야 합니다. 예전에는 최신 것 하나만 붙들었는데, 앱이 받은
+  // 내용을 되돌려 보내는 메아리가 바로 뒤에 도착하면 그 직전의 진짜 편집이
+  // 덮여서 통째로 사라졌습니다. 쓰던 단계가 사라지던 원인입니다.
+  let deferredAckRaws = [];
+  const DEFERRED_ACK_MAX = 12;
   let appEditing = false;
   let appEditingSince = 0;
   /** 앱이 마지막으로 실제 내용 변경(타자)을 보낸 시각 */
@@ -2507,7 +2511,7 @@
   // 한 기록 안에서 화면에 있던 부분이 새 내용에서 사라졌는지 봅니다.
   //  - 목록 항목이 없어졌는데 삭제 표식이 없으면 설명 없는 손실
   //  - 글이 있던 칸이 비었는데 그 칸을 누가 고쳤다는 시각이 없으면 설명 없는 손실
-  function lostParts(screenValue, nextValue, path, meta, out) {
+  function lostParts(screenValue, nextValue, path, meta, out, itemsOnly = false) {
     if (out.length > 5) return out;
     if (isPlainObject(screenValue)) {
       if (!isPlainObject(nextValue)) {
@@ -2516,7 +2520,7 @@
       }
       for (const key of Object.keys(screenValue)) {
         if (key === SYNC_META_KEY) continue;
-        lostParts(screenValue[key], nextValue[key], `${path}/${pathSegment(key)}`, meta, out);
+        lostParts(screenValue[key], nextValue[key], `${path}/${pathSegment(key)}`, meta, out, itemsOnly);
       }
       return out;
     }
@@ -2526,13 +2530,14 @@
         const key = partItemKey(item);
         const itemPath = `${path}/@${pathSegment(key)}`;
         if (nextMap.has(key)) {
-          lostParts(item, nextMap.get(key), itemPath, meta, out);
+          lostParts(item, nextMap.get(key), itemPath, meta, out, itemsOnly);
         } else if (hasMeaningfulValue(item) && !(meta && meta.d && meta.d[itemPath])) {
           out.push(itemPath);
         }
       }
       return out;
     }
+    if (itemsOnly) return out;
     if (hasMeaningfulValue(screenValue) && !hasMeaningfulValue(nextValue)) {
       // 누군가 이 칸을 고쳤다는 시각이 있으면 설명이 됩니다.
       const changed = meta && Object.prototype.hasOwnProperty.call(meta.c, path);
@@ -2586,6 +2591,59 @@
       rescuingScreen = false;
     }
     applyRecordsToApp(currentRecords, message, true);
+  }
+
+  // 화면 보호와 방향만 반대인 검사: 이 기기가 가지고 있는데 화면에는 없는
+  // 내용을 찾습니다. 어떤 경합으로 그렇게 됐든, 결과는 언제나 같아야 합니다.
+  function contentMissingOnScreen() {
+    let screenStore = null;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      screenStore = raw ? JSON.parse(raw) : null;
+    } catch {
+      screenStore = null;
+    }
+    if (!screenStore || !Array.isArray(screenStore.projects)) return [];
+    // 화면 내용을 바탕으로 다시 세운 것과 비교하므로, 아직 자리를 못 잡은 행
+    // (부모가 안 온 프로토콜 등)은 애초에 빠져서 헛돌지 않습니다.
+    const next = storeToRecords(recordsToStore(currentRecords, screenStore));
+    const shown = storeToRecords(screenStore);
+    const missing = [];
+    next.forEach((record, key) => {
+      if (currentRecords.get(key)?.deleted_at) return;
+      const on = shown.get(key);
+      if (!on) {
+        if (hasMeaningfulValue(record.payload)) missing.push(key);
+        return;
+      }
+      // 통째로 빠진 항목만 셉니다. 낱낱의 값 차이까지 되살리면 앱이 정리해 둔
+      // 빈 칸과 서로 밀고 당기게 됩니다.
+      lostParts(payloadContent(record.payload), payloadContent(on.payload), "", null, [], true)
+        .forEach((part) => missing.push(`${key}${part}`));
+    });
+    return missing;
+  }
+
+  let screenCatchUpTimer = null;
+  function scheduleScreenCatchUp(delay = 1200) {
+    if (screenCatchUpTimer) window.clearTimeout(screenCatchUpTimer);
+    screenCatchUpTimer = window.setTimeout(() => {
+      screenCatchUpTimer = null;
+      runScreenCatchUp();
+    }, delay);
+  }
+
+  function runScreenCatchUp() {
+    if (!initializedUserId || rescuingScreen) return;
+    // 타자 중이거나 화면 갱신이 아직 앱에 닿지 않았으면 조금 뒤에 다시 봅니다.
+    if (isActivelyTyping() || pendingAppStore || localCaptureRunning) {
+      scheduleScreenCatchUp(1500);
+      return;
+    }
+    const missing = contentMissingOnScreen();
+    if (!missing.length) return;
+    journal("화면에 없는 내용 되살림", missing.slice(0, 5).join(", "));
+    applyRecordsToApp(currentRecords, "저장해 둔 내용을 화면에 다시 표시했습니다");
   }
 
   function applyRecordsToApp(records, message = "", rescued = false) {
@@ -3443,7 +3501,10 @@
       // pre-push echoes, so hold the newest one instead of trusting it. It is
       // never discarded: the ack handler or the timeout below will process it,
       // because losing a real edit here is what makes fresh work vanish.
-      deferredAckRaw = raw;
+      if (deferredAckRaws[deferredAckRaws.length - 1] !== raw) {
+        deferredAckRaws.push(raw);
+        if (deferredAckRaws.length > DEFERRED_ACK_MAX) deferredAckRaws.shift();
+      }
       if (!ackGateTimer) {
         ackGateTimer = window.setTimeout(() => {
           ackGateTimer = null;
@@ -3490,15 +3551,22 @@
       window.clearTimeout(ackGateTimer);
       ackGateTimer = null;
     }
-    const raw = deferredAckRaw;
-    deferredAckRaw = "";
-    if (!raw) return;
-    // Identical to the store we pushed, so it was only an echo of it.
-    if (fingerprintRaw(raw) === appliedFingerprint) return;
-    if (pushedOverFingerprint && fingerprintRaw(raw) === pushedOverFingerprint) {
-      return;
+    const raws = deferredAckRaws;
+    deferredAckRaws = [];
+    let took = false;
+    for (const raw of raws) {
+      if (!raw) continue;
+      // Identical to the store we pushed, so it was only an echo of it.
+      if (fingerprintRaw(raw) === appliedFingerprint) continue;
+      if (pushedOverFingerprint && fingerprintRaw(raw) === pushedOverFingerprint) {
+        continue;
+      }
+      queueLocalCapture(raw, true);
+      took = true;
     }
-    queueLocalCapture(raw, true);
+    // 담기만 하고 화면을 다시 그리지 않으면, 내용은 클라우드에 있는데 화면에는
+    // 없는 상태가 됩니다. 앱 새로 받기를 눌러야 보이던 바로 그 상태입니다.
+    if (took) scheduleScreenCatchUp();
   }
 
   // "입력 중"은 커서가 입력칸에 있다는 뜻이 아니라 방금 타자를 쳤다는 뜻이어야
@@ -3747,7 +3815,11 @@
 
   function scheduleCatchUp() {
     if (catchUpTimer) return;
-    catchUpTimer = window.setInterval(() => void catchUpRemote(), CATCH_UP_INTERVAL_MS);
+    catchUpTimer = window.setInterval(() => {
+      void catchUpRemote();
+      // 어떤 경합으로든 화면이 뒤처졌으면 여기서도 바로잡습니다.
+      runScreenCatchUp();
+    }, CATCH_UP_INTERVAL_MS);
   }
 
   async function flushDeferredRemote(raw = "") {
@@ -4202,7 +4274,7 @@
       uploadAfterEditing = false;
       reconnectAfterEditing = false;
       pendingLocalRaw = "";
-      deferredAckRaw = "";
+      deferredAckRaws = [];
       pendingAppStore = null;
       pendingAppFingerprint = "";
       approvedProjectDeletions.clear();

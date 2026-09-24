@@ -374,16 +374,30 @@ function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } 
   };
 
   const app = { store: null, pushes: 0 };
+  // 앱이 큰 프로토콜을 다시 그리는 동안 응답(ack)이 늦어지는 상황을 흉내 냅니다.
+  let ackDelayMs = 0;
+  let pushHook = null;
   // Messages from the app to the shell are asynchronous, like postMessage.
   const toShell = (data) =>
     hostImmediate(() => fire(winListeners, "message", { origin: ORIGIN, source: frameWindow, data }));
   const frameWindow = {
     postMessage(message) {
       if (message?.type === "exp-note-cloud-store" && message.store) {
+        const before = app.store;
         app.store = clone(message.store);
         app.pushes += 1;
-        // The real iframe applies the store and acknowledges right away.
-        toShell({ type: "exp-note-cloud-store-applied", fingerprint: message.fingerprint || "" });
+        if (process.env.TRACE) {
+          const pr = message.store?.projects?.[0]?.experiments?.[0]?.protocols?.find((x) => x.id === "prNew");
+          console.log(`    [${name}] push #${app.pushes} @${clock.now - Date.UTC(2026, 8, 19, 0, 0, 0)}ms: ${(pr?.draftVersion?.stepGroups || []).map((g) => g.id).join(",")}`);
+        }
+        const ack = () => toShell({ type: "exp-note-cloud-store-applied", fingerprint: message.fingerprint || "" });
+        if (pushHook) {
+          const hook = pushHook;
+          pushHook = null;
+          hook(before);
+        }
+        if (ackDelayMs > 0) instanceScheduler.setTimeout(ack, ackDelayMs);
+        else ack();
       }
     },
   };
@@ -494,6 +508,32 @@ function makeDevice(name, { seedStore = null, source = SOURCE, persist = null } 
     // Cursor leaves every text field.
     blur() {
       toShell({ type: "exp-note-editing", editing: false, raw: JSON.stringify(app.store) });
+    },
+    // 다음 화면 갱신이 앱에 닿는 순간에 끼어듭니다 (실제 경합을 그대로 흉내).
+    onNextPush(fn) {
+      pushHook = fn;
+    },
+    // 앱이 보냈지만 화면에는 남지 않는 스냅샷 (갱신에 덮이기 직전에 보낸 것).
+    postRaw(raw) {
+      toShell({ type: "exp-note-local-store", raw });
+    },
+    setAckDelay(ms) {
+      ackDelayMs = ms;
+    },
+    // 셸이 화면을 다시 그리는 순간과 겹쳐서, 방금 친 내용이 뒤늦게 도착하는 경우.
+    editInFlight(mutate) {
+      const next = mutate(clone(app.store));
+      const raw = JSON.stringify(next);
+      app.store = next;
+      // 앱은 조금 뒤에 localStorage 에 쓰고 알립니다 (셸의 화면 갱신이 먼저 일어남).
+      hostImmediate(() =>
+        hostImmediate(() => {
+          localStorage.setItem(STORAGE_KEY, raw);
+          localStorage.setItem(LOCAL_UPDATED_KEY, String(clock.now));
+          localStorage.setItem(USER_EDITED_KEY, String(clock.now));
+          toShell({ type: "exp-note-local-store", raw });
+        })
+      );
     },
     // 앱이 화면과 localStorage 에는 썼지만 셸이 그 알림을 놓친 경우 (캡처 유실).
     editWithoutPosting(mutate) {
@@ -1246,6 +1286,65 @@ scenario("셸이 편집 알림을 놓쳐도 다음 화면 갱신이 화면 내�
     "살린 내용이 서버에도 올라가야 함"
   );
   assert.strictEqual(protocolOf(desktop.app.store) && noteOf(desktop.app.store).purpose, "폰에서 고침", "다른 기기 변경도 반영");
+});
+
+scenario("화면을 다시 그리는 순간에 친 내용도 화면에 남는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.focus();
+  desktop.edit(writeNewProtocol(3));
+  await advance(5000);
+  // 다른 기기의 변경이 도착해 화면을 다시 그리게 되는 바로 그 순간에 두 단계를 더 쓴다.
+  phone.edit((store) => {
+    store.projects[0].notes[0].purpose = "폰에서 고침";
+    return store;
+  });
+  desktop.editInFlight((store) => {
+    const pr = store.projects[0].experiments[0].protocols.find((item) => item.id === "prNew");
+    pr.draftVersion.stepGroups.push({ id: "wA", title: "방금 쓴 단계 1" });
+    pr.draftVersion.stepGroups.push({ id: "wB", title: "방금 쓴 단계 2" });
+    return store;
+  });
+  await advance(20000);
+  const titles = writtenTitles(desktop.app.store);
+  assert.ok(titles.includes("방금 쓴 단계 1") && titles.includes("방금 쓴 단계 2"), `화면: ${titles}`);
+  const serverTitles = writtenTitles({
+    projects: [{ experiments: [{ protocols: [server.rows.get("experiment_protocol::p1:e1:prNew")?.payload?.item] }] }],
+  });
+  assert.ok(serverTitles.includes("방금 쓴 단계 2"), `서버: ${serverTitles}`);
+  assert.strictEqual(noteOf(desktop.app.store).purpose, "폰에서 고침", "다른 기기 변경도 반영");
+});
+
+scenario("화면을 다시 그리는 동안 친 내용이 화면에서 사라지지 않는다", async () => {
+  const { desktop, phone } = await twoDevicesWithProtocol();
+  desktop.focus();
+  desktop.edit(writeNewProtocol(3));
+  await advance(8000);
+  desktop.blur();
+  await advance(5000);
+  // 화면 갱신이 앱에 닿는 바로 그 순간: 방금 친 두 단계가 담긴 스냅샷이 뒤늦게
+  // 도착하고, 이어서 앱이 받은 내용을 되돌려 보내는 메아리가 도착합니다.
+  desktop.setAckDelay(400);
+  desktop.onNextPush((before) => {
+    const typed = clone(before);
+    const pr = typed.projects[0].experiments[0].protocols.find((item) => item.id === "prNew");
+    pr.draftVersion.stepGroups.push({ id: "wA", title: "방금 쓴 단계 1" });
+    pr.draftVersion.stepGroups.push({ id: "wB", title: "방금 쓴 단계 2" });
+    desktop.postRaw(JSON.stringify(typed));
+    desktop.postRaw(JSON.stringify(desktop.app.store));
+  });
+  phone.edit((store) => {
+    protocolOf(store).name = "폰에서 고친 이름";
+    return store;
+  });
+  await advance(60000);
+  const titles = writtenTitles(desktop.app.store);
+  assert.ok(
+    titles.includes("방금 쓴 단계 1") && titles.includes("방금 쓴 단계 2"),
+    `화면에서 사라졌습니다: ${titles}`
+  );
+  const server1 = server.rows.get("experiment_protocol::p1:e1:prNew");
+  const kept = (server1?.payload?.item?.draftVersion?.stepGroups || []).map((g) => g.title);
+  assert.ok(kept.includes("방금 쓴 단계 2"), `클라우드에도 없습니다: ${kept}`);
 });
 
 // --- run -------------------------------------------------------------------
