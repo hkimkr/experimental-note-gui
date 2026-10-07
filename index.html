@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Experimental Note GUI v4.6.3 deployment marker -->
+<!-- Experimental Note GUI v4.6.4 deployment marker -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -35,7 +35,7 @@
       <iframe
         id="exp-note-frame"
         class="planner-frame"
-        src="./app.html?v=4.6.3"
+        src="./app.html?v=4.6.4"
         title="실험 노트 GUI"
         allow="clipboard-read; clipboard-write"
       ></iframe>
@@ -49,6 +49,19 @@
         <img src="./assets/icon-192.png" alt="" />
         <span>앱 설치</span>
       </button>
+
+      <div class="install-guide" id="install-guide" hidden>
+        <div class="install-guide-card" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
+          <button class="install-guide-close" id="install-guide-close" type="button" aria-label="닫기">×</button>
+          <h2 id="install-guide-title">앱처럼 쓰기</h2>
+          <p class="install-guide-lead" id="install-guide-lead"></p>
+          <ol class="install-guide-steps" id="install-guide-steps"></ol>
+          <div class="install-guide-actions">
+            <button class="install-guide-copy" id="install-guide-copy" type="button">링크 복사</button>
+          </div>
+          <p class="install-guide-foot">홈 화면에 넣으면 주소창 없이 전체 화면으로 열리고, 오프라인에서도 열립니다. 같은 계정으로 로그인하면 내용은 그대로 따라옵니다.</p>
+        </div>
+      </div>
 
       <div class="cloud-auth-backdrop" id="cloud-auth-backdrop" hidden>
         <section
@@ -140,7 +153,7 @@
 
     <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./sync-app.js?v=4.6.3"></script>
+    <script src="./sync-app.js?v=4.6.4"></script>
     <script>
       (() => {
         const installButton = document.getElementById("app-install-launcher");
@@ -163,8 +176,82 @@
             installPrompt = null;
             return;
           }
-          const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-          window.alert(isIos ? "Safari 공유 버튼을 누른 뒤 ‘홈 화면에 추가’를 선택해주세요." : "브라우저 주소창의 설치 아이콘 또는 메뉴의 ‘앱 설치’를 선택해주세요.");
+          openInstallGuide();
+        });
+
+        // --- 수동 설치 안내 ---------------------------------------------
+        // 아이폰은 설치 알림(beforeinstallprompt)이 없어서, 사용자가 직접
+        // '홈 화면에 추가'를 눌러야 합니다. 카카오톡·인스타 등 앱 안 브라우저에는
+        // 그 메뉴 자체가 없어서, 먼저 Safari 로 열게 안내합니다.
+        const guide = document.getElementById("install-guide");
+        const guideLead = document.getElementById("install-guide-lead");
+        const guideSteps = document.getElementById("install-guide-steps");
+        const guideCopy = document.getElementById("install-guide-copy");
+        const ua = navigator.userAgent || "";
+        const isIos =
+          /iphone|ipad|ipod/i.test(ua) ||
+          (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const isIpad = /ipad/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const inAppBrowser = /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Snapchat|KAKAOSTORY/i.test(ua);
+
+        function guidePlan() {
+          if (inAppBrowser) {
+            return {
+              lead: isIos
+                ? "지금은 카카오톡·인스타 같은 앱 안에서 열려 있어서 홈 화면에 추가할 수 없습니다. Safari 로 먼저 열어주세요."
+                : "지금은 앱 안에서 열려 있어서 설치할 수 없습니다. Chrome 같은 브라우저로 먼저 열어주세요.",
+              steps: isIos
+                ? ["오른쪽 아래 ··· (또는 공유) 를 누릅니다", "‘Safari로 열기’ 를 선택합니다", "Safari 에서 다시 이 단추를 누릅니다"]
+                : ["오른쪽 위 ⋮ 를 누릅니다", "‘다른 브라우저로 열기’ 를 선택합니다", "그 브라우저에서 다시 이 단추를 누릅니다"],
+            };
+          }
+          if (isIos) {
+            return {
+              lead: "아이폰은 설치 단추가 따로 없고, Safari 의 ‘홈 화면에 추가’ 로 넣습니다. 넣고 나면 안드로이드에서 설치한 것과 똑같이 동작합니다.",
+              steps: [
+                isIpad
+                  ? "오른쪽 위 공유 버튼(⬆︎ 네모에 화살표)을 누릅니다"
+                  : "화면 아래 가운데 공유 버튼(⬆︎ 네모에 화살표)을 누릅니다",
+                "목록을 아래로 내려 ‘홈 화면에 추가’ 를 누릅니다",
+                "오른쪽 위 ‘추가’ 를 누릅니다",
+              ],
+            };
+          }
+          return {
+            lead: "브라우저 메뉴에서 설치할 수 있습니다.",
+            steps: ["주소창의 설치 아이콘, 또는 메뉴(⋮)를 누릅니다", "‘앱 설치’ 또는 ‘홈 화면에 추가’ 를 누릅니다", "‘설치’ 를 누릅니다"],
+          };
+        }
+
+        function openInstallGuide() {
+          const plan = guidePlan();
+          guideLead.textContent = plan.lead;
+          guideSteps.innerHTML = "";
+          plan.steps.forEach((text) => {
+            const li = document.createElement("li");
+            li.textContent = text;
+            guideSteps.appendChild(li);
+          });
+          guide.hidden = false;
+        }
+        const closeInstallGuide = () => {
+          guide.hidden = true;
+        };
+        document.getElementById("install-guide-close").addEventListener("click", closeInstallGuide);
+        guide.addEventListener("click", (event) => {
+          if (event.target === guide) closeInstallGuide();
+        });
+        guideCopy.addEventListener("click", async () => {
+          const link = window.location.href.split("?")[0];
+          try {
+            await navigator.clipboard.writeText(link);
+            guideCopy.textContent = "복사했습니다";
+          } catch {
+            guideCopy.textContent = link;
+          }
+          window.setTimeout(() => {
+            guideCopy.textContent = "링크 복사";
+          }, 2500);
         });
       })();
     </script>
