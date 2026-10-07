@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Experimental Note GUI v4.6.2 deployment marker -->
+<!-- Experimental Note GUI v4.6.3 deployment marker -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -22,6 +22,10 @@
     <link rel="icon" type="image/png" sizes="48x48" href="./assets/favicon-48.png?v=3.5.0" />
     <link rel="shortcut icon" href="./assets/favicon-48.png?v=3.5.0" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png?v=3.5.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="실험노트" />
     <link rel="manifest" href="./manifest.webmanifest?v=3.5.0" />
     <link rel="stylesheet" href="./app.css?v=3.5.0" />
     <title>실험 노트 ver3 · Experimental Note GUI</title>
@@ -31,7 +35,7 @@
       <iframe
         id="exp-note-frame"
         class="planner-frame"
-        src="./app.html?v=4.6.2"
+        src="./app.html?v=4.6.3"
         title="실험 노트 GUI"
         allow="clipboard-read; clipboard-write"
       ></iframe>
@@ -136,7 +140,7 @@
 
     <noscript>이 앱을 사용하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./sync-app.js?v=4.6.2"></script>
+    <script src="./sync-app.js?v=4.6.3"></script>
     <script>
       (() => {
         const installButton = document.getElementById("app-install-launcher");
